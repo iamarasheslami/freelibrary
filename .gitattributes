@@ -1,0 +1,10 @@
+# Normalize all text files to LF in the repository, regardless of OS.
+# Git will still check them out using your OS's native line endings locally.
+* text=auto eol=lf
+
+# Explicitly mark binary files so git never tries to convert their line endings
+*.jks binary
+*.keystore binary
+*.png binary
+*.jpg binary
+*.webp binary
