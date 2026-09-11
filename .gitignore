@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+*/build/
+captures/
+.cxx/
+
+# Local configuration file (SDK/NDK paths) — machine-specific, never commit
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+.navigation/
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Signing keys — never commit real keystores or secrets
+*.jks
+*.keystore
+keystore.properties
+
+# Logs
+*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Generated wrapper distribution cache (kept locally, not versioned)
+gradle-wrapper.jar.log
