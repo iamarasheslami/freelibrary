@@ -1,0 +1,10 @@
+#!/bin/sh
+echo "Running ktlintCheck before commit..."
+./gradlew ktlintCheck
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "Commit blocked: ktlint found style violations."
+  echo "Run './gradlew ktlintFormat' to auto-fix, then try committing again."
+  exit 1
+fi
