@@ -6,12 +6,16 @@ import com.freelibrary.app.data.local.dao.AuthorDao
 import com.freelibrary.app.data.local.dao.BookAuthorDao
 import com.freelibrary.app.data.local.dao.BookDao
 import com.freelibrary.app.data.local.dao.BookFormatDao
+import com.freelibrary.app.data.local.dao.BookSubjectDao
 import com.freelibrary.app.data.local.dao.SourceDao
+import com.freelibrary.app.data.local.dao.SubjectDao
 import com.freelibrary.app.data.local.entity.Author
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookAuthor
 import com.freelibrary.app.data.local.entity.BookFormat
+import com.freelibrary.app.data.local.entity.BookSubject
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.data.local.entity.Subject
 
 /**
  * The app's single Room database. Entities and DAOs are added here as each
@@ -24,8 +28,16 @@ import com.freelibrary.app.data.local.entity.Source
  * this before any public release.
  */
 @Database(
-    entities = [Source::class, Book::class, BookFormat::class, Author::class, BookAuthor::class],
-    version = 3,
+    entities = [
+        Source::class,
+        Book::class,
+        BookFormat::class,
+        Author::class,
+        BookAuthor::class,
+        Subject::class,
+        BookSubject::class,
+    ],
+    version = 4,
     exportSchema = true,
 )
 abstract class FreeLibraryDatabase : RoomDatabase() {
@@ -38,4 +50,8 @@ abstract class FreeLibraryDatabase : RoomDatabase() {
     abstract fun authorDao(): AuthorDao
 
     abstract fun bookAuthorDao(): BookAuthorDao
+
+    abstract fun subjectDao(): SubjectDao
+
+    abstract fun bookSubjectDao(): BookSubjectDao
 }
