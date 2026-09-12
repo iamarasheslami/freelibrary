@@ -4,16 +4,20 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.freelibrary.app.data.local.dao.AuthorDao
 import com.freelibrary.app.data.local.dao.BookAuthorDao
+import com.freelibrary.app.data.local.dao.BookBookshelfDao
 import com.freelibrary.app.data.local.dao.BookDao
 import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.dao.BookSubjectDao
+import com.freelibrary.app.data.local.dao.BookshelfDao
 import com.freelibrary.app.data.local.dao.SourceDao
 import com.freelibrary.app.data.local.dao.SubjectDao
 import com.freelibrary.app.data.local.entity.Author
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookAuthor
+import com.freelibrary.app.data.local.entity.BookBookshelf
 import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.BookSubject
+import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.local.entity.Subject
 
@@ -36,8 +40,10 @@ import com.freelibrary.app.data.local.entity.Subject
         BookAuthor::class,
         Subject::class,
         BookSubject::class,
+        Bookshelf::class,
+        BookBookshelf::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class FreeLibraryDatabase : RoomDatabase() {
@@ -54,4 +60,8 @@ abstract class FreeLibraryDatabase : RoomDatabase() {
     abstract fun subjectDao(): SubjectDao
 
     abstract fun bookSubjectDao(): BookSubjectDao
+
+    abstract fun bookshelfDao(): BookshelfDao
+
+    abstract fun bookBookshelfDao(): BookBookshelfDao
 }
