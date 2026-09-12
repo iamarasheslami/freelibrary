@@ -4,6 +4,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("org.jlleitschuh.gradle.ktlint")
     id("androidx.navigation.safeargs.kotlin")
+    id("com.google.devtools.ksp")
     kotlin("kapt")
 }
 
@@ -56,6 +57,12 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:2.58")
     kapt("com.google.dagger:hilt-compiler:2.58")
+
+    // Room
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    ksp("androidx.room:room-compiler:2.8.4")
+    testImplementation("androidx.room:room-testing:2.8.4")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
