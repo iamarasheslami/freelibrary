@@ -9,6 +9,7 @@ import com.freelibrary.app.data.local.dao.BookDao
 import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.dao.BookSubjectDao
 import com.freelibrary.app.data.local.dao.BookshelfDao
+import com.freelibrary.app.data.local.dao.DownloadedBookDao
 import com.freelibrary.app.data.local.dao.ReadingProgressDao
 import com.freelibrary.app.data.local.dao.SourceDao
 import com.freelibrary.app.data.local.dao.SubjectDao
@@ -19,6 +20,7 @@ import com.freelibrary.app.data.local.entity.BookBookshelf
 import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.BookSubject
 import com.freelibrary.app.data.local.entity.Bookshelf
+import com.freelibrary.app.data.local.entity.DownloadedBook
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.local.entity.Subject
@@ -45,8 +47,9 @@ import com.freelibrary.app.data.local.entity.Subject
         Bookshelf::class,
         BookBookshelf::class,
         ReadingProgress::class,
+        DownloadedBook::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 abstract class FreeLibraryDatabase : RoomDatabase() {
@@ -69,4 +72,6 @@ abstract class FreeLibraryDatabase : RoomDatabase() {
     abstract fun bookBookshelfDao(): BookBookshelfDao
 
     abstract fun readingProgressDao(): ReadingProgressDao
+
+    abstract fun downloadedBookDao(): DownloadedBookDao
 }
