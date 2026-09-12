@@ -2,10 +2,14 @@ package com.freelibrary.app.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.freelibrary.app.data.local.dao.AuthorDao
+import com.freelibrary.app.data.local.dao.BookAuthorDao
 import com.freelibrary.app.data.local.dao.BookDao
 import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.dao.SourceDao
+import com.freelibrary.app.data.local.entity.Author
 import com.freelibrary.app.data.local.entity.Book
+import com.freelibrary.app.data.local.entity.BookAuthor
 import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.Source
 
@@ -20,8 +24,8 @@ import com.freelibrary.app.data.local.entity.Source
  * this before any public release.
  */
 @Database(
-    entities = [Source::class, Book::class, BookFormat::class],
-    version = 2,
+    entities = [Source::class, Book::class, BookFormat::class, Author::class, BookAuthor::class],
+    version = 3,
     exportSchema = true,
 )
 abstract class FreeLibraryDatabase : RoomDatabase() {
@@ -30,4 +34,8 @@ abstract class FreeLibraryDatabase : RoomDatabase() {
     abstract fun bookDao(): BookDao
 
     abstract fun bookFormatDao(): BookFormatDao
+
+    abstract fun authorDao(): AuthorDao
+
+    abstract fun bookAuthorDao(): BookAuthorDao
 }
