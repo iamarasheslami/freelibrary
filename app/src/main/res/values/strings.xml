@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FreeLibrary</string>
-    <string name="build_verification_message">FreeLibrary build pipeline is working.</string>
+    <string name="home_placeholder_message">Home screen — real content lands in Phase 2.</string>
 </resources>

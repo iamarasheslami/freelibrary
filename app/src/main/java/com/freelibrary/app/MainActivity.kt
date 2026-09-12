@@ -6,9 +6,8 @@ import com.freelibrary.app.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
- * Temporary launcher activity used to verify the build pipeline end to end
- * (Gradle -> Hilt -> ViewBinding -> install on device). Real navigation and
- * the home screen UI (Phase 2) will replace this.
+ * Single-activity host for the app's navigation graph. All actual screens are
+ * fragments managed by the NavHostFragment declared in activity_main.xml.
  */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -18,7 +17,5 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        binding.statusText.text = getString(R.string.build_verification_message)
     }
 }
