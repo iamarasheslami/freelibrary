@@ -14,6 +14,16 @@ and accessible — contributions should align with that mission.
    `feat: add zoom control to reader screen` or `fix: correct download progress bar state`.
 5. Push your branch and open a pull request against `main`.
 
+## One-time setup
+
+After cloning, enable the repository's git hooks (a pre-commit check that runs ktlint
+automatically) by running:
+
+git config core.hooksPath .githooks
+
+This is a local git setting and isn't stored in the repository itself, so each clone needs
+to run it once.
+
 ## Branching model
 
 This project uses a trunk-based workflow: `main` is always kept in a working state, and all
