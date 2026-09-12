@@ -8,8 +8,10 @@ import com.freelibrary.app.data.local.dao.BookBookshelfDao
 import com.freelibrary.app.data.local.dao.BookDao
 import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.dao.BookSubjectDao
+import com.freelibrary.app.data.local.dao.BookmarkDao
 import com.freelibrary.app.data.local.dao.BookshelfDao
 import com.freelibrary.app.data.local.dao.DownloadedBookDao
+import com.freelibrary.app.data.local.dao.HighlightDao
 import com.freelibrary.app.data.local.dao.ReadingProgressDao
 import com.freelibrary.app.data.local.dao.SourceDao
 import com.freelibrary.app.data.local.dao.SubjectDao
@@ -19,8 +21,10 @@ import com.freelibrary.app.data.local.entity.BookAuthor
 import com.freelibrary.app.data.local.entity.BookBookshelf
 import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.BookSubject
+import com.freelibrary.app.data.local.entity.Bookmark
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.DownloadedBook
+import com.freelibrary.app.data.local.entity.Highlight
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.local.entity.Subject
@@ -48,8 +52,10 @@ import com.freelibrary.app.data.local.entity.Subject
         BookBookshelf::class,
         ReadingProgress::class,
         DownloadedBook::class,
+        Bookmark::class,
+        Highlight::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
 )
 abstract class FreeLibraryDatabase : RoomDatabase() {
@@ -74,4 +80,8 @@ abstract class FreeLibraryDatabase : RoomDatabase() {
     abstract fun readingProgressDao(): ReadingProgressDao
 
     abstract fun downloadedBookDao(): DownloadedBookDao
+
+    abstract fun bookmarkDao(): BookmarkDao
+
+    abstract fun highlightDao(): HighlightDao
 }
