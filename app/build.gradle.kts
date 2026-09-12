@@ -67,6 +67,13 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.0")
+    }
+}
+
 dependencies {
     // Core / UI
     implementation("androidx.core:core-ktx:1.13.1")
