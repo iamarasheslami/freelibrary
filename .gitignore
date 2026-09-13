@@ -34,3 +34,6 @@ Thumbs.db
 
 # Generated wrapper distribution cache (kept locally, not versioned)
 gradle-wrapper.jar.log
+
+# Catalog-tool working data (large downloaded archives, generated databases)
+catalog-tool/data/
