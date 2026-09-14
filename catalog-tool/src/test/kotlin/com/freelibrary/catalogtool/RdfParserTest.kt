@@ -5,7 +5,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private val SAMPLE_RDF = """
+private val SAMPLE_RDF =
+    """
     <?xml version="1.0" encoding="utf-8"?>
     <rdf:RDF xml:base="http://www.gutenberg.org/"
              xmlns:dcam="http://purl.org/dc/dcam/"
@@ -55,9 +56,10 @@ private val SAMPLE_RDF = """
             </dcterms:hasFormat>
         </pgterms:ebook>
     </rdf:RDF>
-""".trimIndent().toByteArray()
+    """.trimIndent().toByteArray()
 
-private val NON_TEXT_SAMPLE_RDF = """
+private val NON_TEXT_SAMPLE_RDF =
+    """
     <?xml version="1.0" encoding="utf-8"?>
     <rdf:RDF xml:base="http://www.gutenberg.org/"
              xmlns:dcam="http://purl.org/dc/dcam/"
@@ -73,9 +75,10 @@ private val NON_TEXT_SAMPLE_RDF = """
             </dcterms:type>
         </pgterms:ebook>
     </rdf:RDF>
-""".trimIndent().toByteArray()
+    """.trimIndent().toByteArray()
 
-private val NO_TITLE_SAMPLE_RDF = """
+private val NO_TITLE_SAMPLE_RDF =
+    """
     <?xml version="1.0" encoding="utf-8"?>
     <rdf:RDF xml:base="http://www.gutenberg.org/"
              xmlns:dcterms="http://purl.org/dc/terms/"
@@ -84,9 +87,10 @@ private val NO_TITLE_SAMPLE_RDF = """
         <pgterms:ebook rdf:about="ebooks/90907">
         </pgterms:ebook>
     </rdf:RDF>
-""".trimIndent().toByteArray()
+    """.trimIndent().toByteArray()
 
-private val NO_FORMATS_SAMPLE_RDF = """
+private val NO_FORMATS_SAMPLE_RDF =
+    """
     <?xml version="1.0" encoding="utf-8"?>
     <rdf:RDF xml:base="http://www.gutenberg.org/"
              xmlns:dcterms="http://purl.org/dc/terms/"
@@ -96,10 +100,9 @@ private val NO_FORMATS_SAMPLE_RDF = """
             <dcterms:title>Come home from Earth</dcterms:title>
         </pgterms:ebook>
     </rdf:RDF>
-""".trimIndent().toByteArray()
+    """.trimIndent().toByteArray()
 
 class RdfParserTest {
-
     @Test
     fun `parseRdf extracts title, id, and issued date`() {
         val book = parseRdf(SAMPLE_RDF)
