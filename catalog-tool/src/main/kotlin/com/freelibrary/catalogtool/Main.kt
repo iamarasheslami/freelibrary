@@ -18,10 +18,44 @@ fun main() {
         return
     }
 
-    var rdfFileCount = 0
-    readRdfEntriesFromArchive(archivePath) { _, _ ->
-        rdfFileCount++
+    var parsedCount = 0
+    var skippedCount = 0
+    var failedCount = 0
+    var zeroFormatCount = 0
+    val failureSamples = mutableListOf<String>()
+    val zeroFormatSamples = mutableListOf<String>()
+
+    readRdfEntriesFromArchive(archivePath) { entryName, content ->
+        try {
+            val book = parseRdf(content)
+            if (book != null) {
+                parsedCount++
+                if (book.formats.isEmpty()) {
+                    zeroFormatCount++
+                    if (zeroFormatSamples.size < 5) {
+                        zeroFormatSamples.add("${book.externalId}: ${book.title}")
+                    }
+                }
+            } else {
+                skippedCount++
+            }
+        } catch (e: RdfParseException) {
+            failedCount++
+            if (failureSamples.size < 5) {
+                failureSamples.add("$entryName: ${e.message}")
+            }
+        }
     }
 
-    println("Found $rdfFileCount RDF entries in the archive.")
+    println("Parsed: $parsedCount, skipped (non-Text/no title): $skippedCount, failed: $failedCount")
+    println("Parsed books with zero formats: $zeroFormatCount")
+
+    if (failureSamples.isNotEmpty()) {
+        println("Sample failures:")
+        failureSamples.forEach { println("  $it") }
+    }
+    if (zeroFormatSamples.isNotEmpty()) {
+        println("Sample zero-format books:")
+        zeroFormatSamples.forEach { println("  $it") }
+    }
 }

@@ -5,8 +5,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private val SAMPLE_RDF =
-    """
+private val SAMPLE_RDF = """
     <?xml version="1.0" encoding="utf-8"?>
     <rdf:RDF xml:base="http://www.gutenberg.org/"
              xmlns:dcam="http://purl.org/dc/dcam/"
@@ -56,10 +55,9 @@ private val SAMPLE_RDF =
             </dcterms:hasFormat>
         </pgterms:ebook>
     </rdf:RDF>
-    """.trimIndent().toByteArray()
+""".trimIndent().toByteArray()
 
-private val NON_TEXT_SAMPLE_RDF =
-    """
+private val NON_TEXT_SAMPLE_RDF = """
     <?xml version="1.0" encoding="utf-8"?>
     <rdf:RDF xml:base="http://www.gutenberg.org/"
              xmlns:dcam="http://purl.org/dc/dcam/"
@@ -75,9 +73,33 @@ private val NON_TEXT_SAMPLE_RDF =
             </dcterms:type>
         </pgterms:ebook>
     </rdf:RDF>
-    """.trimIndent().toByteArray()
+""".trimIndent().toByteArray()
+
+private val NO_TITLE_SAMPLE_RDF = """
+    <?xml version="1.0" encoding="utf-8"?>
+    <rdf:RDF xml:base="http://www.gutenberg.org/"
+             xmlns:dcterms="http://purl.org/dc/terms/"
+             xmlns:pgterms="http://www.gutenberg.org/2009/pgterms/"
+             xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <pgterms:ebook rdf:about="ebooks/90907">
+        </pgterms:ebook>
+    </rdf:RDF>
+""".trimIndent().toByteArray()
+
+private val NO_FORMATS_SAMPLE_RDF = """
+    <?xml version="1.0" encoding="utf-8"?>
+    <rdf:RDF xml:base="http://www.gutenberg.org/"
+             xmlns:dcterms="http://purl.org/dc/terms/"
+             xmlns:pgterms="http://www.gutenberg.org/2009/pgterms/"
+             xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <pgterms:ebook rdf:about="ebooks/69279">
+            <dcterms:title>Come home from Earth</dcterms:title>
+        </pgterms:ebook>
+    </rdf:RDF>
+""".trimIndent().toByteArray()
 
 class RdfParserTest {
+
     @Test
     fun `parseRdf extracts title, id, and issued date`() {
         val book = parseRdf(SAMPLE_RDF)
@@ -131,6 +153,20 @@ class RdfParserTest {
     @Test
     fun `parseRdf returns null for a non-Text entry, treated as an intentional skip`() {
         val result = parseRdf(NON_TEXT_SAMPLE_RDF)
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `parseRdf returns null for an entry with no title, treated as an intentional skip`() {
+        val result = parseRdf(NO_TITLE_SAMPLE_RDF)
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `parseRdf returns null for an entry with zero downloadable formats, treated as an intentional skip`() {
+        val result = parseRdf(NO_FORMATS_SAMPLE_RDF)
 
         assertNull(result)
     }

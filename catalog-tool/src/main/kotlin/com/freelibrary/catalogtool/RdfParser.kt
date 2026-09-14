@@ -9,14 +9,16 @@ private const val NS_DCTERMS = "http://purl.org/dc/terms/"
 private const val NS_PGTERMS = "http://www.gutenberg.org/2009/pgterms/"
 private const val NS_DCAM = "http://purl.org/dc/dcam/"
 
-/** Thrown when an RDF document is malformed or missing its required root element. */
+/** Thrown when an RDF document is malformed in a way that cannot be recovered from. */
 class RdfParseException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 /**
  * Parses a single Project Gutenberg RDF file's raw bytes into a [ParsedBook].
- * Returns null (not an error) when the entry is explicitly typed as
- * something other than "Text" (audio, image, dataset, etc.) - those are not
- * books for this app's purposes and are intentionally skipped, not failed.
+ * Returns null (not an error) for entries that are not presentable as a real
+ * book: explicitly non-"Text" types (audio, image, dataset, etc.), entries
+ * missing a title entirely, or entries with zero downloadable formats - all
+ * observed in the real catalog, and none of them something this app could
+ * meaningfully show a user.
  */
 fun parseRdf(xmlBytes: ByteArray): ParsedBook? {
     val document =
@@ -40,9 +42,9 @@ fun parseRdf(xmlBytes: ByteArray): ParsedBook? {
             .substringAfterLast("/")
             .ifBlank { throw RdfParseException("Could not determine book id from rdf:about attribute") }
 
-    val title =
-        firstElementText(ebookElement, NS_DCTERMS, "title")
-            ?: throw RdfParseException("RDF document for book $externalId has no dcterms:title")
+    val title = firstElementText(ebookElement, NS_DCTERMS, "title") ?: return null
+    val formats = extractFormats(ebookElement)
+    if (formats.isEmpty()) return null
 
     return ParsedBook(
         externalId = externalId,
@@ -53,7 +55,7 @@ fun parseRdf(xmlBytes: ByteArray): ParsedBook? {
         creators = extractCreators(ebookElement),
         subjects = extractSubjects(ebookElement),
         bookshelves = extractBookshelves(ebookElement),
-        formats = extractFormats(ebookElement),
+        formats = formats,
     )
 }
 
