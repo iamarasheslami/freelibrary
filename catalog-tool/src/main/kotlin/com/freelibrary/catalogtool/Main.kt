@@ -18,5 +18,10 @@ fun main() {
         return
     }
 
-    println("Archive ready at $archivePath. Extraction/parsing comes next.")
+    var rdfFileCount = 0
+    readRdfEntriesFromArchive(archivePath) { _, _ ->
+        rdfFileCount++
+    }
+
+    println("Found $rdfFileCount RDF entries in the archive.")
 }
