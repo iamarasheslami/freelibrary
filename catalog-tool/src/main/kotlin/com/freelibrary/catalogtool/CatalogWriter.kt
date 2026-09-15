@@ -264,5 +264,6 @@ fun mapMimeTypeToFormatType(mimeType: String): String =
     when {
         mimeType.contains("epub") -> "epub"
         mimeType.startsWith("text/plain") -> "txt"
+        mimeType.contains("application/pdf") -> "pdf"
         else -> mimeType
     }

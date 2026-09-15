@@ -152,6 +152,8 @@ private fun extractCreators(ebookElement: Element): List<ParsedCreator> {
     return creators
 }
 
+private val SUPPORTED_FORMAT_MIME_MARKERS = listOf("epub", "text/plain", "application/pdf")
+
 private fun extractFormats(ebookElement: Element): List<ParsedFormat> {
     val formats = mutableListOf<ParsedFormat>()
     val fileNodes = ebookElement.getElementsByTagNameNS(NS_PGTERMS, "file")
@@ -164,6 +166,7 @@ private fun extractFormats(ebookElement: Element): List<ParsedFormat> {
             extractDescriptionValue(fileElement, NS_DCTERMS, "format")?.first
                 ?: firstElementText(fileElement, NS_DCTERMS, "format")
                 ?: continue
+        if (SUPPORTED_FORMAT_MIME_MARKERS.none { mimeType.contains(it) }) continue
         formats.add(ParsedFormat(url = url, mimeType = mimeType))
     }
     return formats

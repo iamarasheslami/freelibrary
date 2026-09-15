@@ -19,3 +19,9 @@ application {
 kotlin {
     jvmToolchain(21)
 }
+tasks.register<JavaExec>("inspect") {
+    group = "application"
+    description = "Analyzes the already-generated catalog.sqlite without re-running the full pipeline."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("com.freelibrary.catalogtool.InspectKt")
+}
