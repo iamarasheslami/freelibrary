@@ -135,7 +135,7 @@ class CatalogWriter(private val connection: Connection) {
         authorId: Long,
     ) {
         connection.prepareStatement(
-            "INSERT INTO book_authors (bookId, authorId, role) VALUES (?, ?, ?)",
+            "INSERT OR IGNORE INTO book_authors (bookId, authorId, role) VALUES (?, ?, ?)",
         ).use { insert ->
             insert.setLong(1, bookId)
             insert.setLong(2, authorId)
@@ -229,7 +229,7 @@ class CatalogWriter(private val connection: Connection) {
         format: ParsedFormat,
     ) {
         connection.prepareStatement(
-            "INSERT INTO book_formats (bookId, formatType, downloadUrl) VALUES (?, ?, ?)",
+            "INSERT OR IGNORE INTO book_formats (bookId, formatType, downloadUrl) VALUES (?, ?, ?)",
         ).use { insert ->
             insert.setLong(1, bookId)
             insert.setString(2, mapMimeTypeToFormatType(format.mimeType))
