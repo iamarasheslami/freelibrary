@@ -2,6 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
     application
     id("org.jlleitschuh.gradle.ktlint")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 dependencies {
@@ -19,6 +20,7 @@ application {
 kotlin {
     jvmToolchain(21)
 }
+
 tasks.register<JavaExec>("inspect") {
     group = "application"
     description = "Analyzes the already-generated catalog.sqlite without re-running the full pipeline."
