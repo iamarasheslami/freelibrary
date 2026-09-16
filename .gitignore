@@ -37,3 +37,6 @@ gradle-wrapper.jar.log
 
 # Catalog-tool working data (large downloaded archives, generated databases)
 catalog-tool/data/
+
+# Bundled catalog database, fetched via ./gradlew fetchCatalogDatabase
+app/src/main/assets/catalog.sqlite

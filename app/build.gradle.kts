@@ -1,3 +1,6 @@
+import java.net.URI
+import java.security.MessageDigest
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,6 +9,13 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     id("com.google.devtools.ksp")
     kotlin("kapt")
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.0")
+    }
 }
 
 android {
@@ -67,13 +77,6 @@ android {
     }
 }
 
-configurations.all {
-    resolutionStrategy {
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0")
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.0")
-    }
-}
-
 dependencies {
     // Core / UI
     implementation("androidx.core:core-ktx:1.13.1")
@@ -94,6 +97,10 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.4")
     ksp("androidx.room:room-compiler:2.8.4")
 
+    // Networking
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
     // Testing (local unit tests)
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
@@ -104,8 +111,48 @@ dependencies {
     // Testing (instrumented, on-device)
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+}
 
-    // Networking
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+tasks.register("fetchCatalogDatabase") {
+    group = "freelibrary"
+    description = "Downloads the bundled catalog database from GitHub Releases into app/src/main/assets/."
+
+    val releaseTag = "catalog-2026-09-16"
+    val expectedSha256 = "1749FC3C86C2843C552E63B2F6D5717646AF360EC435C23E34F4BEEAAF31E174"
+    val downloadUrl = "https://github.com/iamarasheslami/freelibrary/releases/download/$releaseTag/catalog.sqlite"
+    val assetsDir = layout.projectDirectory.dir("src/main/assets")
+    val outputFile = assetsDir.file("catalog.sqlite").asFile
+
+    doLast {
+        outputFile.parentFile.mkdirs()
+
+        println("Downloading catalog database from $downloadUrl ...")
+        URI(downloadUrl).toURL().openStream().use { input ->
+            outputFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        val digest = MessageDigest.getInstance("SHA-256")
+        val actualHashBytes =
+            outputFile.inputStream().use { stream ->
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (stream.read(buffer).also { bytesRead = it } != -1) {
+                    digest.update(buffer, 0, bytesRead)
+                }
+                digest.digest()
+            }
+        val actualSha256 = actualHashBytes.joinToString("") { "%02X".format(it) }
+
+        if (actualSha256 != expectedSha256) {
+            outputFile.delete()
+            throw GradleException(
+                "Downloaded catalog database checksum mismatch. Expected $expectedSha256 but got $actualSha256. " +
+                    "The file has been deleted; do not trust a corrupted or tampered database.",
+            )
+        }
+
+        println("Catalog database downloaded and verified successfully: $outputFile")
+    }
 }
