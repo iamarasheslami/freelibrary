@@ -8,6 +8,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     id("androidx.navigation.safeargs.kotlin")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.serialization")
     kotlin("kapt")
 }
 
@@ -78,6 +79,9 @@ android {
 }
 
 dependencies {
+    // Shared sync data contract
+    implementation(project(":shared"))
+
     // Core / UI
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
@@ -99,7 +103,9 @@ dependencies {
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
     // Testing (local unit tests)
     testImplementation("junit:junit:4.13.2")
