@@ -113,12 +113,8 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.17")
     testImplementation("androidx.test:core:1.7.0")
     testImplementation("androidx.room:room-testing:2.8.4")
-
-    // Testing (instrumented, on-device)
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }
-
 tasks.register("fetchCatalogDatabase") {
     group = "freelibrary"
     description = "Downloads the bundled catalog database from GitHub Releases into app/src/main/assets/."
