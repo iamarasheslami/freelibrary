@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 rootProject.name = "FreeLibrary"
 include(":app")
 include(":catalog-tool")
+include(":shared")

@@ -1,14 +1,12 @@
-package com.freelibrary.catalogtool
+package com.freelibrary.shared
 
 import kotlinx.serialization.Serializable
 
 /**
- * The JSON shape written for an individual book file (e.g. books/1342.json)
- * in the sync-manifest system. Deliberately separate from [ParsedBook] -
- * this is the public, versioned data contract the app's sync client reads,
- * while ParsedBook is this tool's internal parsing representation. Keeping
- * them distinct means the RDF parsing logic can change freely without
- * silently altering the public export format.
+ * The JSON shape for an individual book file (e.g. books/1342.json) in the
+ * sync-manifest system. This is the shared data contract between
+ * catalog-tool (the producer) and the app (the consumer) - a single source
+ * of truth so the two sides cannot silently drift apart.
  */
 @Serializable
 data class BookExport(
@@ -36,20 +34,6 @@ data class FormatExport(
     val url: String,
     val formatType: String,
 )
-
-fun ParsedBook.toExport(lastModified: String): BookExport =
-    BookExport(
-        externalId = externalId,
-        title = title,
-        issuedDate = issuedDate,
-        language = language,
-        locc = locc,
-        creators = creators.map { CreatorExport(name = it.name, birthYear = it.birthYear, deathYear = it.deathYear) },
-        subjects = subjects,
-        bookshelves = bookshelves,
-        formats = formats.map { FormatExport(url = it.url, formatType = mapMimeTypeToFormatType(it.mimeType)) },
-        lastModified = lastModified,
-    )
 
 /**
  * A single row in the always-current sync manifest: enough for the app to

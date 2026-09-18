@@ -1,20 +1,27 @@
 package com.freelibrary.catalogtool
 
+import com.freelibrary.shared.Manifest
+import com.freelibrary.shared.ManifestEntry
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDate
 
 private const val SCHEMA_JSON_PATH = "../app/schemas/com.freelibrary.app.data.local.FreeLibraryDatabase/9.json"
 private const val COMMIT_BATCH_SIZE = 500
+private const val BASELINE_VERSION = "2026-09-16"
 
 /**
  * Entry point for the catalog-generation tool. This is a standalone JVM
  * command-line program - it is never shipped inside the Android app. Its job
- * is to download Project Gutenberg's RDF catalog and produce a SQLite
- * database matching the app's Room schema.
+ * is to download Project Gutenberg's RDF catalog and produce both the
+ * bundled SQLite database and the manifest/per-book export files used by
+ * the app's ongoing sync mechanism, in a single pass over the archive.
  */
 fun main() {
     val archivePath = Path.of("data/rdf-files.tar.bz2")
     val outputPath = Path.of("data/catalog.sqlite")
+    val exportBooksDir = Path.of("data/export/books")
+    val exportManifestDir = Path.of("data/export")
 
     try {
         downloadCatalogArchive(archivePath)
@@ -39,6 +46,9 @@ fun main() {
             "Public domain works via Project Gutenberg (https://www.gutenberg.org)",
         )
     writer.commit()
+
+    val today = LocalDate.now().toString()
+    val manifestEntries = mutableListOf<ManifestEntry>()
 
     var parsedCount = 0
     var skippedCount = 0
@@ -66,6 +76,8 @@ fun main() {
 
         try {
             writer.insertBook(sourceId, book)
+            writeBookExport(exportBooksDir, book.toExport(lastModified = today))
+            manifestEntries.add(ManifestEntry(externalId = book.externalId, lastModified = today))
             parsedCount++
             if (parsedCount % COMMIT_BATCH_SIZE == 0) {
                 writer.commit()
@@ -82,6 +94,11 @@ fun main() {
     writer.commit()
     connection.close()
 
+    writeManifest(
+        exportManifestDir,
+        Manifest(generatedAt = today, baselineVersion = BASELINE_VERSION, books = manifestEntries),
+    )
+
     println(
         "Done. Parsed: $parsedCount, skipped: $skippedCount, " +
             "parse failures: $parseFailedCount, write failures: $writeFailedCount",
@@ -95,4 +112,5 @@ fun main() {
         writeFailureSamples.forEach { println("  $it") }
     }
     println("Database written to $outputPath")
+    println("Export files written to $exportManifestDir (manifest.json + ${manifestEntries.size} book files)")
 }

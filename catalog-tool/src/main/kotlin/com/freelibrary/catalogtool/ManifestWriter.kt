@@ -1,5 +1,7 @@
 package com.freelibrary.catalogtool
 
+import com.freelibrary.shared.BookExport
+import com.freelibrary.shared.Manifest
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.nio.file.Files

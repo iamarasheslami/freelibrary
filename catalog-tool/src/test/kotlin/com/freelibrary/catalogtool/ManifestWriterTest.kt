@@ -1,5 +1,10 @@
 package com.freelibrary.catalogtool
 
+import com.freelibrary.shared.BookExport
+import com.freelibrary.shared.CreatorExport
+import com.freelibrary.shared.FormatExport
+import com.freelibrary.shared.Manifest
+import com.freelibrary.shared.ManifestEntry
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
