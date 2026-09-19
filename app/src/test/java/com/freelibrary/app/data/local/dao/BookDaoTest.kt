@@ -139,4 +139,74 @@ class BookDaoTest {
 
             assertEquals(2, bookDao.count())
         }
+
+    @Test
+    fun `update preserves the internal id while changing other fields`() =
+        runTest {
+            val originalId =
+                bookDao.insert(
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "1342",
+                        title = "Pride and Prejudice",
+                        issuedDate = null,
+                        primaryLanguage = "en",
+                        locc = null,
+                        lastModified = "2026-09-16",
+                    ),
+                )
+
+            val corrected =
+                Book(
+                    id = originalId,
+                    sourceId = sourceId,
+                    externalId = "1342",
+                    title = "Pride and Prejudice (corrected title)",
+                    issuedDate = null,
+                    primaryLanguage = "en",
+                    locc = "PR",
+                    lastModified = "2026-09-19",
+                )
+            bookDao.update(corrected)
+
+            val retrieved = bookDao.getById(originalId)
+
+            assertEquals(originalId, retrieved?.id)
+            assertEquals("Pride and Prejudice (corrected title)", retrieved?.title)
+            assertEquals("PR", retrieved?.locc)
+            assertEquals("2026-09-19", retrieved?.lastModified)
+        }
+
+    @Test
+    fun `getAllExternalIdsAndLastModified returns a lightweight index for sync diffing`() =
+        runTest {
+            bookDao.insertAll(
+                listOf(
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "1",
+                        title = "Book One",
+                        issuedDate = null,
+                        primaryLanguage = null,
+                        locc = null,
+                        lastModified = "2026-09-16",
+                    ),
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "2",
+                        title = "Book Two",
+                        issuedDate = null,
+                        primaryLanguage = null,
+                        locc = null,
+                        lastModified = "2026-09-17",
+                    ),
+                ),
+            )
+
+            val index = bookDao.getAllExternalIdsAndLastModified(sourceId)
+
+            assertEquals(2, index.size)
+            assertEquals("2026-09-16", index.first { it.externalId == "1" }.lastModified)
+            assertEquals("2026-09-17", index.first { it.externalId == "2" }.lastModified)
+        }
 }
