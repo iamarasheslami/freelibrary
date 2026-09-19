@@ -89,4 +89,16 @@ class BookSubjectDaoTest {
 
             assertTrue(subjects.isEmpty())
         }
+
+    @Test
+    fun `deleteForBook clears every subject association, letting the sync client rebuild them fresh`() =
+        runTest {
+            val fictionId = database.subjectDao().insert(Subject(label = "Fiction"))
+            bookSubjectDao.insert(BookSubject(bookId = bookId, subjectId = fictionId))
+
+            bookSubjectDao.deleteForBook(bookId)
+
+            val subjects = bookSubjectDao.getSubjectsForBook(bookId)
+            assertTrue(subjects.isEmpty())
+        }
 }

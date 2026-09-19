@@ -22,4 +22,15 @@ interface BookFormatDao {
         bookId: Long,
         formatType: String,
     ): Boolean
+
+    /**
+     * Clears every format entry for a book, so the sync client can rebuild
+     * them fresh when a book's available formats change. Safe to do
+     * unconditionally since this table holds catalog metadata, not user
+     * data - unlike deleting the book row itself. Note: this is distinct
+     * from downloaded_books, which tracks what the user has actually
+     * downloaded and is never touched by catalog sync.
+     */
+    @Query("DELETE FROM book_formats WHERE bookId = :bookId")
+    suspend fun deleteForBook(bookId: Long)
 }

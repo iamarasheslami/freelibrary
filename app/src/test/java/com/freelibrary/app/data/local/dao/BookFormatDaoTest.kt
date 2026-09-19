@@ -88,4 +88,15 @@ class BookFormatDaoTest {
 
             assertTrue(formats.isEmpty())
         }
+
+    @Test
+    fun `deleteForBook clears every format entry, letting the sync client rebuild them fresh`() =
+        runTest {
+            bookFormatDao.insert(BookFormat(bookId = bookId, formatType = "epub", downloadUrl = "https://example.org/1342.epub"))
+
+            bookFormatDao.deleteForBook(bookId)
+
+            val formats = bookFormatDao.getFormatsForBook(bookId)
+            assertTrue(formats.isEmpty())
+        }
 }

@@ -33,4 +33,13 @@ interface BookSubjectDao {
         """,
     )
     suspend fun getBooksForSubject(subjectId: Long): List<Book>
+
+    /**
+     * Clears every subject association for a book, so the sync client can
+     * rebuild them fresh when a book's subjects change. Safe to do
+     * unconditionally since this table holds catalog associations, not user
+     * data - unlike deleting the book row itself.
+     */
+    @Query("DELETE FROM book_subjects WHERE bookId = :bookId")
+    suspend fun deleteForBook(bookId: Long)
 }

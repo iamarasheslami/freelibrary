@@ -23,4 +23,13 @@ interface BookAuthorDao {
         """,
     )
     suspend fun getAuthorsForBook(bookId: Long): List<Author>
+
+    /**
+     * Clears every author association for a book, so the sync client can
+     * rebuild them fresh when a book's credited people change. Safe to do
+     * unconditionally since this table holds catalog associations, not user
+     * data - unlike deleting the book row itself.
+     */
+    @Query("DELETE FROM book_authors WHERE bookId = :bookId")
+    suspend fun deleteForBook(bookId: Long)
 }

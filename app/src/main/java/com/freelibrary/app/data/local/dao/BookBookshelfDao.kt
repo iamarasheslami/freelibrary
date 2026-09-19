@@ -33,4 +33,13 @@ interface BookBookshelfDao {
         """,
     )
     suspend fun getBooksForBookshelf(bookshelfId: Long): List<Book>
+
+    /**
+     * Clears every bookshelf association for a book, so the sync client can
+     * rebuild them fresh when a book's curated shelves change. Safe to do
+     * unconditionally since this table holds catalog associations, not user
+     * data - unlike deleting the book row itself.
+     */
+    @Query("DELETE FROM book_bookshelves WHERE bookId = :bookId")
+    suspend fun deleteForBook(bookId: Long)
 }

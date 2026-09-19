@@ -96,4 +96,16 @@ class BookAuthorDaoTest {
 
             assertTrue(credited.isEmpty())
         }
+
+    @Test
+    fun `deleteForBook clears every author association, letting the sync client rebuild them fresh`() =
+        runTest {
+            val authorId = database.authorDao().insert(Author(name = "Jane Austen", birthYear = 1775, deathYear = 1817))
+            bookAuthorDao.insert(BookAuthor(bookId = bookId, authorId = authorId, role = "author"))
+
+            bookAuthorDao.deleteForBook(bookId)
+
+            val credited = bookAuthorDao.getAuthorsForBook(bookId)
+            assertTrue(credited.isEmpty())
+        }
 }

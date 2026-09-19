@@ -83,4 +83,16 @@ class BookBookshelfDaoTest {
 
             assertTrue(shelves.isEmpty())
         }
+
+    @Test
+    fun `deleteForBook clears every bookshelf association, letting the sync client rebuild them fresh`() =
+        runTest {
+            val shelfId = database.bookshelfDao().insert(Bookshelf(name = "Best Books Ever Listings"))
+            bookBookshelfDao.insert(BookBookshelf(bookId = bookId, bookshelfId = shelfId))
+
+            bookBookshelfDao.deleteForBook(bookId)
+
+            val shelves = bookBookshelfDao.getBookshelvesForBook(bookId)
+            assertTrue(shelves.isEmpty())
+        }
 }
