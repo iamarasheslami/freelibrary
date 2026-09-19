@@ -15,6 +15,7 @@ private val REAL_SCHEMA =
             "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `attribution` TEXT NOT NULL)",
         "CREATE TABLE IF NOT EXISTS `books` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sourceId` INTEGER NOT NULL, " +
             "`externalId` TEXT NOT NULL, `title` TEXT NOT NULL, `issuedDate` TEXT, `primaryLanguage` TEXT, `locc` TEXT, " +
+            "`lastModified` TEXT NOT NULL, " +
             "FOREIGN KEY(`sourceId`) REFERENCES `sources`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
         "CREATE TABLE IF NOT EXISTS `authors` " +
             "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `birthYear` INTEGER, `deathYear` INTEGER)",
@@ -74,7 +75,7 @@ class CatalogWriterTest {
     @Test
     fun `insertBook creates a book row linked to its source`() {
         val sourceId = writer.getOrCreateSource("Project Gutenberg", "PG")
-        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"))
+        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"), lastModified = "2026-09-16")
         writer.commit()
 
         connection.createStatement().use { statement ->
@@ -88,8 +89,8 @@ class CatalogWriterTest {
     @Test
     fun `an author shared by two books is inserted only once`() {
         val sourceId = writer.getOrCreateSource("Project Gutenberg", "PG")
-        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"))
-        writer.insertBook(sourceId, sampleBook("158", "Emma", "Jane Austen"))
+        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"), lastModified = "2026-09-16")
+        writer.insertBook(sourceId, sampleBook("158", "Emma", "Jane Austen"), lastModified = "2026-09-16")
         writer.commit()
 
         connection.createStatement().use { statement ->
@@ -108,8 +109,8 @@ class CatalogWriterTest {
     @Test
     fun `a subject shared by two books is inserted only once`() {
         val sourceId = writer.getOrCreateSource("Project Gutenberg", "PG")
-        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"))
-        writer.insertBook(sourceId, sampleBook("158", "Emma", "Jane Austen"))
+        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"), lastModified = "2026-09-16")
+        writer.insertBook(sourceId, sampleBook("158", "Emma", "Jane Austen"), lastModified = "2026-09-16")
         writer.commit()
 
         connection.createStatement().use { statement ->
@@ -122,7 +123,7 @@ class CatalogWriterTest {
     @Test
     fun `book formats are inserted with the mapped format type and resolved URL`() {
         val sourceId = writer.getOrCreateSource("Project Gutenberg", "PG")
-        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"))
+        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"), lastModified = "2026-09-16")
         writer.commit()
 
         connection.createStatement().use { statement ->
@@ -136,7 +137,7 @@ class CatalogWriterTest {
     @Test
     fun `a book is searchable via the full-text index by title and author`() {
         val sourceId = writer.getOrCreateSource("Project Gutenberg", "PG")
-        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"))
+        writer.insertBook(sourceId, sampleBook("1342", "Pride and Prejudice", "Jane Austen"), lastModified = "2026-09-16")
         writer.commit()
 
         connection.createStatement().use { statement ->

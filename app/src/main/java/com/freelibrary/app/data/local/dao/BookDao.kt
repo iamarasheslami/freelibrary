@@ -23,6 +23,14 @@ interface BookDao {
         externalId: String,
     ): Book?
 
+    @Query("SELECT externalId, lastModified FROM books WHERE sourceId = :sourceId")
+    suspend fun getAllExternalIdsAndLastModified(sourceId: Long): List<ExternalIdAndLastModified>
+
     @Query("SELECT COUNT(*) FROM books")
     suspend fun count(): Int
 }
+
+data class ExternalIdAndLastModified(
+    val externalId: String,
+    val lastModified: String,
+)

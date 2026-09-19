@@ -42,6 +42,7 @@ class BookBookshelfDaoTest {
                         issuedDate = null,
                         primaryLanguage = "en",
                         locc = null,
+                        lastModified = "2026-09-16",
                     ),
                 )
         }

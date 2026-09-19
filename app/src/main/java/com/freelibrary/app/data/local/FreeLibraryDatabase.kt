@@ -58,7 +58,7 @@ import com.freelibrary.app.data.local.entity.Subject
         Highlight::class,
         BookFts::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 abstract class FreeLibraryDatabase : RoomDatabase() {

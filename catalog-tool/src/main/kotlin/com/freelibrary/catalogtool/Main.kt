@@ -6,9 +6,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
 
-private const val SCHEMA_JSON_PATH = "../app/schemas/com.freelibrary.app.data.local.FreeLibraryDatabase/9.json"
+private const val SCHEMA_JSON_PATH = "../app/schemas/com.freelibrary.app.data.local.FreeLibraryDatabase/10.json"
 private const val COMMIT_BATCH_SIZE = 500
-private const val BASELINE_VERSION = "2026-09-16"
+private const val BASELINE_VERSION = "2026-09-19"
 
 /**
  * Entry point for the catalog-generation tool. This is a standalone JVM
@@ -75,7 +75,7 @@ fun main() {
         }
 
         try {
-            writer.insertBook(sourceId, book)
+            writer.insertBook(sourceId, book, lastModified = today)
             writeBookExport(exportBooksDir, book.toExport(lastModified = today))
             manifestEntries.add(ManifestEntry(externalId = book.externalId, lastModified = today))
             parsedCount++

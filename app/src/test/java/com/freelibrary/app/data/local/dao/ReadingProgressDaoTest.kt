@@ -36,11 +36,27 @@ class ReadingProgressDaoTest {
             val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
             bookOneId =
                 database.bookDao().insert(
-                    Book(sourceId = sourceId, externalId = "1", title = "Book One", issuedDate = null, primaryLanguage = null, locc = null),
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "1",
+                        title = "Book One",
+                        issuedDate = null,
+                        primaryLanguage = null,
+                        locc = null,
+                        lastModified = "2026-09-16",
+                    ),
                 )
             bookTwoId =
                 database.bookDao().insert(
-                    Book(sourceId = sourceId, externalId = "2", title = "Book Two", issuedDate = null, primaryLanguage = null, locc = null),
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "2",
+                        title = "Book Two",
+                        issuedDate = null,
+                        primaryLanguage = null,
+                        locc = null,
+                        lastModified = "2026-09-16",
+                    ),
                 )
         }
 

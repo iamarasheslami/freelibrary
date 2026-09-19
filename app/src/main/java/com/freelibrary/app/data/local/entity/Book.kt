@@ -10,7 +10,9 @@ import androidx.room.PrimaryKey
  * A book in the catalog, from any source. [sourceId] + [externalId] together
  * identify the book within its origin (e.g. Project Gutenberg's own numeric ID),
  * while [id] is this app's own stable internal identifier used everywhere else
- * (join tables, reading progress, downloads).
+ * (join tables, reading progress, downloads). [lastModified] tracks the date
+ * this book's data was last updated at the source, letting the sync client
+ * detect corrections to existing books, not just brand-new additions.
  */
 @Entity(
     tableName = "books",
@@ -42,4 +44,6 @@ data class Book(
     val primaryLanguage: String?,
     @ColumnInfo(name = "locc")
     val locc: String?,
+    @ColumnInfo(name = "lastModified")
+    val lastModified: String,
 )

@@ -41,6 +41,7 @@ class BookFtsDaoTest {
                         issuedDate = null,
                         primaryLanguage = "en",
                         locc = null,
+                        lastModified = "2026-09-16",
                     ),
                 )
             bookFtsDao.upsert(BookFts(bookId = bookId, title = "Pride and Prejudice", authorNames = "Jane Austen"))

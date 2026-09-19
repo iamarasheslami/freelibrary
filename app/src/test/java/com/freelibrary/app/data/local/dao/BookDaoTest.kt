@@ -51,6 +51,7 @@ class BookDaoTest {
                     issuedDate = "1998-06-01",
                     primaryLanguage = "en",
                     locc = "PR",
+                    lastModified = "2026-09-16",
                 )
             val insertedId = bookDao.insert(book)
 
@@ -71,6 +72,7 @@ class BookDaoTest {
                     issuedDate = null,
                     primaryLanguage = "en",
                     locc = null,
+                    lastModified = "2026-09-16",
                 ),
             )
 
@@ -98,6 +100,7 @@ class BookDaoTest {
                     issuedDate = null,
                     primaryLanguage = null,
                     locc = null,
+                    lastModified = "2026-09-16",
                 )
             val insertedId = bookDao.insert(book)
 
@@ -113,8 +116,24 @@ class BookDaoTest {
         runTest {
             bookDao.insertAll(
                 listOf(
-                    Book(sourceId = sourceId, externalId = "1", title = "Book One", issuedDate = null, primaryLanguage = null, locc = null),
-                    Book(sourceId = sourceId, externalId = "2", title = "Book Two", issuedDate = null, primaryLanguage = null, locc = null),
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "1",
+                        title = "Book One",
+                        issuedDate = null,
+                        primaryLanguage = null,
+                        locc = null,
+                        lastModified = "2026-09-16",
+                    ),
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "2",
+                        title = "Book Two",
+                        issuedDate = null,
+                        primaryLanguage = null,
+                        locc = null,
+                        lastModified = "2026-09-16",
+                    ),
                 ),
             )
 

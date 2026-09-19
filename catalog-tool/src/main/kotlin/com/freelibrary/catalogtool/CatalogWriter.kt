@@ -50,8 +50,9 @@ class CatalogWriter(private val connection: Connection) {
     fun insertBook(
         sourceId: Long,
         book: ParsedBook,
+        lastModified: String,
     ) {
-        val bookId = insertBookRow(sourceId, book)
+        val bookId = insertBookRow(sourceId, book, lastModified)
 
         for (creator in book.creators) {
             val authorId = getOrCreateAuthor(creator)
@@ -82,10 +83,11 @@ class CatalogWriter(private val connection: Connection) {
     private fun insertBookRow(
         sourceId: Long,
         book: ParsedBook,
+        lastModified: String,
     ): Long {
         connection.prepareStatement(
-            "INSERT INTO books (sourceId, externalId, title, issuedDate, primaryLanguage, locc) " +
-                "VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO books (sourceId, externalId, title, issuedDate, primaryLanguage, locc, lastModified) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
             Statement.RETURN_GENERATED_KEYS,
         ).use { insert ->
             insert.setLong(1, sourceId)
@@ -94,6 +96,7 @@ class CatalogWriter(private val connection: Connection) {
             insert.setString(4, book.issuedDate)
             insert.setString(5, book.language)
             insert.setString(6, book.locc)
+            insert.setString(7, lastModified)
             insert.executeUpdate()
             val keys = insert.generatedKeys
             keys.next()
