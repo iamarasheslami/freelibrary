@@ -16,4 +16,7 @@ interface SourceDao {
 
     @Query("SELECT * FROM sources")
     suspend fun getAll(): List<Source>
+
+    @Query("SELECT * FROM sources WHERE name = :name LIMIT 1")
+    suspend fun findByName(name: String): Source?
 }

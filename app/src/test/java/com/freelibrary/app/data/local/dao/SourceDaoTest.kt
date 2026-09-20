@@ -63,4 +63,22 @@ class SourceDaoTest {
 
             assertEquals(2, all.size)
         }
+
+    @Test
+    fun `findByName locates an existing source to avoid duplicate inserts`() =
+        runTest {
+            sourceDao.insert(Source(name = "Project Gutenberg", attribution = "Attribution A"))
+
+            val found = sourceDao.findByName("Project Gutenberg")
+
+            assertEquals("Attribution A", found?.attribution)
+        }
+
+    @Test
+    fun `findByName returns null for a source that has not been imported yet`() =
+        runTest {
+            val found = sourceDao.findByName("Nonexistent")
+
+            assertNull(found)
+        }
 }
