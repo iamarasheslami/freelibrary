@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Required for the catalog sync client (Retrofit/OkHttp) to reach
+         raw.githubusercontent.com. No other network access is needed. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".FreeLibraryApplication"
         android:allowBackup="false"
