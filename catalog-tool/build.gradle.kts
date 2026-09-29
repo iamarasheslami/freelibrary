@@ -10,7 +10,7 @@ dependencies {
     implementation("org.apache.commons:commons-compress:1.28.0")
     implementation("org.xerial:sqlite-jdbc:3.53.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
-
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("junit:junit:4.13.2")
 }
 
@@ -27,4 +27,11 @@ tasks.register<JavaExec>("inspect") {
     description = "Analyzes the already-generated catalog.sqlite without re-running the full pipeline."
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass.set("com.freelibrary.catalogtool.InspectKt")
+}
+
+tasks.register<JavaExec>("nightlySync") {
+    group = "application"
+    description = "Fetches today's RSS feed and updates the export data for books that are new or changed."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("com.freelibrary.catalogtool.NightlySyncKt")
 }

@@ -35,6 +35,7 @@ fun downloadCatalogArchive(destination: Path): Path {
     val client =
         HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(30))
+            .followRedirects(HttpClient.Redirect.NORMAL)
             .build()
 
     val request =
