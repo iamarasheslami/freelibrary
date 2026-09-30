@@ -1,0 +1,58 @@
+name: Nightly Catalog Sync
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout freelibrary
+        uses: actions/checkout@v4
+
+      - name: Checkout freelibrary-catalog-data
+        uses: actions/checkout@v4
+        with:
+          repository: iamarasheslami/freelibrary-catalog-data
+          path: catalog-data
+          token: ${{ secrets.CATALOG_DATA_PAT }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Copy current export data into the tool's working directory
+        run: |
+          mkdir -p catalog-tool/data/export
+          cp catalog-data/manifest.json catalog-tool/data/export/manifest.json
+          mkdir -p catalog-tool/data/export/books
+          cp catalog-data/books/*.json catalog-tool/data/export/books/
+
+      - name: Run nightly sync
+        run: ./gradlew :catalog-tool:nightlySync
+
+      - name: Copy updated export data back into the catalog-data checkout
+        run: |
+          cp catalog-tool/data/export/manifest.json catalog-data/manifest.json
+          cp catalog-tool/data/export/books/*.json catalog-data/books/
+
+      - name: Commit and push if there are changes
+        working-directory: catalog-data
+        run: |
+          git config user.name "freelibrary-bot"
+          git config user.email "actions@github.com"
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: nightly catalog sync $(date -u +%Y-%m-%d)"
+            git push
+          fi
