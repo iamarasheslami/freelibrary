@@ -13,6 +13,9 @@ import androidx.room.PrimaryKey
  * (join tables, reading progress, downloads). [lastModified] tracks the date
  * this book's data was last updated at the source, letting the sync client
  * detect corrections to existing books, not just brand-new additions.
+ * [coverUrl] is the medium-size cover image URL resolved at catalog-build
+ * time (null when the source lists no cover), so the app never needs to
+ * know any source's URL rules.
  */
 @Entity(
     tableName = "books",
@@ -46,4 +49,6 @@ data class Book(
     val locc: String?,
     @ColumnInfo(name = "lastModified")
     val lastModified: String,
+    @ColumnInfo(name = "coverUrl")
+    val coverUrl: String? = null,
 )
