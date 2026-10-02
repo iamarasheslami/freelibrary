@@ -6,9 +6,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
 
-private const val SCHEMA_JSON_PATH = "../app/schemas/com.freelibrary.app.data.local.FreeLibraryDatabase/10.json"
+private const val SCHEMA_JSON_PATH = "../app/schemas/com.freelibrary.app.data.local.FreeLibraryDatabase/11.json"
 private const val COMMIT_BATCH_SIZE = 500
-private const val BASELINE_VERSION = "2026-09-19"
+private const val BASELINE_VERSION = "2026-10-02"
 
 /**
  * Entry point for the catalog-generation tool. This is a standalone JVM

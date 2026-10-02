@@ -16,4 +16,6 @@ fun ParsedBook.toExport(lastModified: String): BookExport =
         bookshelves = bookshelves,
         formats = formats.map { FormatExport(url = it.url, formatType = mapMimeTypeToFormatType(it.mimeType)) },
         lastModified = lastModified,
+        summary = summary,
+        coverUrl = coverUrl,
     )

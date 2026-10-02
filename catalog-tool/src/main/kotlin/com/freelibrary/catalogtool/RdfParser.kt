@@ -42,7 +42,9 @@ fun parseRdf(xmlBytes: ByteArray): ParsedBook? {
             .substringAfterLast("/")
             .ifBlank { throw RdfParseException("Could not determine book id from rdf:about attribute") }
 
-    val title = firstElementText(ebookElement, NS_DCTERMS, "title") ?: return null
+    val title =
+        firstElementText(ebookElement, NS_DCTERMS, "title")?.let(::normalizeWhitespace)
+            ?: return null
     val formats = extractFormats(ebookElement)
     if (formats.isEmpty()) return null
 
@@ -56,6 +58,8 @@ fun parseRdf(xmlBytes: ByteArray): ParsedBook? {
         subjects = extractSubjects(ebookElement),
         bookshelves = extractBookshelves(ebookElement),
         formats = formats,
+        summary = firstElementText(ebookElement, NS_PGTERMS, "marc520")?.let(::normalizeWhitespace),
+        coverUrl = extractCoverUrl(ebookElement),
     )
 }
 
@@ -171,3 +175,28 @@ private fun extractFormats(ebookElement: Element): List<ParsedFormat> {
     }
     return formats
 }
+
+private const val MEDIUM_COVER_URL_SUFFIX = ".cover.medium.jpg"
+
+/**
+ * Returns the medium-size cover image URL if this entry lists one, else null.
+ * Identified by the URL's own suffix (e.g. .../pg1342.cover.medium.jpg), the
+ * pattern observed in the real catalog, rather than by MIME type.
+ */
+private fun extractCoverUrl(ebookElement: Element): String? {
+    val fileNodes = ebookElement.getElementsByTagNameNS(NS_PGTERMS, "file")
+    for (i in 0 until fileNodes.length) {
+        val fileElement = fileNodes.item(i) as? Element ?: continue
+        val url = fileElement.getAttributeNS(NS_RDF, "about")
+        if (url.endsWith(MEDIUM_COVER_URL_SUFFIX)) return url
+    }
+    return null
+}
+
+private val WHITESPACE_RUN = Regex("\\s+")
+
+/**
+ * Collapses every run of whitespace (including the line breaks the RDF uses
+ * to wrap long text) into a single space and trims the ends.
+ */
+private fun normalizeWhitespace(text: String): String = text.replace(WHITESPACE_RUN, " ").trim()

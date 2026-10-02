@@ -7,6 +7,7 @@ import com.freelibrary.shared.Manifest
 import com.freelibrary.shared.ManifestEntry
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
@@ -83,5 +84,59 @@ class ManifestWriterTest {
 
         assertEquals("txt", export.formats.first().formatType)
         assertEquals("2026-09-16", export.lastModified)
+    }
+
+    @Test
+    fun `toExport copies the summary and cover URL from the parsed book`() {
+        val parsedBook =
+            ParsedBook(
+                externalId = "1342",
+                title = "Pride and Prejudice",
+                issuedDate = "1998-06-01",
+                language = "en",
+                locc = "PR",
+                creators = emptyList(),
+                subjects = emptyList(),
+                bookshelves = emptyList(),
+                formats = listOf(ParsedFormat(url = "https://example.org/1342.txt", mimeType = "text/plain; charset=utf-8")),
+                summary = "A made-up summary.",
+                coverUrl = "https://example.org/pg1342.cover.medium.jpg",
+            )
+
+        val export = parsedBook.toExport(lastModified = "2026-10-02")
+
+        assertEquals("A made-up summary.", export.summary)
+        assertEquals("https://example.org/pg1342.cover.medium.jpg", export.coverUrl)
+    }
+
+    @Test
+    fun `writeBookExport keeps summary and cover URL through a write and read, including non-ASCII text`() {
+        val tempDir = Files.createTempDirectory("book-export-summary-test")
+        val book =
+            sampleBookExport().copy(
+                summary = "Un roman « fictif » — avec des accents: é, ü, ñ.",
+                coverUrl = "https://example.org/pg1342.cover.medium.jpg",
+            )
+
+        writeBookExport(tempDir, book)
+
+        val decoded = Json.decodeFromString<BookExport>(Files.readString(tempDir.resolve("1342.json")))
+        assertEquals(book.summary, decoded.summary)
+        assertEquals(book.coverUrl, decoded.coverUrl)
+    }
+
+    @Test
+    fun `a book file written before summary and cover existed still decodes with both null`() {
+        val oldStyleJson =
+            """
+            {"externalId":"1342","title":"Pride and Prejudice","issuedDate":"1998-06-01","language":"en",
+            "locc":"PR","creators":[],"subjects":[],"bookshelves":[],"formats":[],"lastModified":"2026-09-19"}
+            """.trimIndent()
+
+        val decoded = Json.decodeFromString<BookExport>(oldStyleJson)
+
+        assertEquals("Pride and Prejudice", decoded.title)
+        assertNull(decoded.summary)
+        assertNull(decoded.coverUrl)
     }
 }

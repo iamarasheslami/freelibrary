@@ -102,6 +102,51 @@ private val NO_FORMATS_SAMPLE_RDF =
     </rdf:RDF>
     """.trimIndent().toByteArray()
 
+private val SUMMARY_AND_COVER_SAMPLE_RDF =
+    """
+    <?xml version="1.0" encoding="utf-8"?>
+    <rdf:RDF xml:base="http://www.gutenberg.org/"
+             xmlns:dcam="http://purl.org/dc/dcam/"
+             xmlns:dcterms="http://purl.org/dc/terms/"
+             xmlns:pgterms="http://www.gutenberg.org/2009/pgterms/"
+             xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <pgterms:ebook rdf:about="ebooks/1500">
+            <dcterms:title>A Test Novel
+    Rendered into plain English</dcterms:title>
+            <pgterms:marc520>"A Test Novel" is a made-up story used only in this test. It follows
+    a fictional clerk who
+    finds an unexpected letter. (This is an automatically generated summary.)</pgterms:marc520>
+            <dcterms:hasFormat>
+                <pgterms:file rdf:about="https://www.gutenberg.org/cache/epub/1500/pg1500.cover.small.jpg">
+                    <dcterms:format>
+                        <rdf:Description>
+                            <rdf:value rdf:datatype="http://purl.org/dc/terms/IMT">image/jpeg</rdf:value>
+                        </rdf:Description>
+                    </dcterms:format>
+                </pgterms:file>
+            </dcterms:hasFormat>
+            <dcterms:hasFormat>
+                <pgterms:file rdf:about="https://www.gutenberg.org/cache/epub/1500/pg1500.cover.medium.jpg">
+                    <dcterms:format>
+                        <rdf:Description>
+                            <rdf:value rdf:datatype="http://purl.org/dc/terms/IMT">image/jpeg</rdf:value>
+                        </rdf:Description>
+                    </dcterms:format>
+                </pgterms:file>
+            </dcterms:hasFormat>
+            <dcterms:hasFormat>
+                <pgterms:file rdf:about="http://www.gutenberg.org/files/1500/1500-0.txt">
+                    <dcterms:format>
+                        <rdf:Description>
+                            <rdf:value rdf:datatype="http://purl.org/dc/terms/IMT">text/plain; charset=utf-8</rdf:value>
+                        </rdf:Description>
+                    </dcterms:format>
+                </pgterms:file>
+            </dcterms:hasFormat>
+        </pgterms:ebook>
+    </rdf:RDF>
+    """.trimIndent().toByteArray()
+
 class RdfParserTest {
     @Test
     fun `parseRdf extracts title, id, and issued date`() {
@@ -172,5 +217,46 @@ class RdfParserTest {
         val result = parseRdf(NO_FORMATS_SAMPLE_RDF)
 
         assertNull(result)
+    }
+
+    @Test
+    fun `parseRdf extracts the summary with whitespace normalized and the automatic-summary marker kept`() {
+        val book = parseRdf(SUMMARY_AND_COVER_SAMPLE_RDF)
+
+        assertEquals(
+            "\"A Test Novel\" is a made-up story used only in this test. It follows " +
+                "a fictional clerk who finds an unexpected letter. (This is an automatically generated summary.)",
+            book?.summary,
+        )
+    }
+
+    @Test
+    fun `parseRdf collapses line breaks inside a title into single spaces`() {
+        val book = parseRdf(SUMMARY_AND_COVER_SAMPLE_RDF)
+
+        assertEquals("A Test Novel Rendered into plain English", book?.title)
+    }
+
+    @Test
+    fun `parseRdf extracts the medium cover URL and ignores the small one`() {
+        val book = parseRdf(SUMMARY_AND_COVER_SAMPLE_RDF)
+
+        assertEquals("https://www.gutenberg.org/cache/epub/1500/pg1500.cover.medium.jpg", book?.coverUrl)
+    }
+
+    @Test
+    fun `parseRdf keeps cover images out of the downloadable formats`() {
+        val book = parseRdf(SUMMARY_AND_COVER_SAMPLE_RDF)
+
+        assertEquals(1, book?.formats?.size)
+        assertEquals("http://www.gutenberg.org/files/1500/1500-0.txt", book?.formats?.first()?.url)
+    }
+
+    @Test
+    fun `parseRdf leaves summary and cover null when the entry has neither`() {
+        val book = parseRdf(SAMPLE_RDF)
+
+        assertNull(book?.summary)
+        assertNull(book?.coverUrl)
     }
 }

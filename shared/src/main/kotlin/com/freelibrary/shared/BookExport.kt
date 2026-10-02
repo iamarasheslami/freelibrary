@@ -7,7 +7,11 @@ import kotlinx.serialization.Serializable
  * sync-manifest system. This is the shared data contract between
  * catalog-tool (the producer) and the app (the consumer) - a single source
  * of truth so the two sides cannot silently drift apart.
+ *
+ * [summary] and [coverUrl] are optional: absent in files generated before
+ * they were added, and null when the catalog has no value for a book.
  */
+
 @Serializable
 data class BookExport(
     val externalId: String,
@@ -20,6 +24,8 @@ data class BookExport(
     val bookshelves: List<String>,
     val formats: List<FormatExport>,
     val lastModified: String,
+    val summary: String? = null,
+    val coverUrl: String? = null,
 )
 
 @Serializable

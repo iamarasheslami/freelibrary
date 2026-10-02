@@ -1,5 +1,6 @@
 package com.freelibrary.catalogtool
 
+import com.freelibrary.shared.SearchText
 import java.sql.Connection
 import java.sql.Statement
 
@@ -54,6 +55,8 @@ class CatalogWriter(private val connection: Connection) {
     ) {
         val bookId = insertBookRow(sourceId, book, lastModified)
 
+        book.summary?.let { insertBookSummary(bookId, it) }
+
         for (creator in book.creators) {
             val authorId = getOrCreateAuthor(creator)
             insertBookAuthor(bookId, authorId)
@@ -86,8 +89,8 @@ class CatalogWriter(private val connection: Connection) {
         lastModified: String,
     ): Long {
         connection.prepareStatement(
-            "INSERT INTO books (sourceId, externalId, title, issuedDate, primaryLanguage, locc, lastModified) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO books (sourceId, externalId, title, issuedDate, primaryLanguage, locc, lastModified, " +
+                "coverUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             Statement.RETURN_GENERATED_KEYS,
         ).use { insert ->
             insert.setLong(1, sourceId)
@@ -97,10 +100,24 @@ class CatalogWriter(private val connection: Connection) {
             insert.setString(5, book.language)
             insert.setString(6, book.locc)
             insert.setString(7, lastModified)
+            insert.setString(8, book.coverUrl)
             insert.executeUpdate()
             val keys = insert.generatedKeys
             keys.next()
             return keys.getLong(1)
+        }
+    }
+
+    private fun insertBookSummary(
+        bookId: Long,
+        summary: String,
+    ) {
+        connection.prepareStatement(
+            "INSERT INTO book_summaries (bookId, summary) VALUES (?, ?)",
+        ).use { insert ->
+            insert.setLong(1, bookId)
+            insert.setString(2, summary)
+            insert.executeUpdate()
         }
     }
 
@@ -250,8 +267,8 @@ class CatalogWriter(private val connection: Connection) {
             "INSERT INTO books_fts (rowid, title, authorNames) VALUES (?, ?, ?)",
         ).use { insert ->
             insert.setLong(1, bookId)
-            insert.setString(2, book.title)
-            insert.setString(3, authorNames)
+            insert.setString(2, SearchText.fold(book.title))
+            insert.setString(3, SearchText.fold(authorNames))
             insert.executeUpdate()
         }
     }
