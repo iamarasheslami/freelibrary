@@ -15,6 +15,7 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -90,6 +91,7 @@ class CatalogSyncRepositoryTest {
             bookBookshelfDao = database.bookBookshelfDao(),
             bookFormatDao = database.bookFormatDao(),
             bookFtsDao = database.bookFtsDao(),
+            bookSummaryDao = database.bookSummaryDao(),
         )
     }
 
@@ -237,5 +239,119 @@ class CatalogSyncRepositoryTest {
             assertEquals(1, result.added)
             assertEquals(1, result.failed)
             assertEquals(1, result.failureSamples.size)
+        }
+
+    private fun manifestFor(
+        externalId: String,
+        lastModified: String,
+    ) = """
+        { "generatedAt": "$lastModified", "baselineVersion": "2026-09-19",
+          "books": [ { "externalId": "$externalId", "lastModified": "$lastModified" } ] }
+        """.trimIndent()
+
+    private fun richBookJson(
+        externalId: String,
+        title: String,
+        creator: String,
+        lastModified: String,
+        summary: String? = null,
+        coverUrl: String? = null,
+    ): String {
+        val summaryField = summary?.let { ", \"summary\": \"$it\"" }.orEmpty()
+        val coverField = coverUrl?.let { ", \"coverUrl\": \"$it\"" }.orEmpty()
+        return """
+            {
+              "externalId": "$externalId",
+              "title": "$title",
+              "issuedDate": null,
+              "language": "en",
+              "locc": null,
+              "creators": [{ "name": "$creator", "birthYear": null, "deathYear": null }],
+              "subjects": [],
+              "bookshelves": [],
+              "formats": [],
+              "lastModified": "$lastModified"$summaryField$coverField
+            }
+            """.trimIndent()
+    }
+
+    private fun serving(
+        manifest: () -> String,
+        book: () -> String,
+    ) = object : Dispatcher() {
+        override fun dispatch(request: RecordedRequest): MockResponse =
+            when (request.path) {
+                "/manifest.json" ->
+                    MockResponse().setBody(manifest()).setHeader("Content-Type", "application/json")
+                "/books/1342.json" ->
+                    MockResponse().setBody(book()).setHeader("Content-Type", "application/json")
+                else -> MockResponse().setResponseCode(404)
+            }
+    }
+
+    private suspend fun savedBook(): Book {
+        val sourceId = database.sourceDao().findByName("Project Gutenberg")!!.id
+        return database.bookDao().getBySourceAndExternalId(sourceId, "1342")!!
+    }
+
+    @Test
+    fun `sync saves the cover URL and summary and indexes folded text`() =
+        runTest {
+            val book =
+                richBookJson(
+                    "1342",
+                    "Les Misérables",
+                    "Hugo, Victor",
+                    "2026-10-02",
+                    summary = "Un roman célèbre.",
+                    coverUrl = "https://example.org/1342.cover.medium.jpg",
+                )
+            repository = buildRepository(serving({ manifestFor("1342", "2026-10-02") }, { book }))
+
+            repository.sync()
+
+            val saved = savedBook()
+            assertEquals("https://example.org/1342.cover.medium.jpg", saved.coverUrl)
+            assertEquals("Un roman célèbre.", database.bookSummaryDao().getSummaryForBook(saved.id))
+            assertEquals(listOf("les miserables"), database.bookFtsDao().allIndexedTitles())
+            assertEquals(listOf("hugo victor"), database.bookFtsDao().allIndexedAuthorNames())
+        }
+
+    @Test
+    fun `a book with no cover or summary is saved with neither`() =
+        runTest {
+            val book = richBookJson("1342", "Emma", "Austen, Jane", "2026-10-02")
+            repository = buildRepository(serving({ manifestFor("1342", "2026-10-02") }, { book }))
+
+            repository.sync()
+
+            val saved = savedBook()
+            assertNull(saved.coverUrl)
+            assertNull(database.bookSummaryDao().getSummaryForBook(saved.id))
+        }
+
+    @Test
+    fun `a later sync updates the cover and removes a summary the catalog no longer has`() =
+        runTest {
+            var manifest = manifestFor("1342", "2026-10-02")
+            var book =
+                richBookJson(
+                    "1342",
+                    "Emma",
+                    "Austen, Jane",
+                    "2026-10-02",
+                    summary = "Old summary.",
+                    coverUrl = "https://example.org/old.jpg",
+                )
+            repository = buildRepository(serving({ manifest }, { book }))
+            repository.sync()
+
+            manifest = manifestFor("1342", "2026-10-03")
+            book = richBookJson("1342", "Emma", "Austen, Jane", "2026-10-03", coverUrl = "https://example.org/new.jpg")
+            repository.sync()
+
+            val saved = savedBook()
+            assertEquals("https://example.org/new.jpg", saved.coverUrl)
+            assertNull(database.bookSummaryDao().getSummaryForBook(saved.id))
         }
 }

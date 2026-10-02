@@ -7,6 +7,7 @@ import com.freelibrary.app.data.local.dao.BookDao
 import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.dao.BookFtsDao
 import com.freelibrary.app.data.local.dao.BookSubjectDao
+import com.freelibrary.app.data.local.dao.BookSummaryDao
 import com.freelibrary.app.data.local.dao.BookshelfDao
 import com.freelibrary.app.data.local.dao.SourceDao
 import com.freelibrary.app.data.local.dao.SubjectDao
@@ -17,11 +18,13 @@ import com.freelibrary.app.data.local.entity.BookBookshelf
 import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.BookFts
 import com.freelibrary.app.data.local.entity.BookSubject
+import com.freelibrary.app.data.local.entity.BookSummary
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.local.entity.Subject
 import com.freelibrary.app.data.remote.CatalogSyncApi
 import com.freelibrary.shared.BookExport
+import com.freelibrary.shared.SearchText
 import javax.inject.Inject
 
 private const val SOURCE_NAME = "Project Gutenberg"
@@ -47,9 +50,10 @@ data class SyncResult(
  * Updates to existing books happen strictly in place (see [BookDao.update]):
  * the internal book id is never changed, protecting any reading_progress,
  * bookmarks, highlights, or downloaded_books tied to that book. Only the
- * catalog-association tables (authors, subjects, bookshelves, formats) are
+ * catalog-association tables (authors, subjects, bookshelves, formats, summary) are
  * cleared and rebuilt on an update - those hold catalog metadata, not user
  * data.
+ * The search index is rewritten with folded text on every save.
  *
  * A single book failing to fetch or parse never aborts the whole sync -
  * failures are collected and reported, matching the same per-item error
@@ -69,6 +73,7 @@ class CatalogSyncRepository
         private val bookBookshelfDao: BookBookshelfDao,
         private val bookFormatDao: BookFormatDao,
         private val bookFtsDao: BookFtsDao,
+        private val bookSummaryDao: BookSummaryDao,
     ) {
         suspend fun sync(): SyncResult {
             val sourceId = getOrCreateSourceId()
@@ -133,6 +138,7 @@ class CatalogSyncRepository
                         primaryLanguage = bookExport.language,
                         locc = bookExport.locc,
                         lastModified = bookExport.lastModified,
+                        coverUrl = bookExport.coverUrl,
                     ),
                 )
                 bookId = existing.id
@@ -153,6 +159,7 @@ class CatalogSyncRepository
                             primaryLanguage = bookExport.language,
                             locc = bookExport.locc,
                             lastModified = bookExport.lastModified,
+                            coverUrl = bookExport.coverUrl,
                         ),
                     )
                 wasNew = true
@@ -176,9 +183,22 @@ class CatalogSyncRepository
             for (format in bookExport.formats) {
                 bookFormatDao.insert(BookFormat(bookId = bookId, formatType = format.formatType, downloadUrl = format.url))
             }
+            val summary = bookExport.summary
+            if (summary != null) {
+                bookSummaryDao.upsert(BookSummary(bookId = bookId, summary = summary))
+            } else {
+                bookSummaryDao.deleteForBook(bookId)
+            }
 
+            // The index stores folded text, exactly as the catalog tool builds it.
             val authorNames = bookExport.creators.joinToString(" ") { it.name }
-            bookFtsDao.upsert(BookFts(bookId = bookId, title = bookExport.title, authorNames = authorNames))
+            bookFtsDao.upsert(
+                BookFts(
+                    bookId = bookId,
+                    title = SearchText.fold(bookExport.title),
+                    authorNames = SearchText.fold(authorNames),
+                ),
+            )
 
             return wasNew
         }

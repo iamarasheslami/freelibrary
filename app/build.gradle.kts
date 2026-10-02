@@ -121,8 +121,8 @@ tasks.register("fetchCatalogDatabase") {
     group = "freelibrary"
     description = "Downloads the bundled catalog database from GitHub Releases into app/src/main/assets/."
 
-    val releaseTag = "catalog-2026-09-19"
-    val expectedSha256 = "087BAFB489C998CB924DA19278E0B89F6016132A528D2DE07412B309DCF329D3"
+    val releaseTag = "catalog-2026-10-02"
+    val expectedSha256 = "CE266D3857478193A82FA61A93613F5861A90E12E74611953D387217BB4BFB5E"
     val downloadUrl = "https://github.com/iamarasheslami/freelibrary/releases/download/$releaseTag/catalog.sqlite"
     val assetsDir = layout.projectDirectory.dir("src/main/assets")
     val outputFile = assetsDir.file("catalog.sqlite").asFile

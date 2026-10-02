@@ -9,7 +9,9 @@ import com.freelibrary.app.data.local.dao.BookBookshelfDao
 import com.freelibrary.app.data.local.dao.BookDao
 import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.dao.BookFtsDao
+import com.freelibrary.app.data.local.dao.BookShelfStateDao
 import com.freelibrary.app.data.local.dao.BookSubjectDao
+import com.freelibrary.app.data.local.dao.BookSummaryDao
 import com.freelibrary.app.data.local.dao.BookmarkDao
 import com.freelibrary.app.data.local.dao.BookshelfDao
 import com.freelibrary.app.data.local.dao.DownloadedBookDao
@@ -92,4 +94,10 @@ object DatabaseModule {
 
     @Provides
     fun provideBookFtsDao(database: FreeLibraryDatabase): BookFtsDao = database.bookFtsDao()
+
+    @Provides
+    fun provideBookSummaryDao(database: FreeLibraryDatabase): BookSummaryDao = database.bookSummaryDao()
+
+    @Provides
+    fun provideBookShelfStateDao(database: FreeLibraryDatabase): BookShelfStateDao = database.bookShelfStateDao()
 }
