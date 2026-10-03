@@ -99,8 +99,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.58")
-    kapt("com.google.dagger:hilt-compiler:2.58")
+    implementation("com.google.dagger:hilt-android:2.60.1")
+    kapt("com.google.dagger:hilt-compiler:2.60.1")
     kapt("androidx.hilt:hilt-compiler:1.3.0")
 
     // Room
