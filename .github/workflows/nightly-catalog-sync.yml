@@ -5,6 +5,12 @@ on:
     - cron: "0 3 * * *"
   workflow_dispatch:
 
+# Only one sync may run at a time: two overlapping runs would both push to the data
+# repository and the second push would be rejected. A queued run waits for the running one.
+concurrency:
+  group: nightly-catalog-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
