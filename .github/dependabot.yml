@@ -5,39 +5,43 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "build"
       include: scope
     groups:
-      androidx:
-        patterns:
-          - "androidx.*"
-      kotlin:
-        patterns:
-          - "org.jetbrains.kotlin*"
-          - "org.jetbrains.kotlinx*"
-      dagger:
-        patterns:
-          - "com.google.dagger*"
-      square:
-        patterns:
-          - "com.squareup*"
+      gradle-dependencies:
+        update-types:
+          - "minor"
+          - "patch"
     ignore:
-      # Major upgrades are reviewed and applied by hand.
+      # The project deliberately stays on its current toolchain (Android Gradle Plugin 8.13.x,
+      # Kotlin 2.1.0 with its matching KSP, Hilt 2.58, compileSdk 36). Newer versions depend on
+      # Google Maven access that is restricted for the maintainer, so anything coupled to the
+      # toolchain is upgraded by hand, as one deliberate change, when that becomes possible.
       - dependency-name: "*"
         update-types:
           - "version-update:semver-major"
-      # Kotlin minor upgrades can break kapt, so they are applied by hand as well.
-      - dependency-name: "org.jetbrains.kotlin*"
+      - dependency-name: "androidx.*"
         update-types:
           - "version-update:semver-minor"
+      - dependency-name: "com.google.dagger*"
+        update-types:
+          - "version-update:semver-minor"
+      - dependency-name: "org.jetbrains.kotlin*"
+      - dependency-name: "com.google.devtools.ksp"
+      - dependency-name: "com.android.*"
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
       day: monday
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "ci"
       include: scope
+    groups:
+      github-actions:
+        patterns:
+          - "*"
