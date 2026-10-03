@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout freelibrary
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Checkout freelibrary-catalog-data
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: iamarasheslami/freelibrary-catalog-data
           path: catalog-data
