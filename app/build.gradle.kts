@@ -58,6 +58,11 @@ android {
         jvmTarget = "17"
     }
 
+    lint {
+        // Dependency and Gradle version updates are handled by Dependabot.
+        disable += setOf("NewerVersionAvailable", "AndroidGradlePluginVersion")
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
