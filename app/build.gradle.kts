@@ -90,7 +90,7 @@ dependencies {
     // Core / UI
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.google.android.material:material:1.14.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     // Navigation Component
@@ -104,9 +104,9 @@ dependencies {
     kapt("androidx.hilt:hilt-compiler:1.3.0")
 
     // Room
-    implementation("androidx.room:room-runtime:2.8.4")
-    implementation("androidx.room:room-ktx:2.8.4")
-    ksp("androidx.room:room-compiler:2.8.4")
+    implementation("androidx.room:room-runtime:2.8.5")
+    implementation("androidx.room:room-ktx:2.8.5")
+    ksp("androidx.room:room-compiler:2.8.5")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
@@ -119,7 +119,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("org.robolectric:robolectric:4.17")
     testImplementation("androidx.test:core:1.7.0")
-    testImplementation("androidx.room:room-testing:2.8.4")
+    testImplementation("androidx.room:room-testing:2.8.5")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }
 tasks.register("fetchCatalogDatabase") {
