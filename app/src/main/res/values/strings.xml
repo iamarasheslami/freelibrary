@@ -2,4 +2,14 @@
 <resources>
     <string name="app_name">FreeLibrary</string>
     <string name="home_placeholder_message">Home screen — real content lands in Phase 2.</string>
+    <string name="shelf_best_books_ever">Best Books Ever</string>
+    <string name="shelf_harvard_classics">Harvard Classics</string>
+    <string name="shelf_nobel_literature">Nobel Prizes in Literature</string>
+    <string name="shelf_american_bestsellers">American Bestsellers, 1895–1923</string>
+    <string name="shelf_banned_books">Banned Books</string>
+    <string name="shelf_science_fiction_fantasy">Science Fiction &amp; Fantasy</string>
+    <string name="shelf_adventure">Adventure</string>
+    <string name="shelf_mythology_folklore">Mythology, Legends &amp; Folklore</string>
+    <string name="shelf_poetry">Poetry</string>
+    <string name="shelf_philosophy_ethics">Philosophy &amp; Ethics</string>
 </resources>
