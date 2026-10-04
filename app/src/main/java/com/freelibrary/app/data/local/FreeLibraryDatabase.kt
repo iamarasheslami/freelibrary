@@ -8,6 +8,7 @@ import com.freelibrary.app.data.local.dao.BookBookshelfDao
 import com.freelibrary.app.data.local.dao.BookDao
 import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.dao.BookFtsDao
+import com.freelibrary.app.data.local.dao.BookListDao
 import com.freelibrary.app.data.local.dao.BookShelfStateDao
 import com.freelibrary.app.data.local.dao.BookSubjectDao
 import com.freelibrary.app.data.local.dao.BookSummaryDao
@@ -99,4 +100,6 @@ abstract class FreeLibraryDatabase : RoomDatabase() {
     abstract fun bookSummaryDao(): BookSummaryDao
 
     abstract fun bookShelfStateDao(): BookShelfStateDao
+
+    abstract fun bookListDao(): BookListDao
 }
