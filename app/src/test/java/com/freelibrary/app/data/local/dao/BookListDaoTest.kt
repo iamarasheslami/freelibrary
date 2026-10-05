@@ -31,6 +31,7 @@ class BookListDaoTest {
         title: String,
         language: String? = "en",
         coverUrl: String? = null,
+        issuedDate: String? = null,
         authors: List<String> = emptyList(),
     ): Long {
         val bookId =
@@ -39,7 +40,7 @@ class BookListDaoTest {
                     sourceId = sourceId,
                     externalId = externalId,
                     title = title,
-                    issuedDate = null,
+                    issuedDate = issuedDate,
                     primaryLanguage = language,
                     locc = null,
                     lastModified = "2026-10-04",
@@ -167,5 +168,74 @@ class BookListDaoTest {
 
             assertTrue(booksOn("No Such Shelf").isEmpty())
             assertEquals(0, bookListDao.observeShelfBookCount("No Such Shelf", "en").first())
+        }
+
+    private suspend fun recentlyAdded(
+        language: String = "en",
+        limit: Int = 10,
+    ) = bookListDao.observeRecentlyAdded(language, limit).first()
+
+    @Test
+    fun `recently added lists the newest release date first`() =
+        runTest {
+            addBook("1", "Old", issuedDate = "2001-05-01")
+            addBook("2", "Newest", issuedDate = "2026-09-30")
+            addBook("3", "Middle", issuedDate = "2015-01-15")
+
+            assertEquals(listOf("Newest", "Middle", "Old"), recentlyAdded().map { it.title })
+        }
+
+    @Test
+    fun `books added on the same day come highest Gutenberg number first, compared as numbers`() =
+        runTest {
+            addBook("9", "Nine", issuedDate = "2026-09-30")
+            addBook("100", "Hundred", issuedDate = "2026-09-30")
+            addBook("20", "Twenty", issuedDate = "2026-09-30")
+
+            assertEquals(listOf("100", "20", "9"), recentlyAdded().map { it.externalId })
+        }
+
+    @Test
+    fun `recently added keeps to the requested language`() =
+        runTest {
+            addBook("1", "English", issuedDate = "2026-09-30")
+            addBook("2", "Francais", language = "fr", issuedDate = "2026-10-01")
+            addBook("3", "Unknown", language = null, issuedDate = "2026-10-01")
+
+            assertEquals(listOf("English"), recentlyAdded().map { it.title })
+        }
+
+    @Test
+    fun `the recently added limit keeps the newest books`() =
+        runTest {
+            (1..5).forEach { addBook("$it", "Book $it", issuedDate = "2026-09-0$it") }
+
+            assertEquals(listOf("Book 5", "Book 4"), recentlyAdded(limit = 2).map { it.title })
+        }
+
+    @Test
+    fun `books without a release date come last`() =
+        runTest {
+            addBook("1", "Undated")
+            addBook("2", "Dated", issuedDate = "1999-01-01")
+
+            assertEquals(listOf("Dated", "Undated"), recentlyAdded().map { it.title })
+        }
+
+    @Test
+    fun `recently added books carry their first author and cover`() =
+        runTest {
+            addBook(
+                "1",
+                "The Gambler",
+                coverUrl = "https://example.org/1.cover.medium.jpg",
+                issuedDate = "2026-09-30",
+                authors = listOf("Dostoyevsky, Fyodor", "Hogarth, C. J."),
+            )
+
+            val row = recentlyAdded().single()
+
+            assertEquals("Dostoyevsky, Fyodor", row.authorName)
+            assertEquals("https://example.org/1.cover.medium.jpg", row.coverUrl)
         }
 }
