@@ -2,6 +2,7 @@ package com.freelibrary.app.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import com.freelibrary.app.data.local.entity.ShelfState
 import kotlinx.coroutines.flow.Flow
 
 /** Queries behind the book sliders and lists of the home screen. */
@@ -69,6 +70,30 @@ interface BookListDao {
     )
     fun observeRecentlyAdded(
         language: String,
+        limit: Int,
+    ): Flow<List<BookCardRow>>
+
+    /**
+     * The reader's own books in a shelf [state] (for example Currently Reading or Want to Read),
+     * most recently updated first. Not filtered by language: these are books the reader chose.
+     * Same card shape as [observeBooksOnShelf].
+     */
+    @Query(
+        """
+        SELECT b.id AS bookId, b.externalId AS externalId, b.title AS title,
+               (SELECT a.name FROM book_authors AS ba
+                INNER JOIN authors AS a ON a.id = ba.authorId
+                WHERE ba.bookId = b.id ORDER BY ba.id LIMIT 1) AS authorName,
+               b.coverUrl AS coverUrl
+        FROM book_shelf_state AS s
+        INNER JOIN books AS b ON b.id = s.bookId
+        WHERE s.state = :state
+        ORDER BY s.updatedAt DESC, b.id DESC
+        LIMIT :limit
+        """,
+    )
+    fun observeBooksInState(
+        state: ShelfState,
         limit: Int,
     ): Flow<List<BookCardRow>>
 }
