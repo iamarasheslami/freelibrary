@@ -7,7 +7,9 @@ import com.freelibrary.app.data.local.entity.Author
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookAuthor
 import com.freelibrary.app.data.local.entity.BookBookshelf
+import com.freelibrary.app.data.local.entity.BookShelfState
 import com.freelibrary.app.data.local.entity.Bookshelf
+import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -234,6 +236,76 @@ class BookListDaoTest {
             )
 
             val row = recentlyAdded().single()
+
+            assertEquals("Dostoyevsky, Fyodor", row.authorName)
+            assertEquals("https://example.org/1.cover.medium.jpg", row.coverUrl)
+        }
+
+    private suspend fun setState(
+        bookId: Long,
+        state: ShelfState,
+        updatedAt: Long,
+    ) {
+        database.bookShelfStateDao().upsert(BookShelfState(bookId = bookId, state = state, updatedAt = updatedAt))
+    }
+
+    private suspend fun inState(
+        state: ShelfState,
+        limit: Int = 10,
+    ) = bookListDao.observeBooksInState(state, limit).first()
+
+    @Test
+    fun `only books in the requested shelf state are returned`() =
+        runTest {
+            setState(addBook("1", "Reading"), ShelfState.READING, 100)
+            setState(addBook("2", "Wanted"), ShelfState.WANT_TO_READ, 100)
+            setState(addBook("3", "Finished"), ShelfState.FINISHED, 100)
+            addBook("4", "On no shelf")
+
+            assertEquals(listOf("Reading"), inState(ShelfState.READING).map { it.title })
+            assertEquals(listOf("Wanted"), inState(ShelfState.WANT_TO_READ).map { it.title })
+        }
+
+    @Test
+    fun `books in a state come most recently updated first`() =
+        runTest {
+            setState(addBook("1", "Oldest"), ShelfState.READING, 100)
+            setState(addBook("2", "Newest"), ShelfState.READING, 300)
+            setState(addBook("3", "Middle"), ShelfState.READING, 200)
+
+            assertEquals(listOf("Newest", "Middle", "Oldest"), inState(ShelfState.READING).map { it.title })
+        }
+
+    @Test
+    fun `the state limit keeps the most recently updated books`() =
+        runTest {
+            (1..5).forEach { setState(addBook("$it", "Book $it"), ShelfState.WANT_TO_READ, it * 100L) }
+
+            assertEquals(listOf("Book 5", "Book 4"), inState(ShelfState.WANT_TO_READ, limit = 2).map { it.title })
+        }
+
+    @Test
+    fun `the reader's own books are not filtered by language`() =
+        runTest {
+            setState(addBook("1", "Un livre", language = "fr"), ShelfState.READING, 100)
+            setState(addBook("2", "No language", language = null), ShelfState.READING, 200)
+
+            assertEquals(listOf("No language", "Un livre"), inState(ShelfState.READING).map { it.title })
+        }
+
+    @Test
+    fun `books in a state carry their first author and cover`() =
+        runTest {
+            val book =
+                addBook(
+                    "1",
+                    "The Gambler",
+                    coverUrl = "https://example.org/1.cover.medium.jpg",
+                    authors = listOf("Dostoyevsky, Fyodor", "Hogarth, C. J."),
+                )
+            setState(book, ShelfState.READING, 100)
+
+            val row = inState(ShelfState.READING).single()
 
             assertEquals("Dostoyevsky, Fyodor", row.authorName)
             assertEquals("https://example.org/1.cover.medium.jpg", row.coverUrl)
