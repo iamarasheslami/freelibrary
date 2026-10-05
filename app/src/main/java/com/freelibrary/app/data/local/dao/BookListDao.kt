@@ -48,4 +48,27 @@ interface BookListDao {
         shelfName: String,
         language: String,
     ): Flow<Int>
+
+    /**
+     * The [limit] most recently added books in [language]: newest release date first and, for
+     * books released on the same day, the highest Gutenberg number first (compared as numbers).
+     * A book without a release date sorts last. Same card shape as [observeBooksOnShelf].
+     */
+    @Query(
+        """
+        SELECT b.id AS bookId, b.externalId AS externalId, b.title AS title,
+               (SELECT a.name FROM book_authors AS ba
+                INNER JOIN authors AS a ON a.id = ba.authorId
+                WHERE ba.bookId = b.id ORDER BY ba.id LIMIT 1) AS authorName,
+               b.coverUrl AS coverUrl
+        FROM books AS b
+        WHERE b.primaryLanguage = :language
+        ORDER BY b.issuedDate DESC, CAST(b.externalId AS INTEGER) DESC
+        LIMIT :limit
+        """,
+    )
+    fun observeRecentlyAdded(
+        language: String,
+        limit: Int,
+    ): Flow<List<BookCardRow>>
 }
