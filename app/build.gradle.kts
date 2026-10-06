@@ -108,6 +108,9 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.5")
     ksp("androidx.room:room-compiler:2.8.5")
 
+    // Settings storage (Preferences DataStore)
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
+
     // Networking
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0")
