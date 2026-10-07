@@ -1,5 +1,6 @@
 package com.freelibrary.app.data.local.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Query
 import com.freelibrary.app.data.local.entity.ShelfState
@@ -96,4 +97,58 @@ interface BookListDao {
         state: ShelfState,
         limit: Int,
     ): Flow<List<BookCardRow>>
+
+    /**
+     * Paged version of [observeBooksOnShelf] for the shelf's "View more" page: the same books in
+     * the same order, all of them. Room adds the LIMIT and OFFSET itself.
+     */
+    @Query(
+        """
+        SELECT b.id AS bookId, b.externalId AS externalId, b.title AS title,
+               (SELECT a.name FROM book_authors AS ba
+                INNER JOIN authors AS a ON a.id = ba.authorId
+                WHERE ba.bookId = b.id ORDER BY ba.id LIMIT 1) AS authorName,
+               b.coverUrl AS coverUrl
+        FROM books AS b
+        INNER JOIN book_bookshelves AS bb ON bb.bookId = b.id
+        INNER JOIN bookshelves AS s ON s.id = bb.bookshelfId
+        WHERE s.name = :shelfName AND b.primaryLanguage = :language
+        ORDER BY CAST(b.externalId AS INTEGER), b.id
+        """,
+    )
+    fun shelfBooksPagingSource(
+        shelfName: String,
+        language: String,
+    ): PagingSource<Int, BookCardRow>
+
+    /** Paged version of [observeRecentlyAdded]: every book of the language, newest first. */
+    @Query(
+        """
+        SELECT b.id AS bookId, b.externalId AS externalId, b.title AS title,
+               (SELECT a.name FROM book_authors AS ba
+                INNER JOIN authors AS a ON a.id = ba.authorId
+                WHERE ba.bookId = b.id ORDER BY ba.id LIMIT 1) AS authorName,
+               b.coverUrl AS coverUrl
+        FROM books AS b
+        WHERE b.primaryLanguage = :language
+        ORDER BY b.issuedDate DESC, CAST(b.externalId AS INTEGER) DESC
+        """,
+    )
+    fun recentlyAddedPagingSource(language: String): PagingSource<Int, BookCardRow>
+
+    /** Paged version of [observeBooksInState]: all the reader's books in [state], newest update first. */
+    @Query(
+        """
+        SELECT b.id AS bookId, b.externalId AS externalId, b.title AS title,
+               (SELECT a.name FROM book_authors AS ba
+                INNER JOIN authors AS a ON a.id = ba.authorId
+                WHERE ba.bookId = b.id ORDER BY ba.id LIMIT 1) AS authorName,
+               b.coverUrl AS coverUrl
+        FROM book_shelf_state AS s
+        INNER JOIN books AS b ON b.id = s.bookId
+        WHERE s.state = :state
+        ORDER BY s.updatedAt DESC, b.id DESC
+        """,
+    )
+    fun booksInStatePagingSource(state: ShelfState): PagingSource<Int, BookCardRow>
 }
