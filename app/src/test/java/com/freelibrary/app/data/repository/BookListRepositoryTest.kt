@@ -10,7 +10,6 @@ import com.freelibrary.app.data.local.entity.BookShelfState
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
-import com.freelibrary.app.domain.model.HomeShelf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -27,7 +26,7 @@ class BookListRepositoryTest {
     private lateinit var database: FreeLibraryDatabase
     private lateinit var repository: BookListRepository
     private var sourceId: Long = 0
-    private val shelf = HomeShelf(id = "adventure", titleRes = 0, bookshelfName = "Adventure")
+    private val shelfName = "Adventure"
 
     private suspend fun addBook(
         externalId: String,
@@ -49,8 +48,8 @@ class BookListRepositoryTest {
 
     private suspend fun shelve(vararg bookIds: Long) {
         val shelfId =
-            database.bookshelfDao().findByName(shelf.bookshelfName)?.id
-                ?: database.bookshelfDao().insert(Bookshelf(name = shelf.bookshelfName))
+            database.bookshelfDao().findByName(shelfName)?.id
+                ?: database.bookshelfDao().insert(Bookshelf(name = shelfName))
         bookIds.forEach { database.bookBookshelfDao().insert(BookBookshelf(bookId = it, bookshelfId = shelfId)) }
     }
 
@@ -76,7 +75,7 @@ class BookListRepositoryTest {
         runTest {
             shelve(*(1..12).map { addBook("$it") }.toLongArray(), addBook("99", language = "fr"))
 
-            val slider = repository.observeShelfSlider(shelf).first()
+            val slider = repository.observeShelfSlider(shelfName).first()
 
             assertEquals((1..10).map { "$it" }, slider.books.map { it.externalId })
             assertEquals(12, slider.totalBooks)
@@ -88,7 +87,7 @@ class BookListRepositoryTest {
         runTest {
             shelve(*(1..10).map { addBook("$it") }.toLongArray())
 
-            val slider = repository.observeShelfSlider(shelf).first()
+            val slider = repository.observeShelfSlider(shelfName).first()
 
             assertEquals(10, slider.books.size)
             assertFalse(slider.hasMore)
@@ -110,7 +109,7 @@ class BookListRepositoryTest {
         runTest {
             shelve(*(1..35).map { addBook("$it") }.toLongArray(), addBook("99", language = "fr"))
 
-            val books = repository.shelfPages(shelf).asSnapshot()
+            val books = repository.shelfPages(shelfName).asSnapshot()
 
             assertEquals((1..35).map { "$it" }, books.map { it.externalId })
         }

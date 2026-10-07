@@ -26,6 +26,6 @@ class HomeShelvesTest {
 
     @Test
     fun `a slider shows ten books`() {
-        assertEquals(10, HomeShelves.BOOKS_PER_SLIDER)
+        assertEquals(10, CatalogDefaults.BOOKS_PER_SLIDER)
     }
 }

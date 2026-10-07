@@ -9,9 +9,8 @@ data class BookCard(
     val coverUrl: String?,
 )
 
-/** One home screen shelf slider: the first books of a shelf and how many it holds in all. */
-data class ShelfSlider(
-    val shelf: HomeShelf,
+/** The first books of a list and how many it holds in all, as a slider shows them. */
+data class BookSlider(
     val books: List<BookCard>,
     val totalBooks: Int,
 ) {

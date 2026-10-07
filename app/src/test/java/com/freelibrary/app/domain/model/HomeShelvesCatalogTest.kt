@@ -31,14 +31,14 @@ class HomeShelvesCatalogTest {
                 val count = database.bookListDao().observeShelfBookCount(shelf.bookshelfName, "en").first()
                 assertTrue(
                     "'${shelf.bookshelfName}' has only $count English books in the bundled catalog",
-                    count >= HomeShelves.BOOKS_PER_SLIDER,
+                    count >= CatalogDefaults.BOOKS_PER_SLIDER,
                 )
 
                 val books =
                     database.bookListDao()
-                        .observeBooksOnShelf(shelf.bookshelfName, "en", HomeShelves.BOOKS_PER_SLIDER)
+                        .observeBooksOnShelf(shelf.bookshelfName, "en", CatalogDefaults.BOOKS_PER_SLIDER)
                         .first()
-                assertEquals("'${shelf.bookshelfName}' slider is not full", HomeShelves.BOOKS_PER_SLIDER, books.size)
+                assertEquals("'${shelf.bookshelfName}' slider is not full", CatalogDefaults.BOOKS_PER_SLIDER, books.size)
             }
 
             database.close()
