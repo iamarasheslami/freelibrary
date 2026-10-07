@@ -3,11 +3,11 @@ package com.freelibrary.app.data.repository
 import androidx.room.withTransaction
 import com.freelibrary.app.data.TimeProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
-import com.freelibrary.app.data.local.dao.BookCardRow
 import com.freelibrary.app.data.local.dao.BookListDao
 import com.freelibrary.app.data.local.dao.BookShelfStateDao
 import com.freelibrary.app.data.local.entity.BookShelfState
 import com.freelibrary.app.data.local.entity.ShelfState
+import com.freelibrary.app.domain.model.BookCard
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -36,7 +36,7 @@ class ReadingStateRepository
         fun observeShelf(
             state: ShelfState,
             limit: Int,
-        ): Flow<List<BookCardRow>> = bookListDao.observeBooksInState(state, limit)
+        ): Flow<List<BookCard>> = bookListDao.observeBooksInState(state, limit).map { rows -> rows.map { it.toBookCard() } }
 
         /** How many books are in [state]; tells a slider whether to offer "View more". */
         fun observeCount(state: ShelfState): Flow<Int> = bookShelfStateDao.observeCount(state)
