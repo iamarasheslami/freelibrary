@@ -19,9 +19,6 @@ data class HomeShelf(
  * bookshelfName exists in the bundled catalog.
  */
 object HomeShelves {
-    /** How many books each slider shows before its "View more" button. */
-    const val BOOKS_PER_SLIDER = 10
-
     val all: List<HomeShelf> =
         listOf(
             HomeShelf("best-books-ever", R.string.shelf_best_books_ever, "Best Books Ever Listings"),

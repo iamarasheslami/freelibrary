@@ -4,4 +4,7 @@ package com.freelibrary.app.domain.model
 object CatalogDefaults {
     /** Home and category lists show English books only while Project Gutenberg is the only source. */
     const val LANGUAGE = "en"
+
+    /** How many books each slider shows before its "View more" button. */
+    const val BOOKS_PER_SLIDER = 10
 }
