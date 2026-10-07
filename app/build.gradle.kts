@@ -111,6 +111,9 @@ dependencies {
     // Settings storage (Preferences DataStore)
     implementation("androidx.datastore:datastore-preferences:1.1.7")
 
+    // Paged book lists (the "View more" pages)
+    implementation("androidx.room:room-paging:2.8.5")
+    implementation("androidx.paging:paging-common:3.3.6")
     // Networking
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0")

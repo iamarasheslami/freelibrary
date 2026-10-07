@@ -1,5 +1,6 @@
 package com.freelibrary.app.data.local.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
@@ -309,5 +310,68 @@ class BookListDaoTest {
 
             assertEquals("Dostoyevsky, Fyodor", row.authorName)
             assertEquals("https://example.org/1.cover.medium.jpg", row.coverUrl)
+        }
+
+    private suspend fun PagingSource<Int, BookCardRow>.loadPage(
+        key: Int?,
+        size: Int,
+    ): PagingSource.LoadResult.Page<Int, BookCardRow> {
+        val params: PagingSource.LoadParams<Int> =
+            if (key == null) {
+                PagingSource.LoadParams.Refresh(key = null, loadSize = size, placeholdersEnabled = false)
+            } else {
+                PagingSource.LoadParams.Append(key = key, loadSize = size, placeholdersEnabled = false)
+            }
+        return load(params) as PagingSource.LoadResult.Page
+    }
+
+    @Test
+    fun `a shelf pages through its English books in numeric order`() =
+        runTest {
+            val ids =
+                listOf("100", "9", "20", "3", "40").map { addBook(it, "Book $it") } +
+                    addBook("5", "Un livre", language = "fr")
+            shelve("Adventure", *ids.toLongArray())
+            val source = bookListDao.shelfBooksPagingSource("Adventure", "en")
+
+            val first = source.loadPage(key = null, size = 2)
+            val second = source.loadPage(key = first.nextKey, size = 2)
+            val third = source.loadPage(key = second.nextKey, size = 2)
+
+            assertEquals(listOf("3", "9"), first.data.map { it.externalId })
+            assertEquals(listOf("20", "40"), second.data.map { it.externalId })
+            assertEquals(listOf("100"), third.data.map { it.externalId })
+            assertNull(third.nextKey)
+        }
+
+    @Test
+    fun `recently added pages through the newest books first`() =
+        runTest {
+            (1..5).forEach { addBook("$it", "Book $it", issuedDate = "2026-09-0$it") }
+            val source = bookListDao.recentlyAddedPagingSource("en")
+
+            val first = source.loadPage(key = null, size = 2)
+            val second = source.loadPage(key = first.nextKey, size = 2)
+            val third = source.loadPage(key = second.nextKey, size = 2)
+
+            assertEquals(listOf("Book 5", "Book 4"), first.data.map { it.title })
+            assertEquals(listOf("Book 3", "Book 2"), second.data.map { it.title })
+            assertEquals(listOf("Book 1"), third.data.map { it.title })
+            assertNull(third.nextKey)
+        }
+
+    @Test
+    fun `the reader's shelf pages through its books, most recently updated first`() =
+        runTest {
+            (1..5).forEach { setState(addBook("$it", "Book $it"), ShelfState.WANT_TO_READ, it * 100L) }
+            setState(addBook("6", "Reading"), ShelfState.READING, 900)
+            val source = bookListDao.booksInStatePagingSource(ShelfState.WANT_TO_READ)
+
+            val first = source.loadPage(key = null, size = 3)
+            val second = source.loadPage(key = first.nextKey, size = 3)
+
+            assertEquals(listOf("Book 5", "Book 4", "Book 3"), first.data.map { it.title })
+            assertEquals(listOf("Book 2", "Book 1"), second.data.map { it.title })
+            assertNull(second.nextKey)
         }
 }
