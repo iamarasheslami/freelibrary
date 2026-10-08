@@ -151,4 +151,24 @@ interface BookListDao {
         """,
     )
     fun booksInStatePagingSource(state: ShelfState): PagingSource<Int, BookCardRow>
+
+    /**
+     * Every shelf with at least [minBooks] books in [language], with that count: the shelf sizes
+     * the Explore page is built from. A shelf with no books in [language] does not appear.
+     */
+    @Query(
+        """
+        SELECT s.name AS name, COUNT(*) AS bookCount
+        FROM bookshelves AS s
+        INNER JOIN book_bookshelves AS bb ON bb.bookshelfId = s.id
+        INNER JOIN books AS b ON b.id = bb.bookId
+        WHERE b.primaryLanguage = :language
+        GROUP BY s.id
+        HAVING COUNT(*) >= :minBooks
+        """,
+    )
+    suspend fun shelfBookCounts(
+        language: String,
+        minBooks: Int,
+    ): List<ShelfCountRow>
 }
