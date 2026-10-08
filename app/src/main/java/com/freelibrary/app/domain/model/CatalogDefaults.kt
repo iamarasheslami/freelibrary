@@ -7,4 +7,7 @@ object CatalogDefaults {
 
     /** How many books each slider shows before its "View more" button. */
     const val BOOKS_PER_SLIDER = 10
+
+    /** A shelf appears on the Explore page only with at least this many books in the catalog language. */
+    const val MIN_SHELF_BOOKS = 10
 }
