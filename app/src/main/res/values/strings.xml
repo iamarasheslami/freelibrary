@@ -12,4 +12,10 @@
     <string name="shelf_mythology_folklore">Mythology, Legends &amp; Folklore</string>
     <string name="shelf_poetry">Poetry</string>
     <string name="shelf_philosophy_ethics">Philosophy &amp; Ethics</string>
+    <string name="shelf_childrens_book_series">Children\'s Book Series</string>
+    <string name="shelf_childrens_literature">Children\'s Literature</string>
+    <string name="shelf_childrens_fiction">Children\'s Fiction</string>
+    <string name="shelf_world_war_i">World War I</string>
+    <string name="shelf_us_civil_war">US Civil War</string>
+    <string name="shelf_christmas">Christmas</string>
 </resources>
