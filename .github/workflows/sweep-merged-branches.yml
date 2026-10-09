@@ -1,0 +1,42 @@
+name: Sweep merged branches
+
+on:
+  schedule:
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+# Pull requests merged by the auto-merge workflow are merged by GITHUB_TOKEN, and events
+# caused by that token never start other workflows, so nothing can react to the merge.
+# This sweep deletes the branch afterwards instead.
+concurrency:
+  group: sweep-merged-branches
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Delete branches of merged pull requests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete every branch whose tip was merged through a pull request
+        run: |
+          set -euo pipefail
+          default_branch=$(gh api "repos/$REPO" --jq .default_branch)
+          gh api --paginate "repos/$REPO/branches" --jq '.[] | "\(.name) \(.commit.sha)"' |
+            while read -r branch sha; do
+              [ "$branch" = "$default_branch" ] && continue
+              merged=$(gh pr list --repo "$REPO" --state merged --head "$branch" \
+                --json headRefOid --jq "[.[] | select(.headRefOid == \"$sha\")] | length")
+              if [ "$merged" -gt 0 ]; then
+                echo "Deleting $branch: its tip was merged through a pull request"
+                gh api --method DELETE "repos/$REPO/git/refs/heads/$branch"
+              else
+                echo "Keeping $branch: its tip is not the head of a merged pull request"
+              fi
+            done
+        env:
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
