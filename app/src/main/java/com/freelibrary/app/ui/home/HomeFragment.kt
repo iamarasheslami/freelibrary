@@ -14,7 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 /**
- * Placeholder for the home screen (continue-reading, saved-books, and suggestions
+ * Placeholder for the home screen (continue-reading, saved-books, and curated-shelf
  * sliders described in the product spec). Real implementation lands in Phase 2.
  *
  * For now, displays live status from a real catalog sync triggered by
