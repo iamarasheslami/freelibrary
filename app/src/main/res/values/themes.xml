@@ -33,5 +33,10 @@
         <item name="colorOnErrorContainer">@color/md_on_error_container</item>
         <item name="colorOutline">@color/md_outline</item>
         <item name="colorOutlineVariant">@color/md_outline_variant</item>
+
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.FreeLibrary.HeadlineLarge</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.FreeLibrary.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.FreeLibrary.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.FreeLibrary.TitleLarge</item>
     </style>
 </resources>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Headings and screen titles use the bundled serif. Everything functional keeps the system
+         font. Both attributes are set so the font also loads before Android 8. -->
+    <style name="TextAppearance.FreeLibrary.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="fontFamily">@font/literata_semibold</item>
+        <item name="android:fontFamily">@font/literata_semibold</item>
+    </style>
+
+    <style name="TextAppearance.FreeLibrary.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">@font/literata_semibold</item>
+        <item name="android:fontFamily">@font/literata_semibold</item>
+    </style>
+
+    <style name="TextAppearance.FreeLibrary.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">@font/literata_semibold</item>
+        <item name="android:fontFamily">@font/literata_semibold</item>
+    </style>
+
+    <style name="TextAppearance.FreeLibrary.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">@font/literata_medium</item>
+        <item name="android:fontFamily">@font/literata_medium</item>
+    </style>
+</resources>
