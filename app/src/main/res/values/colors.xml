@@ -1,24 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="md_primary">#00695C</color>
+    <color name="md_primary">#0B5E55</color>
     <color name="md_on_primary">#FFFFFF</color>
-    <color name="md_primary_container">#B2DFDB</color>
-    <color name="md_on_primary_container">#00251A</color>
+    <color name="md_primary_container">#BFEDE5</color>
+    <color name="md_on_primary_container">#00201C</color>
+    <color name="md_primary_inverse">#7ED3C7</color>
 
-    <color name="md_secondary">#B8860B</color>
+    <color name="md_secondary">#8A5A00</color>
     <color name="md_on_secondary">#FFFFFF</color>
-    <color name="md_secondary_container">#FFE8B8</color>
-    <color name="md_on_secondary_container">#3D2E00</color>
+    <color name="md_secondary_container">#FFE2B0</color>
+    <color name="md_on_secondary_container">#2B1A00</color>
 
-    <color name="md_background">#FBFDFB</color>
-    <color name="md_on_background">#1A1C1B</color>
-    <color name="md_surface">#FBFDFB</color>
-    <color name="md_on_surface">#1A1C1B</color>
-    <color name="md_surface_variant">#DBE5E1</color>
-    <color name="md_on_surface_variant">#3F4945</color>
+    <color name="md_background">#FAF8F4</color>
+    <color name="md_on_background">#1C1B18</color>
+    <color name="md_surface">#FAF8F4</color>
+    <color name="md_on_surface">#1C1B18</color>
+    <color name="md_surface_variant">#E8E2D6</color>
+    <color name="md_on_surface_variant">#4A4640</color>
+    <color name="md_surface_inverse">#31302C</color>
+    <color name="md_on_surface_inverse">#F3F0EA</color>
+
+    <color name="md_surface_container_lowest">#FFFFFF</color>
+    <color name="md_surface_container_low">#F5F2EB</color>
+    <color name="md_surface_container">#F0ECE3</color>
+    <color name="md_surface_container_high">#EAE5DA</color>
+    <color name="md_surface_container_highest">#E4DFD3</color>
 
     <color name="md_error">#BA1A1A</color>
     <color name="md_on_error">#FFFFFF</color>
+    <color name="md_error_container">#FFDAD6</color>
+    <color name="md_on_error_container">#410002</color>
 
-    <color name="md_outline">#6F7975</color>
+    <color name="md_outline">#7A746B</color>
+    <color name="md_outline_variant">#CDC6B9</color>
 </resources>
