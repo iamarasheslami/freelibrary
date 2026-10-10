@@ -8,6 +8,7 @@
     <application
         android:name=".FreeLibraryApplication"
         android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.FreeLibrary"
         android:supportsRtl="true">
