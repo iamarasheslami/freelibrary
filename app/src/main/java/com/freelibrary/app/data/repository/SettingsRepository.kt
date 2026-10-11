@@ -2,6 +2,7 @@ package com.freelibrary.app.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -23,20 +24,31 @@ class SettingsRepository
     constructor(
         private val dataStore: DataStore<Preferences>,
     ) {
+        /** The stored settings. A failed read counts as nothing stored, so defaults apply. */
+        private val storedPreferences: Flow<Preferences> =
+            dataStore.data.catch { error -> if (error is IOException) emit(emptyPreferences()) else throw error }
+
         /** The chosen theme; System until the reader picks one. */
         val themeMode: Flow<ThemeMode> =
-            dataStore.data
-                .catch { error -> if (error is IOException) emit(emptyPreferences()) else throw error }
-                .map { preferences ->
-                    val stored = preferences[THEME_MODE_KEY]
-                    ThemeMode.entries.firstOrNull { it.name == stored } ?: ThemeMode.SYSTEM
-                }
+            storedPreferences.map { preferences ->
+                val stored = preferences[THEME_MODE_KEY]
+                ThemeMode.entries.firstOrNull { it.name == stored } ?: ThemeMode.SYSTEM
+            }
+
+        /** Whether dark mode uses pure black surfaces, which saves power on OLED screens. Off until chosen. */
+        val trueBlack: Flow<Boolean> =
+            storedPreferences.map { preferences -> preferences[TRUE_BLACK_KEY] ?: false }
 
         suspend fun setThemeMode(mode: ThemeMode) {
             dataStore.edit { preferences -> preferences[THEME_MODE_KEY] = mode.name }
         }
 
+        suspend fun setTrueBlack(enabled: Boolean) {
+            dataStore.edit { preferences -> preferences[TRUE_BLACK_KEY] = enabled }
+        }
+
         private companion object {
             val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+            val TRUE_BLACK_KEY = booleanPreferencesKey("true_black")
         }
     }
