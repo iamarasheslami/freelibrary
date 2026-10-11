@@ -1,5 +1,6 @@
 package com.freelibrary.app.ui.theme
 
+import com.freelibrary.app.ui.cover.CoverStyle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -66,6 +67,17 @@ class PaletteContrastTest {
 
     @Test
     fun `the dark outline stays visible`() = assertContrast("dark", dark, boundaryPairs, BOUNDARY_MINIMUM)
+
+    @Test
+    fun `every generated cover color keeps the title readable`() {
+        val failures =
+            CoverStyle.BACKGROUNDS.toList().mapNotNull { background ->
+                val ratio = contrast(CoverStyle.TEXT_COLOR, background)
+                if (ratio < TEXT_MINIMUM) "cover color ${"%06X".format(background and 0xFFFFFF)} is ${"%.2f".format(ratio)}" else null
+            }
+
+        assertTrue(failures.joinToString("\n"), failures.isEmpty())
+    }
 
     @Test
     fun `black on white is the maximum contrast of 21 to 1`() {
