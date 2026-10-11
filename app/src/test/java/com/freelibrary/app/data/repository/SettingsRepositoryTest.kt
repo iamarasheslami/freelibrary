@@ -7,6 +7,8 @@ import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -48,6 +50,39 @@ class SettingsRepositoryTest {
             dataStore.edit { it[stringPreferencesKey("theme_mode")] = "SEPIA" }
 
             assertEquals(ThemeMode.SYSTEM, SettingsRepository(dataStore).themeMode.first())
+        }
+
+    @Test
+    fun `true black is off until the reader turns it on`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            assertFalse(repository.trueBlack.first())
+        }
+
+    @Test
+    fun `true black can be turned on and off again`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            repository.setTrueBlack(true)
+            assertTrue(repository.trueBlack.first())
+
+            repository.setTrueBlack(false)
+            assertFalse(repository.trueBlack.first())
+        }
+
+    @Test
+    fun `the theme and true black are stored independently`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            repository.setThemeMode(ThemeMode.DARK)
+            repository.setTrueBlack(true)
+            repository.setThemeMode(ThemeMode.LIGHT)
+
+            assertEquals(ThemeMode.LIGHT, repository.themeMode.first())
+            assertTrue(repository.trueBlack.first())
         }
 
     @Test
