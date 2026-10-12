@@ -21,4 +21,10 @@
         <item name="fontFamily">@font/literata_medium</item>
         <item name="android:fontFamily">@font/literata_medium</item>
     </style>
+
+    <!-- The title under a book cover: the same serif, at the small title size. -->
+    <style name="TextAppearance.FreeLibrary.BookTitle" parent="TextAppearance.Material3.TitleSmall">
+        <item name="fontFamily">@font/literata_medium</item>
+        <item name="android:fontFamily">@font/literata_medium</item>
+    </style>
 </resources>
