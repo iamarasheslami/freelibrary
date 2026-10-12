@@ -18,4 +18,6 @@
     <string name="shelf_world_war_i">World War I</string>
     <string name="shelf_us_civil_war">US Civil War</string>
     <string name="shelf_christmas">Christmas</string>
+    <string name="view_more">View more</string>
+    <string name="view_more_in">View more in %1$s</string>
 </resources>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!-- The heading is on the left and "View more" on the right, so it can be reached without scrolling the list. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/spacing_m"
+        android:paddingEnd="@dimen/spacing_s">
+
+        <TextView
+            android:id="@+id/sliderHeading"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textAppearance="@style/TextAppearance.FreeLibrary.TitleLarge"
+            android:textColor="?attr/colorOnSurface"
+            tools:text="Harvard Classics" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sliderViewMore"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/view_more" />
+
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/sliderBooks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/spacing_m"
+        android:paddingTop="@dimen/spacing_s"
+        android:paddingEnd="@dimen/spacing_m"
+        android:paddingBottom="@dimen/spacing_m"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/item_book_card" />
+
+</LinearLayout>
