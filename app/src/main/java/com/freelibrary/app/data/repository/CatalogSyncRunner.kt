@@ -1,6 +1,12 @@
 package com.freelibrary.app.data.repository
 
 import android.util.Log
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,6 +38,15 @@ internal suspend fun runCatalogSync(
     return result
 }
 
+/** Runs a block the first time it is asked to and never again, however many threads ask. */
+internal class OnceOnly {
+    private val done = AtomicBoolean(false)
+
+    fun runFirstTime(block: () -> Unit) {
+        if (done.compareAndSet(false, true)) block()
+    }
+}
+
 @Singleton
 class CatalogSyncRunner
     @Inject
@@ -40,6 +55,14 @@ class CatalogSyncRunner
         private val exploreRepository: ExploreRepository,
         private val searchRepository: SearchRepository,
     ) {
+        // An unexpected error in the background is logged, never allowed to crash the app on start.
+        private val scope =
+            CoroutineScope(
+                SupervisorJob() + Dispatchers.IO +
+                    CoroutineExceptionHandler { _, error -> Log.e(TAG, "The background catalog sync stopped unexpectedly", error) },
+            )
+        private val startGuard = OnceOnly()
+
         suspend fun run(): SyncResult? =
             runCatalogSync(
                 sync = { syncRepository.sync() },
@@ -48,4 +71,10 @@ class CatalogSyncRunner
                     searchRepository.invalidateVocabularies()
                 },
             )
+
+        /**
+         * Starts a sync in the background the first time it is called in this process and does
+         * nothing after that, so rotating the phone or recreating the screen never starts another.
+         */
+        fun startOnce() = startGuard.runFirstTime { scope.launch { run() } }
     }
