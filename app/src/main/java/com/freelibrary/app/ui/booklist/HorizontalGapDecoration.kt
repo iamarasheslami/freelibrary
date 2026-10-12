@@ -2,7 +2,6 @@ package com.freelibrary.app.ui.booklist
 
 import android.graphics.Rect
 import android.view.View
-import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.RecyclerView
 
 /**
@@ -19,7 +18,7 @@ class HorizontalGapDecoration(
         parent: RecyclerView,
         state: RecyclerView.State,
     ) {
-        val rightToLeft = ViewCompat.getLayoutDirection(parent) == ViewCompat.LAYOUT_DIRECTION_RTL
+        val rightToLeft = parent.layoutDirection == View.LAYOUT_DIRECTION_RTL
         applyGap(outRect, parent.getChildAdapterPosition(view), gapPx, rightToLeft)
     }
 }
