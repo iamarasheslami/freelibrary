@@ -114,6 +114,10 @@ dependencies {
     // Paged book lists (the "View more" pages)
     implementation("androidx.room:room-paging:2.8.5")
     implementation("androidx.paging:paging-common:3.3.6")
+    implementation("androidx.paging:paging-runtime:3.3.6")
+
+    // Cover images (Coil 2.x: Views-friendly, capped memory and disk caches)
+    implementation("io.coil-kt:coil:2.7.0")
     // Networking
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0")
