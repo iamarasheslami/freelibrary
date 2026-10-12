@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The rounded corners of a book cover. It is an overlay, so any image view can take it. -->
+    <style name="ShapeAppearanceOverlay.FreeLibrary.BookCover" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/book_cover_corner_radius</item>
+    </style>
+</resources>

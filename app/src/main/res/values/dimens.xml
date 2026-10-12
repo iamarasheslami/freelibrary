@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing steps, in 4 dp increments. A step is added here only when a layout uses it. -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_s">8dp</dimen>
+
+    <!-- Book card: the width sets the cover size, and the cover height follows from its 2:3 shape. -->
+    <dimen name="book_card_width">112dp</dimen>
+    <dimen name="book_cover_corner_radius">8dp</dimen>
+    <dimen name="book_cover_outline_width">1dp</dimen>
+    <!-- Half the outline width. The outline is drawn on the edge of the cover, so this keeps the picture from covering its inner half. -->
+    <dimen name="book_cover_outline_padding">0.5dp</dimen>
+</resources>
