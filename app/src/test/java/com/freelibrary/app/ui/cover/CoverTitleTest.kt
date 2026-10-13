@@ -53,4 +53,31 @@ class CoverTitleTest {
         assertEquals(CoverTitle("", null), CoverTitle.parse(""))
         assertEquals(CoverTitle("", null), CoverTitle.parse("   "))
     }
+
+    @Test
+    fun `a subfield code after a colon is dropped and the subtitle follows it`() {
+        assertEquals(
+            CoverTitle("Medieval cities", "Their origins and the revival of trade"),
+            CoverTitle.parse("Medieval cities : \$b Their origins and the revival of trade"),
+        )
+    }
+
+    @Test
+    fun `a subfield code with no colon in front of it splits the title`() {
+        assertEquals(
+            CoverTitle("Twilight", "A story of two villages"),
+            CoverTitle.parse("Twilight \$b A story of two villages"),
+        )
+    }
+
+    @Test
+    fun `a subfield code at the end leaves no blank subtitle`() {
+        assertEquals(CoverTitle("Hamlet", null), CoverTitle.parse("Hamlet \$b"))
+    }
+
+    @Test
+    fun `a dollar sign inside real text is left alone`() {
+        assertEquals(CoverTitle("Save \$5 now", null), CoverTitle.parse("Save \$5 now"))
+        assertEquals(CoverTitle("Pay \$bill later", null), CoverTitle.parse("Pay \$bill later"))
+    }
 }
