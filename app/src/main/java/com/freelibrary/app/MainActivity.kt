@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.freelibrary.app.data.repository.CatalogSyncRunner
 import com.freelibrary.app.data.repository.SettingsRepository
 import com.freelibrary.app.databinding.ActivityMainBinding
 import com.freelibrary.app.ui.theme.shouldUseTrueBlack
@@ -21,11 +22,15 @@ import javax.inject.Inject
  *
  * It also puts the true black overlay on its theme while dark mode is showing and the reader
  * chose true black, and recreates itself when that choice changes.
+ * The first time it is created in a process it also starts the catalog sync in the background.
  */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
+
+    @Inject
+    lateinit var catalogSyncRunner: CatalogSyncRunner
 
     private lateinit var binding: ActivityMainBinding
     private var usesTrueBlack = false
@@ -39,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         recreateWhenTrueBlackChanges()
+        catalogSyncRunner.startOnce()
     }
 
     private fun recreateWhenTrueBlackChanges() {
