@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FreeLibrary</string>
-    <string name="home_placeholder_message">Home screen — real content lands in Phase 2.</string>
     <string name="home_continue_reading">Continue Reading</string>
     <string name="home_want_to_read">Want to Read</string>
     <string name="home_recently_added">Recently Added</string>
