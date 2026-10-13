@@ -40,12 +40,19 @@ class BookSliderViewHolder(
         heading: String,
         slider: BookSlider,
         onViewMore: () -> Unit,
+    ) = bind(heading, slider.books, slider.hasMore, onViewMore)
+
+    fun bind(
+        heading: String,
+        books: List<BookCard>,
+        hasMore: Boolean,
+        onViewMore: () -> Unit,
     ) {
         binding.sliderHeading.text = heading
-        binding.sliderViewMore.isVisible = slider.hasMore
+        binding.sliderViewMore.isVisible = hasMore
         binding.sliderViewMore.contentDescription = itemView.context.getString(R.string.view_more_in, heading)
         binding.sliderViewMore.setOnClickListener { onViewMore() }
-        bookAdapter.submitList(slider.books)
+        bookAdapter.submitList(books)
     }
 
     companion object {
