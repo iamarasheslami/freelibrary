@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var catalogSyncRunner: CatalogSyncRunner
+
     private lateinit var binding: ActivityMainBinding
     private var usesTrueBlack = false
 
