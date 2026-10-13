@@ -22,4 +22,5 @@
     <string name="shelf_christmas">Christmas</string>
     <string name="view_more">View more</string>
     <string name="view_more_in">View more in %1$s</string>
+    <string name="back">Back</string>
 </resources>
