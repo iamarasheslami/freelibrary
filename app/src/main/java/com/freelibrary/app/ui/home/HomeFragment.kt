@@ -9,8 +9,12 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import coil.ImageLoader
+import com.freelibrary.app.R
 import com.freelibrary.app.databinding.FragmentHomeBinding
+import com.freelibrary.app.domain.model.HomeSection
+import com.freelibrary.app.ui.booklist.toArgs
 import com.freelibrary.app.ui.cover.CoverTypefaces
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import dagger.hilt.android.AndroidEntryPoint
@@ -19,7 +23,8 @@ import javax.inject.Inject
 
 /**
  * The home screen: a scrolling title followed by the reader's own sliders and the curated shelves.
- * Nothing is drawn until the first lists arrive. Taps do nothing yet; navigation comes next.
+ * Nothing is drawn until the first lists arrive. "View more" opens the full list; taps on a book
+ * do nothing yet.
  *
  * The catalog sync does not start here: MainActivity starts it once per app start.
  */
@@ -51,7 +56,7 @@ class HomeFragment : Fragment() {
                 typefaces = CoverTypefaces.from(requireContext()),
                 imageLoader = imageLoader,
                 onBookClick = {},
-                onViewMore = {},
+                onViewMore = ::openList,
             )
         binding.homeList.adapter = adapter
         binding.homeList.applySystemBarInsetsAsPadding()
@@ -66,6 +71,20 @@ class HomeFragment : Fragment() {
                 }
             }
         }
+    }
+
+    /** Opens the full list of a section. A second tap while the page is opening is ignored. */
+    private fun openList(section: HomeSection) {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.homeFragment) return
+        val args = section.viewMore.toArgs()
+        navController.navigate(
+            HomeFragmentDirections.actionHomeFragmentToBookListFragment(
+                kind = args.kind,
+                titleRes = section.titleRes,
+                bookshelfName = args.bookshelfName,
+            ),
+        )
     }
 
     override fun onDestroyView() {

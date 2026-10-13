@@ -10,7 +10,6 @@ import coil.ImageLoader
 import com.freelibrary.app.databinding.ItemHomeHeaderBinding
 import com.freelibrary.app.domain.model.BookCard
 import com.freelibrary.app.domain.model.HomeSection
-import com.freelibrary.app.domain.model.ViewMoreTarget
 import com.freelibrary.app.ui.booklist.BookSliderViewHolder
 import com.freelibrary.app.ui.cover.CoverTypefaces
 
@@ -30,7 +29,7 @@ class HomeAdapter(
     private val typefaces: CoverTypefaces,
     private val imageLoader: ImageLoader,
     private val onBookClick: (BookCard) -> Unit,
-    private val onViewMore: (ViewMoreTarget) -> Unit,
+    private val onViewMore: (HomeSection) -> Unit,
 ) : ListAdapter<HomeRow, RecyclerView.ViewHolder>(DIFF) {
     private val viewPool = RecyclerView.RecycledViewPool()
 
@@ -62,7 +61,7 @@ class HomeAdapter(
                 heading = holder.itemView.context.getString(section.titleRes),
                 books = section.books,
                 hasMore = section.hasMore,
-                onViewMore = { onViewMore(section.viewMore) },
+                onViewMore = { onViewMore(section) },
             )
         }
     }
