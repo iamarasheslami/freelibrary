@@ -11,4 +11,7 @@
     <dimen name="book_cover_outline_width">1dp</dimen>
     <!-- Half the outline width. The outline is drawn on the edge of the cover, so this keeps the picture from covering its inner half. -->
     <dimen name="book_cover_outline_padding">0.5dp</dimen>
+
+    <!-- The cover on a book's own page; its height follows from the 2:3 shape. -->
+    <dimen name="book_page_cover_width">128dp</dimen>
 </resources>

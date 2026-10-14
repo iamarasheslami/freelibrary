@@ -23,4 +23,12 @@
     <string name="view_more">View more</string>
     <string name="view_more_in">View more in %1$s</string>
     <string name="back">Back</string>
+    <string name="book_page_about">About this book</string>
+    <string name="book_page_not_found">This book is not in the catalog any more.</string>
+    <string name="book_page_status_want_to_read">On your Want to Read list</string>
+    <string name="book_page_status_reading">Currently reading</string>
+    <string name="book_page_status_finished">Finished</string>
+    <string name="shelf_action_save">Save for later</string>
+    <string name="shelf_action_mark_finished">Mark as finished</string>
+    <string name="shelf_action_remove">Remove from my shelf</string>
 </resources>
