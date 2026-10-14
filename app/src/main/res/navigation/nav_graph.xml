@@ -27,7 +27,13 @@
             app:argType="string" />
         <argument
             android:name="titleRes"
+            android:defaultValue="0"
             app:argType="reference" />
+        <argument
+            android:name="title"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
         <argument
             android:name="bookshelfName"
             android:defaultValue="@null"
