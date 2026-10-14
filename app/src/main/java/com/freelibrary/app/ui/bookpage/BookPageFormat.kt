@@ -1,6 +1,7 @@
 package com.freelibrary.app.ui.bookpage
 
 import com.freelibrary.app.domain.model.BookAuthorCredit
+import com.freelibrary.app.ui.cover.CoverTitle
 import java.util.Locale
 
 /** A credited person as the page shows them: the name, then their years in brackets when known. */
@@ -23,4 +24,10 @@ fun languageName(
     val tag = code?.trim().orEmpty()
     if (tag.isEmpty()) return null
     return Locale.forLanguageTag(tag).getDisplayLanguage(locale).ifBlank { null }
+}
+
+/** The title in one piece, "Main: Subtitle", cleaned of line breaks and the catalog's markers. */
+fun pageTitle(title: String): String {
+    val parsed = CoverTitle.parse(title)
+    return if (parsed.subtitle == null) parsed.main else "${parsed.main}: ${parsed.subtitle}"
 }

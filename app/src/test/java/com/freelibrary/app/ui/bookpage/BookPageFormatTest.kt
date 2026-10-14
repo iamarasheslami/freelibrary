@@ -40,4 +40,25 @@ class BookPageFormatTest {
         assertNull(languageName("", Locale.ENGLISH))
         assertNull(languageName("   ", Locale.ENGLISH))
     }
+
+    @Test
+    fun `a title with a semicolon subtitle reads as one piece`() {
+        assertEquals(
+            "Frankenstein: Or, The Modern Prometheus",
+            pageTitle("Frankenstein; Or, The Modern Prometheus"),
+        )
+    }
+
+    @Test
+    fun `the catalog subfield marker does not reach the page`() {
+        assertEquals(
+            "Medieval cities: Their origins and the revival of trade",
+            pageTitle("Medieval cities : \$b Their origins and the revival of trade"),
+        )
+    }
+
+    @Test
+    fun `a plain title stays as it is`() {
+        assertEquals("Hamlet", pageTitle("Hamlet"))
+    }
 }
