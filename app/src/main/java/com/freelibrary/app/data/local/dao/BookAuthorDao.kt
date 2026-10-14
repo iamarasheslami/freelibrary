@@ -20,6 +20,7 @@ interface BookAuthorDao {
         SELECT authors.* FROM authors
         INNER JOIN book_authors ON authors.id = book_authors.authorId
         WHERE book_authors.bookId = :bookId
+        ORDER BY book_authors.id
         """,
     )
     suspend fun getAuthorsForBook(bookId: Long): List<Author>
