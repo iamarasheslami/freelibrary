@@ -13,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import coil.ImageLoader
 import com.freelibrary.app.R
 import com.freelibrary.app.databinding.FragmentHomeBinding
+import com.freelibrary.app.domain.model.BookCard
 import com.freelibrary.app.domain.model.HomeSection
 import com.freelibrary.app.ui.booklist.toArgs
 import com.freelibrary.app.ui.cover.CoverTypefaces
@@ -55,7 +56,7 @@ class HomeFragment : Fragment() {
             HomeAdapter(
                 typefaces = CoverTypefaces.from(requireContext()),
                 imageLoader = imageLoader,
-                onBookClick = {},
+                onBookClick = ::openBook,
                 onViewMore = ::openList,
             )
         binding.homeList.adapter = adapter
@@ -85,6 +86,13 @@ class HomeFragment : Fragment() {
                 bookshelfName = args.bookshelfName,
             ),
         )
+    }
+
+    /** Opens a book's own page. A second tap while the page is opening is ignored. */
+    private fun openBook(book: BookCard) {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.homeFragment) return
+        navController.navigate(HomeFragmentDirections.actionHomeFragmentToBookPageFragment(bookId = book.bookId))
     }
 
     override fun onDestroyView() {

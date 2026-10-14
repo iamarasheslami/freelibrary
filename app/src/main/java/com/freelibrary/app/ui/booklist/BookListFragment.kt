@@ -14,6 +14,7 @@ import androidx.navigation.fragment.navArgs
 import coil.ImageLoader
 import com.freelibrary.app.R
 import com.freelibrary.app.databinding.FragmentBookListBinding
+import com.freelibrary.app.domain.model.BookCard
 import com.freelibrary.app.ui.cover.CoverTypefaces
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,7 +24,7 @@ import javax.inject.Inject
 
 /**
  * The full list behind a "View more" button: a title bar with a back arrow above a grid of cards.
- * Which list it shows comes from its navigation arguments. Taps on a book do nothing yet.
+ * Which list it shows comes from its navigation arguments. A tap on a book opens its own page.
  */
 @AndroidEntryPoint
 class BookListFragment : Fragment() {
@@ -55,7 +56,7 @@ class BookListFragment : Fragment() {
 
         val cardWidth = resources.getDimensionPixelSize(R.dimen.book_card_width)
         val gap = resources.getDimensionPixelSize(R.dimen.spacing_s)
-        val adapter = BookPagingAdapter(CoverTypefaces.from(requireContext()), imageLoader, onBookClick = {})
+        val adapter = BookPagingAdapter(CoverTypefaces.from(requireContext()), imageLoader, onBookClick = ::openBook)
         binding.bookListGrid.layoutManager = AutoSpanGridLayoutManager(requireContext(), cardWidth, gap)
         binding.bookListGrid.addItemDecoration(CenteredCardDecoration(cardWidth, rowGapPx = gap * 2))
         binding.bookListGrid.adapter = adapter
@@ -65,6 +66,13 @@ class BookListFragment : Fragment() {
                 viewModel.pages.collectLatest { adapter.submitData(it) }
             }
         }
+    }
+
+    /** Opens a book's own page. A second tap while the page is opening is ignored. */
+    private fun openBook(book: BookCard) {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.bookListFragment) return
+        navController.navigate(BookListFragmentDirections.actionBookListFragmentToBookPageFragment(bookId = book.bookId))
     }
 
     override fun onDestroyView() {

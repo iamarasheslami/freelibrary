@@ -13,6 +13,9 @@
         <action
             android:id="@+id/action_homeFragment_to_bookListFragment"
             app:destination="@id/bookListFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_bookPageFragment"
+            app:destination="@id/bookPageFragment" />
     </fragment>
 
     <fragment
@@ -30,6 +33,18 @@
             android:defaultValue="@null"
             app:argType="string"
             app:nullable="true" />
+        <action
+            android:id="@+id/action_bookListFragment_to_bookPageFragment"
+            app:destination="@id/bookPageFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/bookPageFragment"
+        android:name="com.freelibrary.app.ui.bookpage.BookPageFragment"
+        tools:layout="@layout/fragment_book_page">
+        <argument
+            android:name="bookId"
+            app:argType="long" />
     </fragment>
 
 </navigation>
