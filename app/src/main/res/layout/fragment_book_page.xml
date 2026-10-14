@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/bookPageRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/bookPageToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:navigationContentDescription="@string/back"
+        app:navigationIcon="?attr/homeAsUpIndicator" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/bookPageScroll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="@dimen/spacing_m"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="@dimen/spacing_m"
+                android:paddingEnd="@dimen/spacing_m">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- The cover is decorative: the title next to it says what the book is. -->
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/bookPageCover"
+                        android:layout_width="@dimen/book_page_cover_width"
+                        android:layout_height="0dp"
+                        android:importantForAccessibility="no"
+                        android:padding="@dimen/book_cover_outline_padding"
+                        android:scaleType="centerCrop"
+                        app:layout_constraintDimensionRatio="2:3"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.FreeLibrary.BookCover"
+                        app:strokeColor="?attr/colorOutlineVariant"
+                        app:strokeWidth="@dimen/book_cover_outline_width"
+                        tools:src="@tools:sample/backgrounds/scenic" />
+
+                    <TextView
+                        android:id="@+id/bookPageTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/spacing_m"
+                        android:textAppearance="@style/TextAppearance.FreeLibrary.HeadlineSmall"
+                        android:textColor="?attr/colorOnSurface"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/bookPageCover"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="Pride and Prejudice" />
+
+                    <TextView
+                        android:id="@+id/bookPageAuthors"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_s"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        app:layout_constraintEnd_toEndOf="@id/bookPageTitle"
+                        app:layout_constraintStart_toStartOf="@id/bookPageTitle"
+                        app:layout_constraintTop_toBottomOf="@id/bookPageTitle"
+                        tools:text="Austen, Jane (1775–1817)" />
+
+                    <TextView
+                        android:id="@+id/bookPageLanguage"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_s"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        app:layout_constraintEnd_toEndOf="@id/bookPageTitle"
+                        app:layout_constraintStart_toStartOf="@id/bookPageTitle"
+                        app:layout_constraintTop_toBottomOf="@id/bookPageAuthors"
+                        tools:text="English" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <TextView
+                    android:id="@+id/bookPageStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_m"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorOnSurface"
+                    android:visibility="gone"
+                    tools:text="Currently reading"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/bookPagePrimaryButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_s"
+                    android:visibility="gone"
+                    tools:text="Save for later"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/bookPageSecondaryButton"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    tools:text="Remove from my shelf"
+                    tools:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/bookPageAboutHeading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_m"
+                    android:text="@string/book_page_about"
+                    android:textAppearance="@style/TextAppearance.FreeLibrary.TitleLarge"
+                    android:textColor="?attr/colorOnSurface"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/bookPageSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_s"
+                    android:textAppearance="?attr/textAppearanceBodyLarge"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textIsSelectable="true"
+                    android:visibility="gone"
+                    tools:text="@tools:sample/lorem/random"
+                    tools:visibility="visible" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <TextView
+            android:id="@+id/bookPageNotFound"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="@dimen/spacing_m"
+            android:text="@string/book_page_not_found"
+            android:textAlignment="center"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+</LinearLayout>
