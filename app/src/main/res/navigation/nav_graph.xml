@@ -16,6 +16,21 @@
         <action
             android:id="@+id/action_homeFragment_to_bookPageFragment"
             app:destination="@id/bookPageFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_exploreFragment"
+            app:destination="@id/exploreFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/exploreFragment"
+        android:name="com.freelibrary.app.ui.explore.ExploreFragment"
+        tools:layout="@layout/fragment_explore">
+        <action
+            android:id="@+id/action_exploreFragment_to_bookListFragment"
+            app:destination="@id/bookListFragment" />
+        <action
+            android:id="@+id/action_exploreFragment_to_bookPageFragment"
+            app:destination="@id/bookPageFragment" />
     </fragment>
 
     <fragment

@@ -23,6 +23,9 @@
     <string name="view_more">View more</string>
     <string name="view_more_in">View more in %1$s</string>
     <string name="back">Back</string>
+    <string name="explore_title">Explore</string>
+    <string name="explore_empty">No shelves to show yet. They appear after the first catalog sync.</string>
+    <string name="home_explore">Explore all categories</string>
     <string name="book_page_about">About this book</string>
     <string name="book_page_not_found">This book is not in the catalog any more.</string>
     <string name="book_page_status_want_to_read">On your Want to Read list</string>
