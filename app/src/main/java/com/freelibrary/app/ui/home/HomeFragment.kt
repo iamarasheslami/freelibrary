@@ -58,6 +58,7 @@ class HomeFragment : Fragment() {
                 imageLoader = imageLoader,
                 onBookClick = ::openBook,
                 onViewMore = ::openList,
+                onExplore = ::openExplore,
             )
         binding.homeList.adapter = adapter
         binding.homeList.applySystemBarInsetsAsPadding()
@@ -86,6 +87,13 @@ class HomeFragment : Fragment() {
                 bookshelfName = args.bookshelfName,
             ),
         )
+    }
+
+    /** Opens the Explore page. A second tap while the page is opening is ignored. */
+    private fun openExplore() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.homeFragment) return
+        navController.navigate(HomeFragmentDirections.actionHomeFragmentToExploreFragment())
     }
 
     /** Opens a book's own page. A second tap while the page is opening is ignored. */

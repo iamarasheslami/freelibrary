@@ -51,7 +51,18 @@ class HomeAdapterTest {
         viewMore = ViewMoreTarget.RecentlyAdded,
     )
 
-    private fun adapter() = HomeAdapter(CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT), imageLoader, {}, {})
+    private fun adapter(onExplore: () -> Unit = {}) =
+        HomeAdapter(CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT), imageLoader, {}, {}, onExplore)
+
+    @Test
+    fun `the explore button in the header calls back`() {
+        var opened = 0
+        val holder = adapter { opened++ }.onCreateViewHolder(FrameLayout(context), HomeAdapter.TYPE_HEADER)
+
+        holder.itemView.findViewById<android.view.View>(R.id.homeExplore).performClick()
+
+        assertEquals(1, opened)
+    }
 
     @Test
     fun `the title row comes first and every section follows it in order`() {
