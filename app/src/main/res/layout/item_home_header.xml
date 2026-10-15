@@ -1,12 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/homeTitle"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
     android:paddingStart="@dimen/spacing_m"
     android:paddingTop="@dimen/spacing_m"
-    android:paddingEnd="@dimen/spacing_m"
-    android:paddingBottom="@dimen/spacing_s"
-    android:text="@string/app_name"
-    android:textAppearance="@style/TextAppearance.FreeLibrary.HeadlineMedium"
-    android:textColor="?attr/colorOnSurface" />
+    android:paddingEnd="@dimen/spacing_s"
+    android:paddingBottom="@dimen/spacing_s">
+
+    <TextView
+        android:id="@+id/homeTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/app_name"
+        android:textAppearance="@style/TextAppearance.FreeLibrary.HeadlineMedium"
+        android:textColor="?attr/colorOnSurface" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/homeExplore"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/home_explore"
+        android:text="@string/explore_title" />
+
+</LinearLayout>

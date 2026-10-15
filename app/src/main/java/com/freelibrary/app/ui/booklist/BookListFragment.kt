@@ -51,7 +51,8 @@ class BookListFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         binding.bookListRoot.applySystemBarInsetsAsPadding()
-        binding.bookListToolbar.setTitle(args.titleRes)
+        val title = args.title
+        if (title != null) binding.bookListToolbar.title = title else binding.bookListToolbar.setTitle(args.titleRes)
         binding.bookListToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
         val cardWidth = resources.getDimensionPixelSize(R.dimen.book_card_width)
