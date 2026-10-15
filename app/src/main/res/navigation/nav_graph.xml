@@ -31,6 +31,18 @@
         <action
             android:id="@+id/action_exploreFragment_to_bookPageFragment"
             app:destination="@id/bookPageFragment" />
+        <action
+            android:id="@+id/action_exploreFragment_to_searchFragment"
+            app:destination="@id/searchFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.freelibrary.app.ui.search.SearchFragment"
+        tools:layout="@layout/fragment_search">
+        <action
+            android:id="@+id/action_searchFragment_to_bookPageFragment"
+            app:destination="@id/bookPageFragment" />
     </fragment>
 
     <fragment

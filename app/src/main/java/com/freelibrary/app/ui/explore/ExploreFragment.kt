@@ -55,6 +55,15 @@ class ExploreFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.exploreRoot.applySystemBarInsetsAsPadding()
         binding.exploreToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
+        binding.exploreToolbar.inflateMenu(R.menu.menu_explore)
+        binding.exploreToolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId == R.id.action_search) {
+                openSearch()
+                true
+            } else {
+                false
+            }
+        }
 
         val adapter =
             ExploreAdapter(
@@ -88,6 +97,13 @@ class ExploreFragment : Fragment() {
                 title = if (section.titleRes == null) section.title else null,
             ),
         )
+    }
+
+    /** Opens the search screen. A second tap while the page is opening is ignored. */
+    private fun openSearch() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.exploreFragment) return
+        navController.navigate(ExploreFragmentDirections.actionExploreFragmentToSearchFragment())
     }
 
     /** Opens a book's own page. A second tap while the page is opening is ignored. */
