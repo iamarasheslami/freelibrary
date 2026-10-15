@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/profileRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/profileTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/spacing_m"
+        android:paddingTop="@dimen/spacing_m"
+        android:paddingEnd="@dimen/spacing_m"
+        android:paddingBottom="@dimen/spacing_s"
+        android:text="@string/profile_title"
+        android:textAppearance="@style/TextAppearance.FreeLibrary.HeadlineMedium"
+        android:textColor="?attr/colorOnSurface" />
+
+    <TextView
+        android:id="@+id/profilePlaceholder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/spacing_m"
+        android:paddingEnd="@dimen/spacing_m"
+        android:text="@string/profile_placeholder"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="?attr/colorOnSurfaceVariant" />
+
+</LinearLayout>

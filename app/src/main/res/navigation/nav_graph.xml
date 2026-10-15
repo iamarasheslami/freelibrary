@@ -79,5 +79,9 @@
             android:name="bookId"
             app:argType="long" />
     </fragment>
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.freelibrary.app.ui.profile.ProfileFragment"
+        tools:layout="@layout/fragment_profile" />
 
 </navigation>
