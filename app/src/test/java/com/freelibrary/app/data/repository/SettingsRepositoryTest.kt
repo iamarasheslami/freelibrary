@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -22,6 +23,33 @@ import java.io.File
 class SettingsRepositoryTest {
     @get:Rule
     val temporaryFolder = TemporaryFolder()
+
+    @Test
+    fun `sync is Wi-Fi only until the reader turns that off`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            assertTrue(repository.wifiOnlySync.first())
+
+            repository.setWifiOnlySync(false)
+            assertFalse(repository.wifiOnlySync.first())
+
+            repository.setWifiOnlySync(true)
+            assertTrue(repository.wifiOnlySync.first())
+        }
+
+    @Test
+    fun `the last sync time is empty until a sync is recorded and then keeps the latest`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            assertNull(repository.lastCatalogSyncAt.first())
+
+            repository.recordCatalogSync(1_000L)
+            repository.recordCatalogSync(2_000L)
+
+            assertEquals(2_000L, repository.lastCatalogSyncAt.first())
+        }
 
     @Test
     fun `the theme is System until the reader picks one`() =
