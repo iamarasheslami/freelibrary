@@ -20,6 +20,8 @@ import com.freelibrary.app.domain.model.ExploreSection
 import com.freelibrary.app.domain.model.ViewMoreTarget
 import com.freelibrary.app.ui.booklist.toArgs
 import com.freelibrary.app.ui.cover.CoverTypefaces
+import com.freelibrary.app.ui.filter.FilterSheetFragment
+import com.freelibrary.app.ui.filter.showFilterOnNavigation
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -64,6 +66,9 @@ class ExploreFragment : Fragment() {
             }
         }
 
+        binding.exploreToolbar.showFilterOnNavigation(viewModel.filter.value.isActive)
+        binding.exploreToolbar.setNavigationOnClickListener { FilterSheetFragment.show(childFragmentManager) }
+
         val adapter =
             ExploreAdapter(
                 typefaces = CoverTypefaces.from(requireContext()),
@@ -73,12 +78,14 @@ class ExploreFragment : Fragment() {
             )
         binding.exploreList.adapter = adapter
         adapter.addLoadStateListener { states ->
+            binding.exploreEmpty.setText(if (viewModel.filter.value.isActive) R.string.explore_empty_filtered else R.string.explore_empty)
             binding.exploreEmpty.isVisible = states.refresh is LoadState.NotLoading && adapter.itemCount == 0
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.rows.collectLatest { adapter.submitData(it) }
+                launch { viewModel.rows.collectLatest { adapter.submitData(it) } }
+                launch { viewModel.filter.collect { binding.exploreToolbar.showFilterOnNavigation(it.isActive) } }
             }
         }
     }

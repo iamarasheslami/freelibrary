@@ -65,6 +65,9 @@ class SearchViewModel
         val query: StateFlow<String> = _query
         val scope: StateFlow<SearchScope> = _scope
 
+        /** The shared filter, so the screen can show whether one is on. */
+        val filter: StateFlow<BookFilter> = filterHolder.filter
+
         val state: StateFlow<SearchState> =
             combine(
                 _query.map { it.trim() }.distinctUntilChanged().debounce { if (it.isEmpty()) 0L else DEBOUNCE_MS },

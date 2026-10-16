@@ -144,6 +144,13 @@ class ExploreViewModelTest {
         }
 
     @Test
+    fun `it exposes the shared filter`() {
+        filterHolder.update(BookFilter(language = "fr"))
+
+        assertEquals(BookFilter(language = "fr"), viewModel().filter.value)
+    }
+
+    @Test
     fun `a shelf with too few books is not listed`() =
         runTest {
             addShelf("Poetry", 9)

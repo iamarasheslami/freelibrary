@@ -21,6 +21,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.freelibrary.app.R
 import com.freelibrary.app.data.repository.SearchResult
 import com.freelibrary.app.databinding.FragmentSearchBinding
+import com.freelibrary.app.ui.filter.FilterSheetFragment
+import com.freelibrary.app.ui.filter.showFilterState
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.freelibrary.shared.SearchScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -56,6 +58,17 @@ class SearchFragment : Fragment() {
         binding.searchToolbar.setNavigationOnClickListener {
             hideKeyboard()
             findNavController().navigateUp()
+        }
+        binding.searchToolbar.inflateMenu(R.menu.menu_search)
+        val filterItem = binding.searchToolbar.menu.findItem(R.id.action_filter)
+        filterItem.showFilterState(requireContext(), viewModel.filter.value.isActive)
+        binding.searchToolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId == R.id.action_filter) {
+                FilterSheetFragment.show(childFragmentManager)
+                true
+            } else {
+                false
+            }
         }
         ViewCompat.setAccessibilityLiveRegion(binding.searchMessage, ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE)
 
@@ -96,7 +109,8 @@ class SearchFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collect { render(it, adapter) }
+                launch { viewModel.state.collect { render(it, adapter) } }
+                launch { viewModel.filter.collect { filterItem.showFilterState(requireContext(), it.isActive) } }
             }
         }
     }
@@ -109,7 +123,11 @@ class SearchFragment : Fragment() {
         when (state) {
             SearchState.Idle -> showMessage(adapter, R.string.search_idle)
             SearchState.Loading -> Unit
-            SearchState.NoResults -> showMessage(adapter, R.string.search_no_results)
+            SearchState.NoResults ->
+                showMessage(
+                    adapter,
+                    if (viewModel.filter.value.isActive) R.string.search_no_results_filtered else R.string.search_no_results,
+                )
             SearchState.Failed -> showMessage(adapter, R.string.search_failed)
             is SearchState.Results -> {
                 binding.searchMessage.isVisible = false

@@ -146,6 +146,14 @@ class SearchViewModelTest {
         }
 
     @Test
+    fun `it exposes the shared filter`() =
+        runTest {
+            filterHolder.update(BookFilter(formats = setOf("epub")))
+
+            assertEquals(BookFilter(formats = setOf("epub")), watched().filter.value)
+        }
+
+    @Test
     fun `clearing the query goes back to idle`() =
         runTest {
             val viewModel = watched()

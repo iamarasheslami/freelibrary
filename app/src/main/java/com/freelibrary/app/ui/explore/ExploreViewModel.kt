@@ -8,10 +8,12 @@ import androidx.paging.map
 import com.freelibrary.app.data.repository.BookFilterHolder
 import com.freelibrary.app.data.repository.BookListRepository
 import com.freelibrary.app.data.repository.ExploreRepository
+import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.app.domain.model.ExploreRow
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -32,6 +34,9 @@ class ExploreViewModel
         bookListRepository: BookListRepository,
         filterHolder: BookFilterHolder,
     ) : ViewModel() {
+        /** The shared filter, so the page can show whether one is on. */
+        val filter: StateFlow<BookFilter> = filterHolder.filter
+
         val rows: Flow<PagingData<ExploreRow>> =
             filterHolder.filter
                 .flatMapLatest { filter ->
