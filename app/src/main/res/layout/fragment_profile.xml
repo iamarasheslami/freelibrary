@@ -1,21 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/profileRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/profileTitle"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingStart="@dimen/spacing_m"
-        android:paddingTop="@dimen/spacing_m"
-        android:paddingEnd="@dimen/spacing_m"
-        android:paddingBottom="@dimen/spacing_s"
-        android:text="@string/profile_title"
-        android:textAppearance="@style/TextAppearance.FreeLibrary.HeadlineMedium"
-        android:textColor="?attr/colorOnSurface" />
+        android:paddingTop="@dimen/spacing_s"
+        android:paddingEnd="@dimen/spacing_s"
+        android:paddingBottom="@dimen/spacing_s">
+
+        <TextView
+            android:id="@+id/profileTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/profile_title"
+            android:textAppearance="@style/TextAppearance.FreeLibrary.HeadlineMedium"
+            android:textColor="?attr/colorOnSurface" />
+
+        <ImageButton
+            android:id="@+id/profileSettings"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings_title"
+            android:src="@drawable/ic_settings"
+            app:tint="?attr/colorOnSurface" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/profilePlaceholder"

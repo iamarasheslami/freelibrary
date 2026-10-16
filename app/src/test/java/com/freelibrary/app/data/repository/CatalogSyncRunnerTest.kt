@@ -2,7 +2,9 @@ package com.freelibrary.app.data.repository
 
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -16,6 +18,50 @@ class CatalogSyncRunnerTest {
         updated: Int = 0,
         failed: Int = 0,
     ) = SyncResult(added = added, updated = updated, failed = failed, failureSamples = emptyList())
+
+    @Test
+    fun `a sync that ran is reported as synced, even when some books failed`() =
+        runTest {
+            var synced = 0
+
+            runCatalogSync(sync = { result(failed = 2) }, onCatalogChanged = {}, onSynced = { synced++ })
+
+            assertEquals(1, synced)
+        }
+
+    @Test
+    fun `a sync that could not run is not reported as synced`() =
+        runTest {
+            var synced = 0
+
+            runCatalogSync(
+                sync = { throw CatalogSyncException("Failed to fetch sync manifest") },
+                onCatalogChanged = {},
+                onSynced = { synced++ },
+            )
+
+            assertEquals(0, synced)
+        }
+
+    @Test
+    fun `automatic sync is blocked only on a metered connection with Wi-Fi only on`() {
+        assertFalse(mayAutoSync(wifiOnly = true, metered = true))
+        assertTrue(mayAutoSync(wifiOnly = true, metered = false))
+        assertTrue(mayAutoSync(wifiOnly = false, metered = true))
+        assertTrue(mayAutoSync(wifiOnly = false, metered = false))
+    }
+
+    @Test
+    fun `the automatic sync runs when allowed and is skipped when not`() =
+        runTest {
+            var runs = 0
+
+            runIfAllowed(wifiOnly = true, metered = true) { runs++ }
+            assertEquals(0, runs)
+
+            runIfAllowed(wifiOnly = true, metered = false) { runs++ }
+            assertEquals(1, runs)
+        }
 
     @Test
     fun `new books tell the caches the catalog changed`() =

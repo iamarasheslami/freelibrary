@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.freelibrary.app.R
 import com.freelibrary.app.databinding.FragmentProfileBinding
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 
@@ -30,6 +32,14 @@ class ProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.profileRoot.applySystemBarInsetsAsPadding()
         ViewCompat.setAccessibilityHeading(binding.profileTitle, true)
+        binding.profileSettings.setOnClickListener { openSettings() }
+    }
+
+    /** Opens Settings. A second tap while the page is opening is ignored. */
+    private fun openSettings() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.profileFragment) return
+        navController.navigate(ProfileFragmentDirections.actionProfileFragmentToSettingsFragment())
     }
 
     override fun onDestroyView() {

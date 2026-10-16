@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +40,17 @@ class SettingsRepository
         val trueBlack: Flow<Boolean> =
             storedPreferences.map { preferences -> preferences[TRUE_BLACK_KEY] ?: false }
 
+        /**
+         * Whether the catalog syncs by itself only on a connection that is not metered (normally
+         * Wi-Fi), so it never uses the reader's mobile data. On until the reader turns it off.
+         */
+        val wifiOnlySync: Flow<Boolean> =
+            storedPreferences.map { preferences -> preferences[WIFI_ONLY_SYNC_KEY] ?: true }
+
+        /** When the catalog last synced successfully, in epoch milliseconds; null if it never has. */
+        val lastCatalogSyncAt: Flow<Long?> =
+            storedPreferences.map { preferences -> preferences[LAST_CATALOG_SYNC_KEY] }
+
         suspend fun setThemeMode(mode: ThemeMode) {
             dataStore.edit { preferences -> preferences[THEME_MODE_KEY] = mode.name }
         }
@@ -47,8 +59,18 @@ class SettingsRepository
             dataStore.edit { preferences -> preferences[TRUE_BLACK_KEY] = enabled }
         }
 
+        suspend fun setWifiOnlySync(enabled: Boolean) {
+            dataStore.edit { preferences -> preferences[WIFI_ONLY_SYNC_KEY] = enabled }
+        }
+
+        suspend fun recordCatalogSync(atMillis: Long) {
+            dataStore.edit { preferences -> preferences[LAST_CATALOG_SYNC_KEY] = atMillis }
+        }
+
         private companion object {
             val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
             val TRUE_BLACK_KEY = booleanPreferencesKey("true_black")
+            val WIFI_ONLY_SYNC_KEY = booleanPreferencesKey("wifi_only_sync")
+            val LAST_CATALOG_SYNC_KEY = longPreferencesKey("last_catalog_sync_at")
         }
     }
