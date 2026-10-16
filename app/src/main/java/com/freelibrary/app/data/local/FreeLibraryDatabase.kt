@@ -3,6 +3,7 @@ package com.freelibrary.app.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.freelibrary.app.data.local.dao.AuthorDao
+import com.freelibrary.app.data.local.dao.BackupDao
 import com.freelibrary.app.data.local.dao.BookAuthorDao
 import com.freelibrary.app.data.local.dao.BookBookshelfDao
 import com.freelibrary.app.data.local.dao.BookDao
@@ -102,4 +103,6 @@ abstract class FreeLibraryDatabase : RoomDatabase() {
     abstract fun bookShelfStateDao(): BookShelfStateDao
 
     abstract fun bookListDao(): BookListDao
+
+    abstract fun backupDao(): BackupDao
 }
