@@ -77,7 +77,7 @@ class CatalogSyncRunner
         private val settingsRepository: SettingsRepository,
         private val networkState: NetworkState,
         private val timeProvider: TimeProvider,
-    ) {
+    ) : CatalogSyncer {
         // An unexpected error in the background is logged, never allowed to crash the app on start.
         private val scope =
             CoroutineScope(
@@ -85,6 +85,9 @@ class CatalogSyncRunner
                     CoroutineExceptionHandler { _, error -> Log.e(TAG, "The background catalog sync stopped unexpectedly", error) },
             )
         private val startGuard = OnceOnly()
+
+        /** The reader's own "Sync now": it runs whatever the Wi-Fi only choice is. */
+        override suspend fun syncNow(): SyncResult? = run()
 
         suspend fun run(): SyncResult? =
             runCatalogSync(
