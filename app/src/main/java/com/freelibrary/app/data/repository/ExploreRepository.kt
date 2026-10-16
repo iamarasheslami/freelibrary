@@ -4,6 +4,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.freelibrary.app.data.local.dao.BookListDao
+import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.app.domain.model.CatalogDefaults
 import com.freelibrary.app.domain.model.ExploreSection
 import com.freelibrary.app.domain.model.ExploreSections
@@ -29,13 +30,16 @@ class ExploreRepository
         private val bookListDao: BookListDao,
     ) {
         private val lock = Mutex()
-        private var cachedSections: List<ExploreSection>? = null
+        private var cached: Pair<BookFilter, List<ExploreSection>>? = null
 
-        /** All Explore sections in display order. */
-        suspend fun sections(): List<ExploreSection> = lock.withLock { cachedSections ?: loadSections().also { cachedSections = it } }
+        /** All Explore sections for [filter] in display order. Only the latest filter's list is kept. */
+        suspend fun sections(filter: BookFilter = BookFilter()): List<ExploreSection> =
+            lock.withLock {
+                cached?.takeIf { it.first == filter }?.second ?: loadSections(filter).also { cached = filter to it }
+            }
 
         /** The Explore page: ten sections at first, ten more each time the reader nears the end. */
-        fun sectionPages(): Flow<PagingData<ExploreSection>> =
+        fun sectionPages(filter: BookFilter = BookFilter()): Flow<PagingData<ExploreSection>> =
             Pager(
                 config =
                     PagingConfig(
@@ -44,18 +48,27 @@ class ExploreRepository
                         prefetchDistance = LOAD_MORE_WHEN_SECTIONS_LEFT,
                         enablePlaceholders = false,
                     ),
-                pagingSourceFactory = { ExploreSectionPagingSource(::sections) },
+                pagingSourceFactory = { ExploreSectionPagingSource { sections(filter) } },
             ).flow
 
         /** Forget the cached section list, so the shelf sizes are counted again on the next load. */
         suspend fun invalidate() {
-            lock.withLock { cachedSections = null }
+            lock.withLock { cached = null }
         }
 
-        private suspend fun loadSections(): List<ExploreSection> {
+        /** Without a filter a shelf needs [CatalogDefaults.MIN_SHELF_BOOKS] books; with one, any shelf that still has a book is listed. */
+        private suspend fun loadSections(filter: BookFilter): List<ExploreSection> {
+            val minBooks = if (filter.isActive) 1 else CatalogDefaults.MIN_SHELF_BOOKS
             val counts =
-                bookListDao.shelfBookCounts(CatalogDefaults.LANGUAGE, CatalogDefaults.MIN_SHELF_BOOKS)
-                    .map { ShelfBookCount(it.name, it.bookCount) }
+                bookListDao
+                    .shelfBookCounts(
+                        filter.browseLanguage,
+                        minBooks,
+                        filter.formats.toList(),
+                        filter.formats.isEmpty(),
+                        filter.genres.toList(),
+                        filter.genres.isEmpty(),
+                    ).map { ShelfBookCount(it.name, it.bookCount) }
             return ExploreSections.build(counts)
         }
     }

@@ -27,6 +27,7 @@ interface BookListDao {
         INNER JOIN book_bookshelves AS bb ON bb.bookId = b.id
         INNER JOIN bookshelves AS s ON s.id = bb.bookshelfId
         WHERE s.name = :shelfName AND b.primaryLanguage = :language
+        $BOOK_FILTER_SQL
         ORDER BY CAST(b.externalId AS INTEGER), b.id
         LIMIT :limit
         """,
@@ -35,6 +36,10 @@ interface BookListDao {
         shelfName: String,
         language: String,
         limit: Int,
+        formats: List<String>,
+        anyFormat: Boolean,
+        genres: List<String>,
+        anyGenre: Boolean,
     ): Flow<List<BookCardRow>>
 
     /** How many books the shelf holds in [language]; tells a slider whether to offer "View more". */
@@ -44,11 +49,16 @@ interface BookListDao {
         INNER JOIN book_bookshelves AS bb ON bb.bookId = b.id
         INNER JOIN bookshelves AS s ON s.id = bb.bookshelfId
         WHERE s.name = :shelfName AND b.primaryLanguage = :language
+        $BOOK_FILTER_SQL
         """,
     )
     fun observeShelfBookCount(
         shelfName: String,
         language: String,
+        formats: List<String>,
+        anyFormat: Boolean,
+        genres: List<String>,
+        anyGenre: Boolean,
     ): Flow<Int>
 
     /**
@@ -113,12 +123,17 @@ interface BookListDao {
         INNER JOIN book_bookshelves AS bb ON bb.bookId = b.id
         INNER JOIN bookshelves AS s ON s.id = bb.bookshelfId
         WHERE s.name = :shelfName AND b.primaryLanguage = :language
+        $BOOK_FILTER_SQL
         ORDER BY CAST(b.externalId AS INTEGER), b.id
         """,
     )
     fun shelfBooksPagingSource(
         shelfName: String,
         language: String,
+        formats: List<String>,
+        anyFormat: Boolean,
+        genres: List<String>,
+        anyGenre: Boolean,
     ): PagingSource<Int, BookCardRow>
 
     /** Paged version of [observeRecentlyAdded]: every book of the language, newest first. */
@@ -163,6 +178,7 @@ interface BookListDao {
         INNER JOIN book_bookshelves AS bb ON bb.bookshelfId = s.id
         INNER JOIN books AS b ON b.id = bb.bookId
         WHERE b.primaryLanguage = :language
+        $BOOK_FILTER_SQL
         GROUP BY s.id
         HAVING COUNT(*) >= :minBooks
         """,
@@ -170,5 +186,9 @@ interface BookListDao {
     suspend fun shelfBookCounts(
         language: String,
         minBooks: Int,
+        formats: List<String>,
+        anyFormat: Boolean,
+        genres: List<String>,
+        anyGenre: Boolean,
     ): List<ShelfCountRow>
 }

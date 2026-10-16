@@ -28,7 +28,15 @@ class HomeShelvesCatalogTest {
                 ).createFromAsset("catalog.sqlite").build()
 
             HomeShelves.all.forEach { shelf ->
-                val count = database.bookListDao().observeShelfBookCount(shelf.bookshelfName, "en").first()
+                val count =
+                    database.bookListDao().observeShelfBookCount(
+                        shelf.bookshelfName,
+                        "en",
+                        emptyList(),
+                        true,
+                        emptyList(),
+                        true,
+                    ).first()
                 assertTrue(
                     "'${shelf.bookshelfName}' has only $count English books in the bundled catalog",
                     count >= CatalogDefaults.BOOKS_PER_SLIDER,
@@ -36,7 +44,15 @@ class HomeShelvesCatalogTest {
 
                 val books =
                     database.bookListDao()
-                        .observeBooksOnShelf(shelf.bookshelfName, "en", CatalogDefaults.BOOKS_PER_SLIDER)
+                        .observeBooksOnShelf(
+                            shelf.bookshelfName,
+                            "en",
+                            CatalogDefaults.BOOKS_PER_SLIDER,
+                            emptyList(),
+                            true,
+                            emptyList(),
+                            true,
+                        )
                         .first()
                 assertEquals("'${shelf.bookshelfName}' slider is not full", CatalogDefaults.BOOKS_PER_SLIDER, books.size)
             }

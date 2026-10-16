@@ -9,6 +9,7 @@ import com.freelibrary.app.data.local.dao.BookCardRow
 import com.freelibrary.app.data.local.dao.BookListDao
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.domain.model.BookCard
+import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.app.domain.model.BookSlider
 import com.freelibrary.app.domain.model.CatalogDefaults
 import kotlinx.coroutines.flow.Flow
@@ -31,14 +32,28 @@ class BookListRepository
         private val bookListDao: BookListDao,
     ) {
         /** The slider of any catalog shelf, by its bookshelf name: its first books and its total size. */
-        fun observeShelfSlider(bookshelfName: String): Flow<BookSlider> =
+        fun observeShelfSlider(
+            bookshelfName: String,
+            filter: BookFilter = BookFilter(),
+        ): Flow<BookSlider> =
             combine(
                 bookListDao.observeBooksOnShelf(
                     bookshelfName,
-                    CatalogDefaults.LANGUAGE,
+                    filter.browseLanguage,
                     CatalogDefaults.BOOKS_PER_SLIDER,
+                    filter.formats.toList(),
+                    filter.formats.isEmpty(),
+                    filter.genres.toList(),
+                    filter.genres.isEmpty(),
                 ),
-                bookListDao.observeShelfBookCount(bookshelfName, CatalogDefaults.LANGUAGE),
+                bookListDao.observeShelfBookCount(
+                    bookshelfName,
+                    filter.browseLanguage,
+                    filter.formats.toList(),
+                    filter.formats.isEmpty(),
+                    filter.genres.toList(),
+                    filter.genres.isEmpty(),
+                ),
             ) { rows, total -> BookSlider(rows.map { it.toBookCard() }, total) }
 
         /** The Recently Added slider. */
@@ -47,8 +62,20 @@ class BookListRepository
                 .map { rows -> rows.map { it.toBookCard() } }
 
         /** Every book of a catalog shelf, for its "View more" page. */
-        fun shelfPages(bookshelfName: String): Flow<PagingData<BookCard>> =
-            pages { bookListDao.shelfBooksPagingSource(bookshelfName, CatalogDefaults.LANGUAGE) }
+        fun shelfPages(
+            bookshelfName: String,
+            filter: BookFilter = BookFilter(),
+        ): Flow<PagingData<BookCard>> =
+            pages {
+                bookListDao.shelfBooksPagingSource(
+                    bookshelfName,
+                    filter.browseLanguage,
+                    filter.formats.toList(),
+                    filter.formats.isEmpty(),
+                    filter.genres.toList(),
+                    filter.genres.isEmpty(),
+                )
+            }
 
         /** Every book, newest first, for the Recently Added "View more" page. */
         fun recentlyAddedPages(): Flow<PagingData<BookCard>> = pages { bookListDao.recentlyAddedPagingSource(CatalogDefaults.LANGUAGE) }
