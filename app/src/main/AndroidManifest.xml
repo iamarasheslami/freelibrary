@@ -4,6 +4,7 @@
     <!-- Required for the catalog sync client (Retrofit/OkHttp) to reach
          raw.githubusercontent.com. No other network access is needed. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".FreeLibraryApplication"
