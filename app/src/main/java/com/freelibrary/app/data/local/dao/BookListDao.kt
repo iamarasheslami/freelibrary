@@ -191,4 +191,40 @@ interface BookListDao {
         genres: List<String>,
         anyGenre: Boolean,
     ): List<ShelfCountRow>
+
+    /** Every language that at least one book has, with its book count, most books first. */
+    @Query(
+        """
+        SELECT primaryLanguage AS value, COUNT(*) AS bookCount
+        FROM books
+        WHERE primaryLanguage IS NOT NULL AND primaryLanguage != ''
+        GROUP BY primaryLanguage
+        ORDER BY bookCount DESC, value
+        """,
+    )
+    suspend fun languageOptions(): List<FilterOptionRow>
+
+    /** Every file format that at least one book has, with its book count, most books first. */
+    @Query(
+        """
+        SELECT formatType AS value, COUNT(*) AS bookCount
+        FROM book_formats
+        GROUP BY formatType
+        ORDER BY bookCount DESC, value
+        """,
+    )
+    suspend fun formatOptions(): List<FilterOptionRow>
+
+    /** Every genre shelf ("Category: ...") that has books, with its book count, most books first. */
+    @Query(
+        """
+        SELECT s.name AS value, COUNT(*) AS bookCount
+        FROM bookshelves AS s
+        INNER JOIN book_bookshelves AS bb ON bb.bookshelfId = s.id
+        WHERE s.name LIKE 'Category: %'
+        GROUP BY s.id
+        ORDER BY bookCount DESC, value
+        """,
+    )
+    suspend fun genreOptions(): List<FilterOptionRow>
 }
