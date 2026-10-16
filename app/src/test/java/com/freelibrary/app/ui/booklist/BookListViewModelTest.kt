@@ -7,11 +7,14 @@ import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookBookshelf
+import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.BookShelfState
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.data.repository.BookFilterHolder
 import com.freelibrary.app.data.repository.BookListRepository
+import com.freelibrary.app.domain.model.BookFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -31,6 +34,7 @@ import org.robolectric.RobolectricTestRunner
 class BookListViewModelTest {
     private lateinit var database: FreeLibraryDatabase
     private var sourceId: Long = 0
+    private val filterHolder = BookFilterHolder()
 
     @Before
     fun setUp() =
@@ -69,14 +73,17 @@ class BookListViewModelTest {
     private fun viewModel(
         kind: String?,
         bookshelfName: String? = null,
+        filtered: Boolean = false,
     ) = BookListViewModel(
         SavedStateHandle(
-            buildMap {
+            buildMap<String, Any> {
                 kind?.let { put(ARG_KIND, it) }
                 bookshelfName?.let { put(ARG_BOOKSHELF_NAME, it) }
+                if (filtered) put(ARG_FILTERED, true)
             },
         ),
         BookListRepository(database.bookListDao()),
+        filterHolder,
     )
 
     @Test
@@ -113,6 +120,24 @@ class BookListViewModelTest {
             val books = viewModel(KIND_CONTINUE_READING).pages.asSnapshot()
 
             assertEquals(listOf("Book 1"), books.map { it.title })
+        }
+
+    @Test
+    fun `a filtered shelf list follows the chosen filter and an unfiltered one ignores it`() =
+        runTest {
+            val one = addBook("1")
+            val two = addBook("2")
+            val shelfId = database.bookshelfDao().insert(Bookshelf(name = "Poetry"))
+            database.bookBookshelfDao().insert(BookBookshelf(bookId = one, bookshelfId = shelfId))
+            database.bookBookshelfDao().insert(BookBookshelf(bookId = two, bookshelfId = shelfId))
+            database.bookFormatDao().insert(BookFormat(bookId = one, formatType = "epub", downloadUrl = "https://example.org/1.epub"))
+            filterHolder.update(BookFilter(formats = setOf("epub")))
+
+            val filtered = viewModel(KIND_SHELF, "Poetry", filtered = true).pages.asSnapshot()
+            val plain = viewModel(KIND_SHELF, "Poetry").pages.asSnapshot()
+
+            assertEquals(listOf("Book 1"), filtered.map { it.title })
+            assertEquals(listOf("Book 1", "Book 2"), plain.map { it.title })
         }
 
     @Test

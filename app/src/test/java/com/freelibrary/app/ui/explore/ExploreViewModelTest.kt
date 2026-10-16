@@ -8,8 +8,10 @@ import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookBookshelf
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.data.repository.BookFilterHolder
 import com.freelibrary.app.data.repository.BookListRepository
 import com.freelibrary.app.data.repository.ExploreRepository
+import com.freelibrary.app.domain.model.BookFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -31,6 +33,7 @@ class ExploreViewModelTest {
     private lateinit var database: FreeLibraryDatabase
     private var sourceId: Long = 0
     private var nextExternalId = 1
+    private val filterHolder = BookFilterHolder()
 
     @Before
     fun setUp() =
@@ -53,6 +56,7 @@ class ExploreViewModelTest {
     private suspend fun addShelf(
         name: String,
         books: Int,
+        language: String = "en",
     ) {
         val shelfId = database.bookshelfDao().insert(Bookshelf(name = name))
         repeat(books) {
@@ -64,7 +68,7 @@ class ExploreViewModelTest {
                         externalId = externalId,
                         title = "Book $externalId",
                         issuedDate = null,
-                        primaryLanguage = "en",
+                        primaryLanguage = language,
                         locc = null,
                         lastModified = "2026-10-04",
                     ),
@@ -77,6 +81,7 @@ class ExploreViewModelTest {
         ExploreViewModel(
             ExploreRepository(database.bookListDao()),
             BookListRepository(database.bookListDao()),
+            filterHolder,
         )
 
     @Test
@@ -110,6 +115,40 @@ class ExploreViewModelTest {
             assertEquals(10, genre.books.size)
             assertFalse(genre.hasMore)
         }
+
+    @Test
+    fun `choosing a language shows the shelves of that language`() =
+        runTest {
+            addShelf("Poetry", 10, language = "fr")
+            addShelf("Drama", 10)
+            filterHolder.update(BookFilter(language = "fr"))
+
+            val rows = viewModel().rows.asSnapshot()
+
+            assertEquals(listOf("shelf:Poetry"), rows.map { it.section.id })
+        }
+
+    @Test
+    fun `changing the filter builds the page again`() =
+        runTest {
+            addShelf("Poetry", 10, language = "fr")
+            addShelf("Drama", 10)
+            val viewModel = viewModel()
+
+            val before = viewModel.rows.asSnapshot().map { it.section.id }
+            filterHolder.update(BookFilter(language = "fr"))
+            val after = viewModel.rows.asSnapshot().map { it.section.id }
+
+            assertEquals(listOf("shelf:Drama"), before)
+            assertEquals(listOf("shelf:Poetry"), after)
+        }
+
+    @Test
+    fun `it exposes the shared filter`() {
+        filterHolder.update(BookFilter(language = "fr"))
+
+        assertEquals(BookFilter(language = "fr"), viewModel().filter.value)
+    }
 
     @Test
     fun `a shelf with too few books is not listed`() =

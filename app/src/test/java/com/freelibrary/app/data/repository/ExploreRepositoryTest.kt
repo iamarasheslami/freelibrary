@@ -6,8 +6,10 @@ import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookBookshelf
+import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.domain.model.BookFilter
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -103,6 +105,42 @@ class ExploreRepositoryTest {
                 (1..scrolled.size).map { "shelf:Shelf %02d".format(it) },
                 scrolled.map { it.id },
             )
+        }
+
+    @Test
+    fun `a chosen language lists the shelves that have a book in it`() =
+        runTest {
+            val english = books(12)
+            val french = books(2, language = "fr", prefix = "f")
+            shelf("Category: Poetry", english)
+            shelf("Category: French", french)
+
+            val sections = repository.sections(BookFilter(language = "fr"))
+
+            assertEquals(listOf("genre:Category: French"), sections.map { it.id })
+        }
+
+    @Test
+    fun `a format filter narrows each shelf to the books with that format`() =
+        runTest {
+            val english = books(12)
+            shelf("Category: Poetry", english)
+            shelf("Category: Drama", english.take(3))
+            english.take(2).forEach { database.bookFormatDao().insert(BookFormat(bookId = it, formatType = "pdf", downloadUrl = "u$it")) }
+
+            val sections = repository.sections(BookFilter(formats = setOf("pdf")))
+
+            assertEquals(listOf(2, 2), sections.map { it.bookCount })
+        }
+
+    @Test
+    fun `each filter gets its own section list`() =
+        runTest {
+            shelf("Category: Poetry", books(10))
+            assertEquals(1, repository.sections().size)
+
+            assertEquals(0, repository.sections(BookFilter(language = "fr")).size)
+            assertEquals(1, repository.sections().size)
         }
 
     @Test

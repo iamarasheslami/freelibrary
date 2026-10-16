@@ -8,6 +8,7 @@ import com.freelibrary.app.data.local.entity.Author
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookAuthor
 import com.freelibrary.app.data.local.entity.BookBookshelf
+import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.BookShelfState
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.ShelfState
@@ -71,7 +72,20 @@ class BookListDaoTest {
         shelfName: String,
         language: String = "en",
         limit: Int = 10,
-    ) = bookListDao.observeBooksOnShelf(shelfName, language, limit).first()
+        formats: List<String> = emptyList(),
+        genres: List<String> = emptyList(),
+    ) = bookListDao
+        .observeBooksOnShelf(shelfName, language, limit, formats, formats.isEmpty(), genres, genres.isEmpty())
+        .first()
+
+    private suspend fun shelfCount(
+        shelfName: String,
+        language: String = "en",
+        formats: List<String> = emptyList(),
+        genres: List<String> = emptyList(),
+    ) = bookListDao
+        .observeShelfBookCount(shelfName, language, formats, formats.isEmpty(), genres, genres.isEmpty())
+        .first()
 
     @Before
     fun setUp() =
@@ -160,8 +174,8 @@ class BookListDaoTest {
             shelve("Poetry", one, two, french)
             shelve("Adventure", other)
 
-            assertEquals(2, bookListDao.observeShelfBookCount("Poetry", "en").first())
-            assertEquals(1, bookListDao.observeShelfBookCount("Poetry", "fr").first())
+            assertEquals(2, shelfCount("Poetry", "en"))
+            assertEquals(1, shelfCount("Poetry", "fr"))
         }
 
     @Test
@@ -170,7 +184,92 @@ class BookListDaoTest {
             addBook("1", "One")
 
             assertTrue(booksOn("No Such Shelf").isEmpty())
-            assertEquals(0, bookListDao.observeShelfBookCount("No Such Shelf", "en").first())
+            assertEquals(0, shelfCount("No Such Shelf", "en"))
+        }
+
+    private suspend fun addFormat(
+        bookId: Long,
+        type: String,
+    ) {
+        database.bookFormatDao().insert(
+            BookFormat(bookId = bookId, formatType = type, downloadUrl = "https://example.org/$bookId.$type"),
+        )
+    }
+
+    @Test
+    fun `a format filter keeps the books that have any chosen format`() =
+        runTest {
+            val one = addBook("1", "One")
+            val two = addBook("2", "Two")
+            val three = addBook("3", "Three")
+            shelve("Poetry", one, two, three)
+            addFormat(one, "epub")
+            addFormat(one, "pdf")
+            addFormat(two, "pdf")
+            addFormat(three, "txt")
+
+            assertEquals(listOf("1"), booksOn("Poetry", formats = listOf("epub")).map { it.externalId })
+            assertEquals(listOf("1", "3"), booksOn("Poetry", formats = listOf("epub", "txt")).map { it.externalId })
+            assertEquals(listOf("1", "2", "3"), booksOn("Poetry").map { it.externalId })
+        }
+
+    @Test
+    fun `a book with two matching formats is listed once`() =
+        runTest {
+            val one = addBook("1", "One")
+            shelve("Poetry", one)
+            addFormat(one, "epub")
+            addFormat(one, "pdf")
+
+            assertEquals(1, booksOn("Poetry", formats = listOf("epub", "pdf")).size)
+            assertEquals(1, shelfCount("Poetry", formats = listOf("epub", "pdf")))
+        }
+
+    @Test
+    fun `a genre filter keeps the books on any chosen genre shelf`() =
+        runTest {
+            val one = addBook("1", "One")
+            val two = addBook("2", "Two")
+            val three = addBook("3", "Three")
+            shelve("Poetry", one, two, three)
+            shelve("Category: Fiction", one, three)
+            shelve("Category: Drama", two)
+
+            assertEquals(listOf("1", "3"), booksOn("Poetry", genres = listOf("Category: Fiction")).map { it.externalId })
+            assertEquals(
+                listOf("1", "2", "3"),
+                booksOn("Poetry", genres = listOf("Category: Fiction", "Category: Drama")).map { it.externalId },
+            )
+        }
+
+    @Test
+    fun `a format and a genre both have to match`() =
+        runTest {
+            val one = addBook("1", "One")
+            val two = addBook("2", "Two")
+            shelve("Poetry", one, two)
+            shelve("Category: Fiction", one, two)
+            addFormat(one, "epub")
+            addFormat(two, "pdf")
+
+            val both = booksOn("Poetry", formats = listOf("epub"), genres = listOf("Category: Fiction"))
+
+            assertEquals(listOf("1"), both.map { it.externalId })
+        }
+
+    @Test
+    fun `the shelf count and the shelf sizes follow the filter`() =
+        runTest {
+            val one = addBook("1", "One")
+            val two = addBook("2", "Two")
+            shelve("Poetry", one, two)
+            shelve("Drama", two)
+            addFormat(one, "epub")
+            addFormat(two, "pdf")
+
+            assertEquals(1, shelfCount("Poetry", formats = listOf("epub")))
+            val sizes = bookListDao.shelfBookCounts("en", 1, listOf("pdf"), false, emptyList(), true)
+            assertEquals(mapOf("Poetry" to 1, "Drama" to 1), sizes.associate { it.name to it.bookCount })
         }
 
     private suspend fun recentlyAdded(
@@ -332,7 +431,7 @@ class BookListDaoTest {
                 listOf("100", "9", "20", "3", "40").map { addBook(it, "Book $it") } +
                     addBook("5", "Un livre", language = "fr")
             shelve("Adventure", *ids.toLongArray())
-            val source = bookListDao.shelfBooksPagingSource("Adventure", "en")
+            val source = bookListDao.shelfBooksPagingSource("Adventure", "en", emptyList(), true, emptyList(), true)
 
             val first = source.loadPage(key = null, size = 2)
             val second = source.loadPage(key = first.nextKey, size = 2)

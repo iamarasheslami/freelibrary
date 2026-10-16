@@ -3,8 +3,10 @@ package com.freelibrary.app.ui.search
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freelibrary.app.data.repository.BookFilterHolder
 import com.freelibrary.app.data.repository.SearchRepository
 import com.freelibrary.app.data.repository.SearchResult
+import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.shared.SearchScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -51,6 +53,7 @@ class SearchViewModel
     @Inject
     constructor(
         private val searchRepository: SearchRepository,
+        filterHolder: BookFilterHolder,
         private val savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val _query = MutableStateFlow(savedStateHandle.get<String>(KEY_QUERY).orEmpty())
@@ -62,12 +65,16 @@ class SearchViewModel
         val query: StateFlow<String> = _query
         val scope: StateFlow<SearchScope> = _scope
 
+        /** The shared filter, so the screen can show whether one is on. */
+        val filter: StateFlow<BookFilter> = filterHolder.filter
+
         val state: StateFlow<SearchState> =
             combine(
                 _query.map { it.trim() }.distinctUntilChanged().debounce { if (it.isEmpty()) 0L else DEBOUNCE_MS },
                 _scope,
-            ) { text, scope -> text to scope }
-                .flatMapLatest { (text, scope) -> searchFlow(text, scope) }
+                filterHolder.filter,
+            ) { text, scope, filter -> Triple(text, scope, filter) }
+                .flatMapLatest { (text, scope, filter) -> searchFlow(text, scope, filter) }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchState.Idle)
 
         fun setQuery(text: String) {
@@ -83,6 +90,7 @@ class SearchViewModel
         private fun searchFlow(
             text: String,
             scope: SearchScope,
+            filter: BookFilter,
         ): Flow<SearchState> =
             flow {
                 if (text.isEmpty()) {
@@ -92,7 +100,7 @@ class SearchViewModel
                 emit(SearchState.Loading)
                 val finished =
                     try {
-                        val results = searchRepository.search(text, scope)
+                        val results = searchRepository.search(text, scope, filter = filter)
                         if (results.isEmpty()) SearchState.NoResults else SearchState.Results(results)
                     } catch (e: CancellationException) {
                         throw e

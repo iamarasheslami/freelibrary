@@ -8,6 +8,7 @@ import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookAuthor
 import com.freelibrary.app.data.local.entity.BookFts
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.shared.SearchScope
 import com.freelibrary.shared.SearchText
 import kotlinx.coroutines.test.runTest
@@ -24,6 +25,7 @@ class SearchRepositoryTest {
     private lateinit var database: FreeLibraryDatabase
     private lateinit var repository: SearchRepository
     private var sourceId: Long = 0
+    private var language = "en"
 
     private suspend fun addBook(
         externalId: String,
@@ -37,7 +39,7 @@ class SearchRepositoryTest {
                     externalId = externalId,
                     title = title,
                     issuedDate = null,
-                    primaryLanguage = "en",
+                    primaryLanguage = language,
                     locc = null,
                     lastModified = "2026-10-02",
                 ),
@@ -175,5 +177,20 @@ class SearchRepositoryTest {
 
             repository.invalidateVocabularies()
             assertEquals(listOf("Zeppelin Flight"), titles("zepelin"))
+        }
+
+    @Test
+    fun `a language filter limits the results to that language`() =
+        runTest {
+            language = "fr"
+            addBook("1", "Hamlet Francais", "Writer, A.")
+            language = "en"
+            addBook("2", "Hamlet English", "Writer, B.")
+
+            val any = repository.search("hamlet", SearchScope.TITLE).map { it.title }.sorted()
+            val french = repository.search("hamlet", SearchScope.TITLE, filter = BookFilter(language = "fr")).map { it.title }
+
+            assertEquals(listOf("Hamlet English", "Hamlet Francais"), any)
+            assertEquals(listOf("Hamlet Francais"), french)
         }
 }

@@ -6,10 +6,12 @@ import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookBookshelf
+import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.BookShelfState
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.domain.model.BookFilter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -112,6 +114,32 @@ class BookListRepositoryTest {
             val books = repository.shelfPages(shelfName).asSnapshot()
 
             assertEquals((1..35).map { "$it" }, books.map { it.externalId })
+        }
+
+    @Test
+    fun `a filter narrows the slider and the pages to the chosen format`() =
+        runTest {
+            val ids = (1..12).map { addBook("$it") }
+            shelve(*ids.toLongArray())
+            ids.take(4).forEach { database.bookFormatDao().insert(BookFormat(bookId = it, formatType = "epub", downloadUrl = "u$it")) }
+            val filter = BookFilter(formats = setOf("epub"))
+
+            val slider = repository.observeShelfSlider(shelfName, filter).first()
+            val pages = repository.shelfPages(shelfName, filter).asSnapshot()
+
+            assertEquals(4, slider.totalBooks)
+            assertFalse(slider.hasMore)
+            assertEquals((1..4).map { "$it" }, pages.map { it.externalId })
+        }
+
+    @Test
+    fun `a chosen language replaces English`() =
+        runTest {
+            shelve(addBook("1"), addBook("2", language = "fr"))
+
+            val slider = repository.observeShelfSlider(shelfName, BookFilter(language = "fr")).first()
+
+            assertEquals(listOf("2"), slider.books.map { it.externalId })
         }
 
     @Test
