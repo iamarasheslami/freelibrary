@@ -9,7 +9,9 @@ import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookAuthor
 import com.freelibrary.app.data.local.entity.BookFts
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.data.repository.BookFilterHolder
 import com.freelibrary.app.data.repository.SearchRepository
+import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.shared.SearchScope
 import com.freelibrary.shared.SearchText
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +36,8 @@ class SearchViewModelTest {
     private lateinit var database: FreeLibraryDatabase
     private lateinit var repository: SearchRepository
     private var sourceId: Long = 0
+    private val filterHolder = BookFilterHolder()
+    private var language = "en"
 
     private suspend fun addBook(
         externalId: String,
@@ -47,7 +51,7 @@ class SearchViewModelTest {
                     externalId = externalId,
                     title = title,
                     issuedDate = null,
-                    primaryLanguage = "en",
+                    primaryLanguage = language,
                     locc = null,
                     lastModified = "2026-10-02",
                 ),
@@ -87,7 +91,7 @@ class SearchViewModelTest {
 
     /** A view model whose state is being watched, as the screen does, for the length of the test. */
     private fun TestScope.watched(handle: SavedStateHandle = SavedStateHandle()): SearchViewModel {
-        val viewModel = SearchViewModel(repository, handle)
+        val viewModel = SearchViewModel(repository, filterHolder, handle)
         backgroundScope.launch { viewModel.state.collect {} }
         return viewModel
     }
@@ -127,6 +131,21 @@ class SearchViewModelTest {
         }
 
     @Test
+    fun `choosing a language filter searches again within that language`() =
+        runTest {
+            language = "fr"
+            addBook("2", "Hamlet Francais", "Writer, A.")
+            val viewModel = watched()
+            viewModel.setQuery("hamlet")
+            viewModel.state.first { it is SearchState.Results && it.results.size == 2 }
+
+            filterHolder.update(BookFilter(language = "fr"))
+
+            val state = viewModel.state.first { it is SearchState.Results && it.results.size == 1 }
+            assertEquals(listOf("Hamlet Francais"), state.titles())
+        }
+
+    @Test
     fun `clearing the query goes back to idle`() =
         runTest {
             val viewModel = watched()
@@ -146,7 +165,7 @@ class SearchViewModelTest {
             first.setQuery("hamlet")
             first.setScope(SearchScope.AUTHOR)
 
-            val restored = SearchViewModel(repository, handle)
+            val restored = SearchViewModel(repository, filterHolder, handle)
 
             assertEquals("hamlet", restored.query.value)
             assertEquals(SearchScope.AUTHOR, restored.scope.value)

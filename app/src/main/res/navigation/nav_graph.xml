@@ -63,6 +63,10 @@
             android:defaultValue="@null"
             app:argType="string"
             app:nullable="true" />
+        <argument
+            android:name="filtered"
+            android:defaultValue="false"
+            app:argType="boolean" />
         <action
             android:id="@+id/action_bookListFragment_to_bookPageFragment"
             app:destination="@id/bookPageFragment" />

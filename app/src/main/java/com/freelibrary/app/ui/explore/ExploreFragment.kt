@@ -94,6 +94,7 @@ class ExploreFragment : Fragment() {
                 titleRes = section.titleRes ?: 0,
                 bookshelfName = args.bookshelfName,
                 title = if (section.titleRes == null) section.title else null,
+                filtered = true,
             ),
         )
     }
