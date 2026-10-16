@@ -30,7 +30,6 @@ class HomeAdapter(
     private val imageLoader: ImageLoader,
     private val onBookClick: (BookCard) -> Unit,
     private val onViewMore: (HomeSection) -> Unit,
-    private val onExplore: () -> Unit,
 ) : ListAdapter<HomeRow, RecyclerView.ViewHolder>(DIFF) {
     private val viewPool = RecyclerView.RecycledViewPool()
 
@@ -47,7 +46,7 @@ class HomeAdapter(
         viewType: Int,
     ): RecyclerView.ViewHolder =
         when (viewType) {
-            TYPE_HEADER -> HeaderViewHolder.create(parent, onExplore)
+            TYPE_HEADER -> HeaderViewHolder.create(parent)
             else -> BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick)
         }
 
@@ -69,21 +68,14 @@ class HomeAdapter(
 
     private class HeaderViewHolder(
         binding: ItemHomeHeaderBinding,
-        onExplore: () -> Unit,
     ) : RecyclerView.ViewHolder(binding.root) {
         init {
-            ViewCompat.setAccessibilityHeading(binding.homeTitle, true)
-            binding.homeExplore.setOnClickListener { onExplore() }
+            ViewCompat.setAccessibilityHeading(binding.homeLogo, true)
         }
 
         companion object {
-            fun create(
-                parent: ViewGroup,
-                onExplore: () -> Unit,
-            ) = HeaderViewHolder(
-                ItemHomeHeaderBinding.inflate(LayoutInflater.from(parent.context), parent, false),
-                onExplore,
-            )
+            fun create(parent: ViewGroup) =
+                HeaderViewHolder(ItemHomeHeaderBinding.inflate(LayoutInflater.from(parent.context), parent, false))
         }
     }
 

@@ -25,7 +25,6 @@
     <string name="back">Back</string>
     <string name="explore_title">Explore</string>
     <string name="explore_empty">No shelves to show yet. They appear after the first catalog sync.</string>
-    <string name="home_explore">Explore all categories</string>
     <string name="search_title">Search</string> 
     <string name="search_hint">Search books</string> 
     <string name="search_scope_title">Title</string> 

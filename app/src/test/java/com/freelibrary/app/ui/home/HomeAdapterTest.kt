@@ -51,18 +51,7 @@ class HomeAdapterTest {
         viewMore = ViewMoreTarget.RecentlyAdded,
     )
 
-    private fun adapter(onExplore: () -> Unit = {}) =
-        HomeAdapter(CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT), imageLoader, {}, {}, onExplore)
-
-    @Test
-    fun `the explore button in the header calls back`() {
-        var opened = 0
-        val holder = adapter { opened++ }.onCreateViewHolder(FrameLayout(context), HomeAdapter.TYPE_HEADER)
-
-        holder.itemView.findViewById<android.view.View>(R.id.homeExplore).performClick()
-
-        assertEquals(1, opened)
-    }
+    private fun adapter() = HomeAdapter(CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT), imageLoader, {}, {})
 
     @Test
     fun `the title row comes first and every section follows it in order`() {
@@ -105,13 +94,13 @@ class HomeAdapterTest {
     }
 
     @Test
-    fun `the title row shows the app name as a heading`() {
+    fun `the title row shows the logo, named for the app, as a heading`() {
         val holder = adapter().onCreateViewHolder(FrameLayout(context), HomeAdapter.TYPE_HEADER)
-        val title = holder.itemView.findViewById<android.widget.TextView>(R.id.homeTitle)
+        val logo = holder.itemView.findViewById<android.widget.ImageView>(R.id.homeLogo)
 
-        assertNotNull(title)
-        assertEquals(context.getString(R.string.app_name), title.text.toString())
-        assertTrue(ViewCompat.isAccessibilityHeading(title))
+        assertNotNull(logo)
+        assertEquals(context.getString(R.string.app_name), logo.contentDescription.toString())
+        assertTrue(ViewCompat.isAccessibilityHeading(logo))
     }
 
     @Test

@@ -16,9 +16,6 @@
         <action
             android:id="@+id/action_homeFragment_to_bookPageFragment"
             app:destination="@id/bookPageFragment" />
-        <action
-            android:id="@+id/action_homeFragment_to_exploreFragment"
-            app:destination="@id/exploreFragment" />
     </fragment>
 
     <fragment
