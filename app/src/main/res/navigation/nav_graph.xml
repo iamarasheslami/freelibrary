@@ -16,9 +16,6 @@
         <action
             android:id="@+id/action_homeFragment_to_bookPageFragment"
             app:destination="@id/bookPageFragment" />
-        <action
-            android:id="@+id/action_homeFragment_to_exploreFragment"
-            app:destination="@id/exploreFragment" />
     </fragment>
 
     <fragment
@@ -79,5 +76,9 @@
             android:name="bookId"
             app:argType="long" />
     </fragment>
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.freelibrary.app.ui.profile.ProfileFragment"
+        tools:layout="@layout/fragment_profile" />
 
 </navigation>

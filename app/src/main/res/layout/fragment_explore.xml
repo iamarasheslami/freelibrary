@@ -11,8 +11,6 @@
         android:id="@+id/exploreToolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        app:navigationContentDescription="@string/back"
-        app:navigationIcon="?attr/homeAsUpIndicator"
         app:title="@string/explore_title"
         app:titleTextAppearance="@style/TextAppearance.FreeLibrary.TitleLarge" />
 

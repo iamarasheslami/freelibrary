@@ -54,7 +54,6 @@ class ExploreFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         binding.exploreRoot.applySystemBarInsetsAsPadding()
-        binding.exploreToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.exploreToolbar.inflateMenu(R.menu.menu_explore)
         binding.exploreToolbar.setOnMenuItemClickListener { item ->
             if (item.itemId == R.id.action_search) {
