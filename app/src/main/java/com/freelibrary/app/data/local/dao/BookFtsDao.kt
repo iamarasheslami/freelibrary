@@ -27,12 +27,22 @@ interface BookFtsDao {
     /**
      * The books matching [matchQuery] (at most [limit] books, in index order),
      * one row per credited person in credit order. The limit sits in a
-     * subquery so it counts books, not joined author rows.
+     * subquery so it counts books, not joined author rows. The language and
+     * the format and genre conditions sit inside that subquery too, so the
+     * limit counts only the books that pass the filter. A null [language]
+     * and the "any" flags mean no restriction.
      */
     @Query(
         """
         SELECT b.id AS bookId, b.externalId AS externalId, b.title AS title, a.name AS authorName
-        FROM (SELECT rowid AS id FROM books_fts WHERE books_fts MATCH :matchQuery LIMIT :limit) AS m
+        FROM (
+            SELECT b.id AS id FROM books_fts
+            INNER JOIN books AS b ON b.id = books_fts.rowid
+            WHERE books_fts MATCH :matchQuery
+            AND (:language IS NULL OR b.primaryLanguage = :language)
+            $BOOK_FILTER_SQL
+            LIMIT :limit
+        ) AS m
         INNER JOIN books AS b ON b.id = m.id
         LEFT JOIN book_authors AS ba ON ba.bookId = b.id
         LEFT JOIN authors AS a ON a.id = ba.authorId
@@ -42,6 +52,11 @@ interface BookFtsDao {
     suspend fun findCandidates(
         matchQuery: String,
         limit: Int,
+        language: String?,
+        formats: List<String>,
+        anyFormat: Boolean,
+        genres: List<String>,
+        anyGenre: Boolean,
     ): List<SearchRow>
 
     /** Every indexed (folded) title, for building the spelling-correction vocabulary. */

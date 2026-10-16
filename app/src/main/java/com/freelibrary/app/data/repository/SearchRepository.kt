@@ -1,6 +1,7 @@
 package com.freelibrary.app.data.repository
 
 import com.freelibrary.app.data.local.dao.BookFtsDao
+import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.shared.SearchCandidate
 import com.freelibrary.shared.SearchPlan
 import com.freelibrary.shared.SearchQueryPlanner
@@ -51,15 +52,16 @@ class SearchRepository
             query: String,
             scope: SearchScope,
             limit: Int = DEFAULT_RESULT_LIMIT,
+            filter: BookFilter = BookFilter(),
         ): List<SearchResult> {
             val plan = SearchQueryPlanner.plan(query, scope) ?: return emptyList()
             val found = LinkedHashMap<Long, SearchCandidate>()
 
-            collect(found, plan.matchQuery, plan.requiredWords, corrected = false)
+            collect(found, plan.matchQuery, plan.requiredWords, corrected = false, filter = filter)
             if (found.size < MIN_EXACT_RESULTS) {
                 val vocabulary = vocabularyFor(scope)
-                tryCorrections(plan, vocabulary, widen = false, found = found)
-                if (found.isEmpty()) tryCorrections(plan, vocabulary, widen = true, found = found)
+                tryCorrections(plan, vocabulary, widen = false, found = found, filter = filter)
+                if (found.isEmpty()) tryCorrections(plan, vocabulary, widen = true, found = found, filter = filter)
             }
 
             val ranked = withContext(Dispatchers.Default) { SearchRanker.rank(plan, found.values.toList()) }
@@ -76,8 +78,18 @@ class SearchRepository
             matchQuery: String,
             matchedWords: List<String>,
             corrected: Boolean,
+            filter: BookFilter,
         ) {
-            val rows = bookFtsDao.findCandidates(matchQuery, CANDIDATE_LIMIT)
+            val rows =
+                bookFtsDao.findCandidates(
+                    matchQuery = matchQuery,
+                    limit = CANDIDATE_LIMIT,
+                    language = filter.language,
+                    formats = filter.formats.toList(),
+                    anyFormat = filter.formats.isEmpty(),
+                    genres = filter.genres.toList(),
+                    anyGenre = filter.genres.isEmpty(),
+                )
             rows.groupBy { it.bookId }.forEach { (bookId, bookRows) ->
                 if (bookId !in found) {
                     val first = bookRows.first()
@@ -99,6 +111,7 @@ class SearchRepository
             vocabulary: SearchVocabulary,
             widen: Boolean,
             found: MutableMap<Long, SearchCandidate>,
+            filter: BookFilter,
         ) {
             val alternatives =
                 withContext(Dispatchers.Default) {
@@ -107,7 +120,7 @@ class SearchRepository
             for (combination in combinations(alternatives).take(MAX_CORRECTION_COMBINATIONS)) {
                 currentCoroutineContext().ensureActive()
                 if (combination == plan.requiredWords) continue
-                collect(found, SearchQueryPlanner.matchQueryFor(plan.scope, combination), combination, corrected = true)
+                collect(found, SearchQueryPlanner.matchQueryFor(plan.scope, combination), combination, corrected = true, filter = filter)
             }
         }
 
