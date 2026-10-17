@@ -47,12 +47,17 @@ class BookSliderViewHolder(
         books: List<BookCard>,
         hasMore: Boolean,
         onViewMore: () -> Unit,
+        emptyMessage: String? = null,
     ) {
         binding.sliderHeading.text = heading
         binding.sliderViewMore.isVisible = hasMore
         binding.sliderViewMore.contentDescription = itemView.context.getString(R.string.view_more_in, heading)
         binding.sliderViewMore.setOnClickListener { onViewMore() }
         bookAdapter.submitList(books)
+        val showEmpty = books.isEmpty() && emptyMessage != null
+        binding.sliderEmpty.isVisible = showEmpty
+        binding.sliderEmpty.text = emptyMessage.orEmpty()
+        binding.sliderBooks.isVisible = !showEmpty
     }
 
     companion object {

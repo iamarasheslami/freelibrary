@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="avatar_background_center">#4B4B4B</color>
+    <color name="avatar_background_edge">#2B2B2B</color>
+    <color name="avatar_figure">#7A7A7A</color>
+    <color name="avatar_figure_deep">#666666</color>
+    <color name="avatar_page">#9A9A9A</color>
+    <color name="avatar_page_edge">#7C7C7C</color>
+</resources>

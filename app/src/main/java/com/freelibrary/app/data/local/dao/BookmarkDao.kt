@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.freelibrary.app.data.local.entity.Bookmark
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BookmarkDao {
@@ -18,6 +19,10 @@ interface BookmarkDao {
 
     @Query("DELETE FROM bookmarks WHERE bookId = :bookId")
     suspend fun deleteAllForBook(bookId: Long)
+
+    /** Live total of the reader's bookmarks, for the Profile page. */
+    @Query("SELECT COUNT(*) FROM bookmarks")
+    fun observeCount(): Flow<Int>
 
     @Query("DELETE FROM bookmarks")
     suspend fun deleteAll()

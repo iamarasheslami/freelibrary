@@ -6,13 +6,16 @@ import org.junit.Test
 
 class ShelfControlsTest {
     @Test
-    fun `a book on no shelf offers Save`() {
-        assertEquals(ShelfControls(ShelfAction.SAVE, null), shelfControlsFor(null))
+    fun `a book on no shelf offers Save and Mark as finished`() {
+        assertEquals(ShelfControls(ShelfAction.SAVE, ShelfAction.MARK_FINISHED), shelfControlsFor(null))
     }
 
     @Test
-    fun `a wanted book can only be removed`() {
-        assertEquals(ShelfControls(null, ShelfAction.REMOVE), shelfControlsFor(ShelfState.WANT_TO_READ))
+    fun `a wanted book can be finished or removed`() {
+        assertEquals(
+            ShelfControls(ShelfAction.MARK_FINISHED, ShelfAction.REMOVE),
+            shelfControlsFor(ShelfState.WANT_TO_READ),
+        )
     }
 
     @Test
