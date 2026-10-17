@@ -87,6 +87,12 @@
         <action
             android:id="@+id/action_profileFragment_to_settingsFragment"
             app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/action_profileFragment_to_bookListFragment"
+            app:destination="@id/bookListFragment" />
+        <action
+            android:id="@+id/action_profileFragment_to_bookPageFragment"
+            app:destination="@id/bookPageFragment" />
     </fragment>
 
     <fragment

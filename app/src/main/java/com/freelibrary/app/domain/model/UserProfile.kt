@@ -14,11 +14,8 @@ data class UserProfile(
     val avatarVersion: Long? = null,
 )
 
-/** The numbers shown on the Profile page. */
-data class ProfileStats(
-    val reading: Int,
-    val wantToRead: Int,
-    val finished: Int,
+/** The reader's totals, shown under their name. */
+data class ProfileCounts(
     val bookmarks: Int,
     val highlights: Int,
 )

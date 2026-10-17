@@ -18,8 +18,8 @@ data class ShelfControls(
 /** [state] is null for a book on no shelf. */
 fun shelfControlsFor(state: ShelfState?): ShelfControls =
     when (state) {
-        null -> ShelfControls(primary = ShelfAction.SAVE, secondary = null)
-        ShelfState.WANT_TO_READ -> ShelfControls(primary = null, secondary = ShelfAction.REMOVE)
+        null -> ShelfControls(primary = ShelfAction.SAVE, secondary = ShelfAction.MARK_FINISHED)
+        ShelfState.WANT_TO_READ -> ShelfControls(primary = ShelfAction.MARK_FINISHED, secondary = ShelfAction.REMOVE)
         ShelfState.READING -> ShelfControls(primary = ShelfAction.MARK_FINISHED, secondary = ShelfAction.REMOVE)
         ShelfState.FINISHED -> ShelfControls(primary = null, secondary = ShelfAction.REMOVE)
     }

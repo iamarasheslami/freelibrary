@@ -4,12 +4,10 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.entity.Book
-import com.freelibrary.app.data.local.entity.BookShelfState
 import com.freelibrary.app.data.local.entity.Bookmark
 import com.freelibrary.app.data.local.entity.Highlight
-import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
-import com.freelibrary.app.domain.model.ProfileStats
+import com.freelibrary.app.domain.model.ProfileCounts
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -23,7 +21,7 @@ import org.robolectric.RobolectricTestRunner
 class ProfileStatsRepositoryTest {
     private lateinit var database: FreeLibraryDatabase
     private lateinit var repository: ProfileStatsRepository
-    private var sourceId: Long = 0
+    private var bookId: Long = 0
 
     @Before
     fun setUp() =
@@ -33,9 +31,20 @@ class ProfileStatsRepositoryTest {
                     ApplicationProvider.getApplicationContext(),
                     FreeLibraryDatabase::class.java,
                 ).allowMainThreadQueries().build()
-            repository =
-                ProfileStatsRepository(database.bookShelfStateDao(), database.bookmarkDao(), database.highlightDao())
-            sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
+            repository = ProfileStatsRepository(database.bookmarkDao(), database.highlightDao())
+            val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
+            bookId =
+                database.bookDao().insert(
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "1",
+                        title = "Book 1",
+                        issuedDate = null,
+                        primaryLanguage = "en",
+                        locc = null,
+                        lastModified = "2026-10-17",
+                    ),
+                )
         }
 
     @After
@@ -43,50 +52,21 @@ class ProfileStatsRepositoryTest {
         database.close()
     }
 
-    private suspend fun addBook(externalId: String): Long =
-        database.bookDao().insert(
-            Book(
-                sourceId = sourceId,
-                externalId = externalId,
-                title = "Book $externalId",
-                issuedDate = null,
-                primaryLanguage = "en",
-                locc = null,
-                lastModified = "2026-10-17",
-            ),
-        )
-
     @Test
-    fun `a reader with nothing saved has all zeros`() =
+    fun `a reader with nothing saved has zero bookmarks and highlights`() =
         runTest {
-            assertEquals(ProfileStats(0, 0, 0, 0, 0), repository.stats.first())
+            assertEquals(ProfileCounts(0, 0), repository.counts.first())
         }
 
     @Test
-    fun `each shelf bookmark and highlight is counted`() =
+    fun `bookmarks and highlights are counted`() =
         runTest {
-            val a = addBook("1")
-            val b = addBook("2")
-            val c = addBook("3")
-            val d = addBook("4")
-            database.bookShelfStateDao().upsert(BookShelfState(a, ShelfState.READING, updatedAt = 1L))
-            database.bookShelfStateDao().upsert(BookShelfState(b, ShelfState.WANT_TO_READ, updatedAt = 2L))
-            database.bookShelfStateDao().upsert(BookShelfState(c, ShelfState.FINISHED, updatedAt = 3L, finishedAt = 3L))
-            database.bookShelfStateDao().upsert(BookShelfState(d, ShelfState.FINISHED, updatedAt = 4L, finishedAt = 4L))
-            database.bookmarkDao().insert(Bookmark(bookId = a, position = "0.1", note = null, createdAt = 5L))
-            database.highlightDao().insert(Highlight(bookId = a, startPosition = "0.2", endPosition = "0.3", color = null, createdAt = 6L))
-            database.highlightDao().insert(Highlight(bookId = b, startPosition = "0.4", endPosition = "0.5", color = null, createdAt = 7L))
+            database.bookmarkDao().insert(Bookmark(bookId = bookId, position = "0.1", note = null, createdAt = 1L))
+            database.bookmarkDao().insert(Bookmark(bookId = bookId, position = "0.2", note = null, createdAt = 2L))
+            database.highlightDao().insert(
+                Highlight(bookId = bookId, startPosition = "0.3", endPosition = "0.4", color = null, createdAt = 3L),
+            )
 
-            assertEquals(ProfileStats(1, 1, 2, 1, 2), repository.stats.first())
-        }
-
-    @Test
-    fun `moving a book to another shelf changes the counts`() =
-        runTest {
-            val a = addBook("1")
-            database.bookShelfStateDao().upsert(BookShelfState(a, ShelfState.READING, updatedAt = 1L))
-            database.bookShelfStateDao().upsert(BookShelfState(a, ShelfState.FINISHED, updatedAt = 2L, finishedAt = 2L))
-
-            assertEquals(ProfileStats(0, 0, 1, 0, 0), repository.stats.first())
+            assertEquals(ProfileCounts(2, 1), repository.counts.first())
         }
 }

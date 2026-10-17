@@ -2,14 +2,18 @@ package com.freelibrary.app.ui.profile
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.freelibrary.app.data.TimeProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookShelfState
+import com.freelibrary.app.data.local.entity.Bookmark
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.repository.InMemoryPreferences
 import com.freelibrary.app.data.repository.ProfileRepository
+import com.freelibrary.app.data.repository.ProfileShelvesRepository
 import com.freelibrary.app.data.repository.ProfileStatsRepository
+import com.freelibrary.app.data.repository.ReadingStateRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -44,7 +48,10 @@ class ProfileViewModelTest {
         viewModel =
             ProfileViewModel(
                 profileRepository,
-                ProfileStatsRepository(database.bookShelfStateDao(), database.bookmarkDao(), database.highlightDao()),
+                ProfileStatsRepository(database.bookmarkDao(), database.highlightDao()),
+                ProfileShelvesRepository(
+                    ReadingStateRepository(database, database.bookShelfStateDao(), database.bookListDao(), TimeProvider { 100L }),
+                ),
             )
     }
 
@@ -54,13 +61,31 @@ class ProfileViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private suspend fun addBook(): Long {
+        val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
+        return database.bookDao().insert(
+            Book(
+                sourceId = sourceId,
+                externalId = "1",
+                title = "Book 1",
+                issuedDate = null,
+                primaryLanguage = "en",
+                locc = null,
+                lastModified = "2026-10-17",
+            ),
+        )
+    }
+
     @Test
-    fun `a new reader has no name no picture and no books`() =
+    fun `a new reader has no name no picture and three empty shelves`() =
         runTest {
-            val state = viewModel.state.first { it.stats == ProfileState().stats }
+            val state = viewModel.state.first { it.sections.isNotEmpty() }
 
             assertNull(state.name)
             assertNull(state.avatarVersion)
+            assertEquals(0, state.counts.bookmarks)
+            assertEquals(3, state.sections.size)
+            assertEquals(true, state.sections.all { it.books.isEmpty() })
         }
 
     @Test
@@ -76,25 +101,24 @@ class ProfileViewModelTest {
         }
 
     @Test
-    fun `the counts follow the reader's shelves`() =
+    fun `a saved book shows on the Want to Read shelf`() =
         runTest {
-            val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
-            val bookId =
-                database.bookDao().insert(
-                    Book(
-                        sourceId = sourceId,
-                        externalId = "1",
-                        title = "Book 1",
-                        issuedDate = null,
-                        primaryLanguage = "en",
-                        locc = null,
-                        lastModified = "2026-10-17",
-                    ),
-                )
-            database.bookShelfStateDao().upsert(BookShelfState(bookId, ShelfState.READING, updatedAt = 1L))
+            val bookId = addBook()
+            database.bookShelfStateDao().upsert(BookShelfState(bookId, ShelfState.WANT_TO_READ, updatedAt = 1L))
 
-            val state = viewModel.state.first { it.stats.reading == 1 }
+            val state = viewModel.state.first { s -> s.sections.any { it.id == "want-to-read" && it.books.isNotEmpty() } }
 
-            assertEquals(0, state.stats.finished)
+            assertEquals(listOf("Book 1"), state.sections.first { it.id == "want-to-read" }.books.map { it.title })
+        }
+
+    @Test
+    fun `the bookmark total follows the reader's bookmarks`() =
+        runTest {
+            val bookId = addBook()
+            database.bookmarkDao().insert(Bookmark(bookId = bookId, position = "0.1", note = null, createdAt = 1L))
+
+            val state = viewModel.state.first { it.counts.bookmarks == 1 }
+
+            assertEquals(0, state.counts.highlights)
         }
 }

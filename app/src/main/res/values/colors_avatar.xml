@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The profile picture placeholder: neutral grays only, so it carries no palette colour. -->
+    <color name="avatar_background_center">#EDEDED</color>
+    <color name="avatar_background_edge">#C2C2C2</color>
+    <color name="avatar_figure">#9B9B9B</color>
+    <color name="avatar_figure_deep">#858585</color>
+    <color name="avatar_page">#F7F7F7</color>
+    <color name="avatar_page_edge">#CFCFCF</color>
+</resources>

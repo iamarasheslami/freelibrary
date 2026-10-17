@@ -48,4 +48,21 @@
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/item_book_card" />
 
+    <!-- Shown instead of the cards when a list has no books yet and the screen gave a message for it. -->
+    <TextView
+        android:id="@+id/sliderEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_m"
+        android:layout_marginTop="@dimen/spacing_s"
+        android:layout_marginEnd="@dimen/spacing_m"
+        android:layout_marginBottom="@dimen/spacing_m"
+        android:background="@drawable/bg_slider_empty"
+        android:gravity="center"
+        android:minHeight="112dp"
+        android:padding="@dimen/spacing_m"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:visibility="gone" />
+
 </LinearLayout>
