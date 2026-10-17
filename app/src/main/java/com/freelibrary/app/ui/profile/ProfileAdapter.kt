@@ -7,8 +7,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.ImageLoader
-import coil.dispose
-import coil.load
 import com.freelibrary.app.R
 import com.freelibrary.app.data.profile.AvatarStore
 import com.freelibrary.app.databinding.ItemProfileHeaderBinding
@@ -42,6 +40,7 @@ class ProfileAdapter(
     private val avatarStore: AvatarStore,
     private val onBookClick: (BookCard) -> Unit,
     private val onViewMore: (ProfileSection) -> Unit,
+    private val onAvatarClick: () -> Unit,
 ) : ListAdapter<ProfileRow, RecyclerView.ViewHolder>(DIFF) {
     private val viewPool = RecyclerView.RecycledViewPool()
 
@@ -56,7 +55,7 @@ class ProfileAdapter(
         viewType: Int,
     ): RecyclerView.ViewHolder =
         when (viewType) {
-            TYPE_HEADER -> HeaderViewHolder.create(parent, imageLoader, avatarStore)
+            TYPE_HEADER -> HeaderViewHolder.create(parent, imageLoader, avatarStore, onAvatarClick)
             else -> BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick)
         }
 
@@ -84,7 +83,12 @@ class ProfileAdapter(
         private val binding: ItemProfileHeaderBinding,
         private val imageLoader: ImageLoader,
         private val avatarStore: AvatarStore,
+        onAvatarClick: () -> Unit,
     ) : RecyclerView.ViewHolder(binding.root) {
+        init {
+            binding.profileAvatarCard.setOnClickListener { onAvatarClick() }
+        }
+
         fun bind(row: ProfileRow.Header) {
             binding.profileName.text = row.name.orEmpty()
             binding.profileName.isVisible = row.name != null
@@ -96,22 +100,12 @@ class ProfileAdapter(
                     resources.getQuantityString(R.plurals.profile_bookmarks, row.bookmarks, row.bookmarks),
                     resources.getQuantityString(R.plurals.profile_highlights, row.highlights, row.highlights),
                 )
-            showAvatar(row.avatarVersion)
-        }
 
-        /** The saved picture, or the gray reader placeholder. The version keeps an old picture from showing after a change. */
-        private fun showAvatar(version: Long?) {
-            val file = if (version != null) avatarStore.file() else null
+            val file = if (row.avatarVersion != null) avatarStore.file() else null
             if (file == null) {
-                binding.profileAvatar.dispose()
-                binding.profileAvatar.setBackgroundResource(R.drawable.bg_avatar_placeholder)
-                binding.profileAvatar.setImageResource(R.drawable.ic_avatar_placeholder)
+                binding.profileAvatar.showAvatarPlaceholder()
             } else {
-                binding.profileAvatar.background = null
-                binding.profileAvatar.load(file, imageLoader) {
-                    memoryCacheKey("avatar-$version")
-                    crossfade(false)
-                }
+                binding.profileAvatar.showAvatarPicture(file, "avatar-${row.avatarVersion}", imageLoader)
             }
         }
 
@@ -120,10 +114,12 @@ class ProfileAdapter(
                 parent: ViewGroup,
                 imageLoader: ImageLoader,
                 avatarStore: AvatarStore,
+                onAvatarClick: () -> Unit,
             ) = HeaderViewHolder(
                 ItemProfileHeaderBinding.inflate(LayoutInflater.from(parent.context), parent, false),
                 imageLoader,
                 avatarStore,
+                onAvatarClick,
             )
         }
     }

@@ -26,8 +26,8 @@ import javax.inject.Inject
 
 /**
  * The Profile tab: the reader's picture and name, then three sliders (Continue Reading, Want to
- * Read, Finished) that work like Home's. This class only shows [ProfileViewModel]'s state and
- * passes the reader's taps on.
+ * Read, Finished) that work like Home's. The picture opens the profile editor. This class only
+ * shows [ProfileViewModel]'s state and passes the reader's taps on.
  */
 @AndroidEntryPoint
 class ProfileFragment : Fragment() {
@@ -65,6 +65,7 @@ class ProfileFragment : Fragment() {
                 avatarStore = avatarStore,
                 onBookClick = ::openBook,
                 onViewMore = ::openList,
+                onAvatarClick = ::openEditor,
             )
         binding.profileList.adapter = adapter
 
@@ -94,6 +95,13 @@ class ProfileFragment : Fragment() {
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.profileFragment) return
         navController.navigate(ProfileFragmentDirections.actionProfileFragmentToBookPageFragment(bookId = book.bookId))
+    }
+
+    /** Opens the profile editor. A second tap while the page is opening is ignored. */
+    private fun openEditor() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.profileFragment) return
+        navController.navigate(ProfileFragmentDirections.actionProfileFragmentToEditProfileFragment())
     }
 
     /** Opens Settings. A second tap while the page is opening is ignored. */

@@ -115,6 +115,7 @@ class SettingsFragment : Fragment() {
         binding.wifiOnlySwitch.setOnClickListener { viewModel.setWifiOnlySync(binding.wifiOnlySwitch.isChecked) }
         binding.wifiOnlyRow.setOnClickListener { binding.wifiOnlySwitch.performClick() }
 
+        binding.profileRow.setOnClickListener { openProfileEditor() }
         binding.syncNowButton.setOnClickListener { viewModel.syncNow() }
         binding.clearCacheButton.setOnClickListener { viewModel.clearCoverCache() }
 
@@ -258,6 +259,13 @@ class SettingsFragment : Fragment() {
     private fun versionName(): String {
         val context = requireContext()
         return context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
+    }
+
+    /** Opens the profile editor. A second tap while the page is opening is ignored. */
+    private fun openProfileEditor() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.settingsFragment) return
+        navController.navigate(SettingsFragmentDirections.actionSettingsFragmentToEditProfileFragment())
     }
 
     private fun openLink(url: String) {
