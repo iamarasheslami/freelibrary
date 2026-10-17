@@ -48,6 +48,7 @@ class BookListViewModel
             ) {
                 ViewMoreTarget.ContinueReading -> repository.readerShelfPages(ShelfState.READING)
                 ViewMoreTarget.WantToRead -> repository.readerShelfPages(ShelfState.WANT_TO_READ)
+                ViewMoreTarget.Finished -> repository.readerShelfPages(ShelfState.FINISHED)
                 ViewMoreTarget.RecentlyAdded -> repository.recentlyAddedPages()
                 is ViewMoreTarget.CatalogShelf ->
                     repository.shelfPages(

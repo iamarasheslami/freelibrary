@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.freelibrary.app.data.local.entity.Highlight
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HighlightDao {
@@ -18,6 +19,10 @@ interface HighlightDao {
 
     @Query("DELETE FROM highlights WHERE bookId = :bookId")
     suspend fun deleteAllForBook(bookId: Long)
+
+    /** Live total of the reader's highlights, for the Profile page. */
+    @Query("SELECT COUNT(*) FROM highlights")
+    fun observeCount(): Flow<Int>
 
     @Query("DELETE FROM highlights")
     suspend fun deleteAll()

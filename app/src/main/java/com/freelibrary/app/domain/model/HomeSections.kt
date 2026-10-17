@@ -11,6 +11,8 @@ sealed interface ViewMoreTarget {
 
     data object RecentlyAdded : ViewMoreTarget
 
+    data object Finished : ViewMoreTarget
+
     data class CatalogShelf(
         val bookshelfName: String,
     ) : ViewMoreTarget

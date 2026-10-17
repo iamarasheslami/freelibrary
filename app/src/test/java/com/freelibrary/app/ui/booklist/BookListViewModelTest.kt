@@ -87,6 +87,19 @@ class BookListViewModelTest {
     )
 
     @Test
+    fun `the finished list shows only the books the reader has finished`() =
+        runTest {
+            val one = addBook("1")
+            val two = addBook("2")
+            database.bookShelfStateDao().upsert(BookShelfState(one, ShelfState.FINISHED, updatedAt = 5L, finishedAt = 5L))
+            database.bookShelfStateDao().upsert(BookShelfState(two, ShelfState.READING, updatedAt = 6L))
+
+            val books = viewModel(KIND_FINISHED).pages.asSnapshot()
+
+            assertEquals(listOf("Book 1"), books.map { it.title })
+        }
+
+    @Test
     fun `the recently added list shows the newest books first`() =
         runTest {
             (1..3).forEach { addBook("$it", issuedDate = "2026-09-0$it") }

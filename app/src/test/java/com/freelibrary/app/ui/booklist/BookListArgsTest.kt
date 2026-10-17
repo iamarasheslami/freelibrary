@@ -18,6 +18,7 @@ class BookListArgsTest {
                 ViewMoreTarget.ContinueReading,
                 ViewMoreTarget.WantToRead,
                 ViewMoreTarget.RecentlyAdded,
+                ViewMoreTarget.Finished,
                 ViewMoreTarget.CatalogShelf("Harvard Classics"),
             )
 
