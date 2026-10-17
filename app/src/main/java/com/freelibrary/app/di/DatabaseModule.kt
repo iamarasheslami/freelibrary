@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.dao.AuthorDao
+import com.freelibrary.app.data.local.dao.BackupDao
 import com.freelibrary.app.data.local.dao.BookAuthorDao
 import com.freelibrary.app.data.local.dao.BookBookshelfDao
 import com.freelibrary.app.data.local.dao.BookDao
@@ -56,6 +57,9 @@ object DatabaseModule {
 
     @Provides
     fun provideSourceDao(database: FreeLibraryDatabase): SourceDao = database.sourceDao()
+
+    @Provides
+    fun provideBackupDao(database: FreeLibraryDatabase): BackupDao = database.backupDao()
 
     @Provides
     fun provideBookDao(database: FreeLibraryDatabase): BookDao = database.bookDao()
