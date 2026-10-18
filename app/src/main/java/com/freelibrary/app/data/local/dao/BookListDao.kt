@@ -6,7 +6,13 @@ import androidx.room.Query
 import com.freelibrary.app.data.local.entity.ShelfState
 import kotlinx.coroutines.flow.Flow
 
-/** Queries behind the book sliders and lists of the home screen. */
+/**
+ * Queries behind the book sliders and lists of the home screen.
+ *
+ * The shelf queries start from the shelf (CROSS JOIN fixes the order the tables are visited in)
+ * and walk to its books. Left to itself, SQLite starts from the 78,000 books and checks every one
+ * against the shelf, which cost about 55 ms per query however small the shelf was.
+ */
 @Dao
 interface BookListDao {
     /**
@@ -23,9 +29,9 @@ interface BookListDao {
                 INNER JOIN authors AS a ON a.id = ba.authorId
                 WHERE ba.bookId = b.id ORDER BY ba.id LIMIT 1) AS authorName,
                b.coverUrl AS coverUrl
-        FROM books AS b
-        INNER JOIN book_bookshelves AS bb ON bb.bookId = b.id
-        INNER JOIN bookshelves AS s ON s.id = bb.bookshelfId
+        FROM bookshelves AS s
+        CROSS JOIN book_bookshelves AS bb ON bb.bookshelfId = s.id
+        CROSS JOIN books AS b ON b.id = bb.bookId
         WHERE s.name = :shelfName AND b.primaryLanguage = :language
         $BOOK_FILTER_SQL
         ORDER BY CAST(b.externalId AS INTEGER), b.id
@@ -45,9 +51,9 @@ interface BookListDao {
     /** How many books the shelf holds in [language]; tells a slider whether to offer "View more". */
     @Query(
         """
-        SELECT COUNT(*) FROM books AS b
-        INNER JOIN book_bookshelves AS bb ON bb.bookId = b.id
-        INNER JOIN bookshelves AS s ON s.id = bb.bookshelfId
+        SELECT COUNT(*) FROM bookshelves AS s
+        CROSS JOIN book_bookshelves AS bb ON bb.bookshelfId = s.id
+        CROSS JOIN books AS b ON b.id = bb.bookId
         WHERE s.name = :shelfName AND b.primaryLanguage = :language
         $BOOK_FILTER_SQL
         """,
@@ -119,9 +125,9 @@ interface BookListDao {
                 INNER JOIN authors AS a ON a.id = ba.authorId
                 WHERE ba.bookId = b.id ORDER BY ba.id LIMIT 1) AS authorName,
                b.coverUrl AS coverUrl
-        FROM books AS b
-        INNER JOIN book_bookshelves AS bb ON bb.bookId = b.id
-        INNER JOIN bookshelves AS s ON s.id = bb.bookshelfId
+        FROM bookshelves AS s
+        CROSS JOIN book_bookshelves AS bb ON bb.bookshelfId = s.id
+        CROSS JOIN books AS b ON b.id = bb.bookId
         WHERE s.name = :shelfName AND b.primaryLanguage = :language
         $BOOK_FILTER_SQL
         ORDER BY CAST(b.externalId AS INTEGER), b.id
