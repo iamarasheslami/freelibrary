@@ -3,10 +3,13 @@ package com.freelibrary.app.ui.bookpage
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freelibrary.app.data.download.BookDownloadManager
+import com.freelibrary.app.data.download.BookFiles
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.repository.BookDetailsRepository
 import com.freelibrary.app.data.repository.ReadingStateRepository
 import com.freelibrary.app.domain.model.BookDetails
+import com.freelibrary.app.domain.model.BookFileFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,6 +47,7 @@ class BookPageViewModel
         savedStateHandle: SavedStateHandle,
         private val detailsRepository: BookDetailsRepository,
         private val readingStateRepository: ReadingStateRepository,
+        private val downloads: BookDownloadManager,
     ) : ViewModel() {
         private val bookId: Long = savedStateHandle.get<Long>(ARG_BOOK_ID) ?: NO_BOOK
 
@@ -60,6 +64,20 @@ class BookPageViewModel
                         }
                     }
                 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BookPageUiState.Loading)
+
+        /** The book's files: what is offered, what is on the phone and what is downloading. Null until first read. */
+        val files: StateFlow<BookFiles?> =
+            downloads.observe(bookId)
+                .map<BookFiles, BookFiles?> { it }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+        fun onDownload(format: BookFileFormat) = downloads.start(bookId, format)
+
+        fun onCancelDownload() = downloads.cancel(bookId)
+
+        fun onDeleteDownload(format: BookFileFormat) {
+            viewModelScope.launch { downloads.delete(bookId, format) }
+        }
 
         fun onShelfAction(action: ShelfAction) {
             viewModelScope.launch {

@@ -15,12 +15,18 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import coil.ImageLoader
 import com.freelibrary.app.R
+import com.freelibrary.app.data.download.BookFiles
+import com.freelibrary.app.data.download.DownloadError
+import com.freelibrary.app.data.download.DownloadProgress
+import com.freelibrary.app.data.download.Transfer
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.databinding.FragmentBookPageBinding
+import com.freelibrary.app.domain.model.BookFileFormat
 import com.freelibrary.app.ui.cover.CoverTypefaces
 import com.freelibrary.app.ui.cover.loadCover
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -28,8 +34,8 @@ import javax.inject.Inject
 
 /**
  * A book's own page: cover, title, authors, language, where the book sits on the reader's shelves
- * with the buttons to change that, and the catalog summary. Reading and downloading come with the
- * reader, so there is no Read button yet.
+ * with the buttons to change that, the book's files with the buttons to download, cancel and delete
+ * them, and the catalog summary. Reading comes with the reader, so there is no Read button yet.
  */
 @AndroidEntryPoint
 class BookPageFragment : Fragment() {
@@ -65,7 +71,8 @@ class BookPageFragment : Fragment() {
         val typefaces = CoverTypefaces.from(requireContext())
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { render(it, typefaces) }
+                launch { viewModel.uiState.collect { render(it, typefaces) } }
+                launch { viewModel.files.collect { showFiles(it) } }
             }
         }
     }
@@ -132,6 +139,126 @@ class BookPageFragment : Fragment() {
         button.setText(actionLabel(action))
         button.setOnClickListener { viewModel.onShelfAction(action) }
     }
+
+    private fun showFiles(files: BookFiles?) {
+        binding.bookPageFiles.isVisible = files != null
+        if (files == null) return
+        val transfer = files.transfer
+        val busy = files.busy
+
+        val status = filesStatus(files)
+        binding.bookPageFilesStatus.text = status
+        binding.bookPageFilesStatus.isVisible = status.isNotEmpty()
+        showProgress(transfer)
+
+        val target =
+            (transfer as? Transfer.Failed)?.format?.takeIf { it in files.toDownload }
+                ?: files.toDownload.firstOrNull()
+        val download = binding.bookPageDownloadButton
+        download.isVisible = !busy && target != null
+        if (target != null) {
+            download.text =
+                if (transfer is Transfer.Failed) {
+                    getString(R.string.book_files_retry)
+                } else {
+                    getString(R.string.book_files_download, getString(formatLabel(target)))
+                }
+            download.setOnClickListener { viewModel.onDownload(target) }
+        }
+
+        binding.bookPageOtherFormatsButton.isVisible = !busy && files.toDownload.size > 1
+        binding.bookPageOtherFormatsButton.setOnClickListener { chooseFormatToDownload(files.toDownload) }
+        binding.bookPageCancelDownloadButton.isVisible = busy
+        binding.bookPageCancelDownloadButton.setOnClickListener { viewModel.onCancelDownload() }
+        binding.bookPageDeleteDownloadButton.isVisible = !busy && files.downloaded.isNotEmpty()
+        binding.bookPageDeleteDownloadButton.setOnClickListener { deleteDownload(files.downloaded) }
+    }
+
+    private fun filesStatus(files: BookFiles): String {
+        val transfer = files.transfer
+        return when {
+            transfer is Transfer.Waiting -> getString(R.string.book_files_waiting)
+            transfer is Transfer.Running -> runningText(transfer)
+            transfer is Transfer.Failed -> getString(errorMessage(transfer.error))
+            files.downloaded.isNotEmpty() ->
+                getString(
+                    R.string.book_files_downloaded,
+                    files.downloaded.joinToString(", ") { getString(formatLabel(it)) },
+                )
+            files.available.isEmpty() -> getString(R.string.book_files_none)
+            else -> ""
+        }
+    }
+
+    private fun runningText(transfer: Transfer.Running): String {
+        val format = getString(formatLabel(transfer.format))
+        val percent = percentOf(transfer.progress)
+        return if (percent == null) {
+            getString(R.string.book_files_downloading, format)
+        } else {
+            getString(R.string.book_files_downloading_percent, format, percent)
+        }
+    }
+
+    private fun percentOf(progress: DownloadProgress): Int? {
+        val total = progress.total
+        if (total == null || total <= 0L) return null
+        return (progress.bytes * 100 / total).toInt().coerceIn(0, 100)
+    }
+
+    private fun showProgress(transfer: Transfer?) {
+        val bar = binding.bookPageDownloadProgress
+        val running = transfer as? Transfer.Running
+        bar.isVisible = transfer is Transfer.Waiting || running != null
+        if (!bar.isVisible) return
+        val percent = running?.let { percentOf(it.progress) }
+        if (percent == null) {
+            bar.isIndeterminate = true
+        } else {
+            bar.isIndeterminate = false
+            bar.setProgressCompat(percent, true)
+        }
+    }
+
+    private fun chooseFormatToDownload(formats: List<BookFileFormat>) {
+        val labels = formats.map { getString(formatLabel(it)) }.toTypedArray()
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.book_files_choose_title)
+            .setItems(labels) { _, index -> viewModel.onDownload(formats[index]) }
+            .show()
+    }
+
+    private fun deleteDownload(downloaded: List<BookFileFormat>) {
+        if (downloaded.size == 1) {
+            viewModel.onDeleteDownload(downloaded.first())
+            return
+        }
+        val labels = downloaded.map { getString(formatLabel(it)) }.toTypedArray()
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.book_files_delete_title)
+            .setItems(labels) { _, index -> viewModel.onDeleteDownload(downloaded[index]) }
+            .show()
+    }
+
+    @StringRes
+    private fun formatLabel(format: BookFileFormat): Int =
+        when (format) {
+            BookFileFormat.EPUB -> R.string.format_epub
+            BookFileFormat.PDF -> R.string.format_pdf
+            BookFileFormat.TEXT -> R.string.format_txt
+        }
+
+    @StringRes
+    private fun errorMessage(error: DownloadError): Int =
+        when (error) {
+            DownloadError.OFFLINE -> R.string.download_error_offline
+            DownloadError.BLOCKED -> R.string.download_error_blocked
+            DownloadError.NOT_FOUND -> R.string.download_error_not_found
+            DownloadError.SERVER -> R.string.download_error_server
+            DownloadError.NOT_A_BOOK -> R.string.download_error_not_a_book
+            DownloadError.TOO_LARGE -> R.string.download_error_too_large
+            DownloadError.STORAGE -> R.string.download_error_storage
+        }
 
     @StringRes
     private fun statusLabel(state: ShelfState): Int =
