@@ -67,7 +67,11 @@ class HomeFragment : Fragment() {
                 viewModel.uiState.collect { state ->
                     when (state) {
                         HomeUiState.Loading -> Unit
-                        is HomeUiState.Content -> adapter.submitSections(state.sections)
+                        is HomeUiState.Content -> {
+                            adapter.submitSections(state.sections)
+                            // Tells the system the first screen is ready to use, so start-up time can be measured to this point.
+                            binding.homeList.post { activity?.reportFullyDrawn() }
+                        }
                     }
                 }
             }
