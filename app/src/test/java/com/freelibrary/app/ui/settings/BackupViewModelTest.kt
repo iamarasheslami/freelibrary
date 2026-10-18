@@ -7,8 +7,12 @@ import com.freelibrary.app.data.backup.BackupExporter
 import com.freelibrary.app.data.backup.BackupImporter
 import com.freelibrary.app.data.backup.BackupPart
 import com.freelibrary.app.data.backup.BookStorage
+import com.freelibrary.app.data.backup.ProfileBackupStore
 import com.freelibrary.app.data.local.FreeLibraryDatabase
+import com.freelibrary.app.data.profile.AvatarDecoder
+import com.freelibrary.app.data.profile.AvatarStore
 import com.freelibrary.app.data.repository.InMemoryPreferences
+import com.freelibrary.app.data.repository.ProfileRepository
 import com.freelibrary.app.data.repository.SettingsRepository
 import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.Dispatchers
@@ -50,9 +54,15 @@ class BackupViewModelTest {
                 FreeLibraryDatabase::class.java,
             ).allowMainThreadQueries().build()
         settings = SettingsRepository(InMemoryPreferences())
+        val profileStore =
+            ProfileBackupStore(
+                ProfileRepository(InMemoryPreferences()),
+                AvatarStore(File(temporaryFolder.root, "profile"), AvatarDecoder { _, _ -> null }),
+                TimeProvider { 1_234L },
+            )
         viewModel =
             BackupViewModel(
-                BackupExporter(database.backupDao(), settings, TimeProvider { 1_234L }),
+                BackupExporter(database.backupDao(), settings, TimeProvider { 1_234L }, profileStore),
                 BackupImporter(
                     database.backupDao(),
                     database.bookShelfStateDao(),
@@ -62,6 +72,7 @@ class BackupViewModelTest {
                     database.downloadedBookDao(),
                     settings,
                     BookStorage(File(temporaryFolder.root, "books")),
+                    profileStore,
                 ),
             )
     }

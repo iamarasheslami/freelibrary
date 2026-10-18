@@ -1,6 +1,7 @@
 package com.freelibrary.app.data.profile
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -10,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 
 /** Reads a picture the reader chose into a bitmap at least [minSidePx] on its short side, or null if it cannot be read. */
 fun interface AvatarDecoder {
@@ -22,6 +24,8 @@ fun interface AvatarDecoder {
 private const val AVATAR_SIZE_PX = 512
 private const val JPEG_QUALITY = 90
 private const val FILE_NAME = "avatar.jpg"
+private const val COPY_BUFFER_BYTES = 8 * 1024
+private val JPEG_SIGNATURE = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte())
 
 /**
  * Keeps the reader's profile picture: one square JPEG of at most 512 px in the app's private
@@ -65,6 +69,52 @@ class AvatarStore(
             }
             true
         }
+
+    /**
+     * Saves a picture that is already a finished avatar (read from a backup). It is only kept if it
+     * is a real image no larger than [maxBytes]; otherwise nothing changes and the result is false.
+     */
+    suspend fun saveFinished(
+        input: InputStream,
+        maxBytes: Long,
+    ): Boolean =
+        withContext(Dispatchers.IO) {
+            if (!directory.isDirectory && !directory.mkdirs()) throw IOException("The profile folder could not be created")
+            val partial = File(directory, "$FILE_NAME.part")
+            try {
+                var total = 0L
+                var tooBig = false
+                partial.outputStream().use { output ->
+                    val buffer = ByteArray(COPY_BUFFER_BYTES)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        total += read
+                        if (total > maxBytes) {
+                            tooBig = true
+                            break
+                        }
+                        output.write(buffer, 0, read)
+                    }
+                }
+                if (tooBig || !isImage(partial)) return@withContext false
+                avatarFile.delete()
+                if (!partial.renameTo(avatarFile)) throw IOException("The picture could not be saved")
+                true
+            } finally {
+                partial.delete()
+            }
+        }
+
+    /** A JPEG (the only kind the app ever writes) that the system can read the size of. */
+    private fun isImage(file: File): Boolean {
+        val signature = ByteArray(JPEG_SIGNATURE.size)
+        val read = file.inputStream().use { it.read(signature) }
+        if (read != signature.size || !signature.contentEquals(JPEG_SIGNATURE)) return false
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.path, bounds)
+        return bounds.outWidth > 0 && bounds.outHeight > 0
+    }
 
     /** Removes the picture, if there is one. */
     suspend fun remove() {

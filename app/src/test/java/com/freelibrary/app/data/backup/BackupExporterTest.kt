@@ -1,5 +1,6 @@
 package com.freelibrary.app.data.backup
 
+import android.graphics.Bitmap
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.TimeProvider
@@ -12,7 +13,10 @@ import com.freelibrary.app.data.local.entity.Highlight
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.data.profile.AvatarDecoder
+import com.freelibrary.app.data.profile.AvatarStore
 import com.freelibrary.app.data.repository.InMemoryPreferences
+import com.freelibrary.app.data.repository.ProfileRepository
 import com.freelibrary.app.data.repository.SettingsRepository
 import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.test.runTest
@@ -29,6 +33,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.zip.ZipInputStream
 
 @RunWith(RobolectricTestRunner::class)
@@ -39,6 +44,9 @@ class BackupExporterTest {
     private lateinit var database: FreeLibraryDatabase
     private lateinit var settings: SettingsRepository
     private lateinit var exporter: BackupExporter
+    private lateinit var profileRepository: ProfileRepository
+    private lateinit var avatarStore: AvatarStore
+    private lateinit var profileStore: ProfileBackupStore
     private var bookId: Long = 0
 
     @Before
@@ -50,7 +58,10 @@ class BackupExporterTest {
                     FreeLibraryDatabase::class.java,
                 ).allowMainThreadQueries().build()
             settings = SettingsRepository(InMemoryPreferences())
-            exporter = BackupExporter(database.backupDao(), settings, TimeProvider { 1_234L })
+            profileRepository = ProfileRepository(InMemoryPreferences())
+            avatarStore = AvatarStore(File(temporaryFolder.root, "profile"), AvatarDecoder { _, _ -> null })
+            profileStore = ProfileBackupStore(profileRepository, avatarStore, TimeProvider { 1_234L })
+            exporter = BackupExporter(database.backupDao(), settings, TimeProvider { 1_234L }, profileStore)
             val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
             bookId =
                 database.bookDao().insert(
@@ -135,6 +146,49 @@ class BackupExporterTest {
                 SettingsBackup("DARK", trueBlack = true, wifiOnlySync = false),
                 BackupJson.decodeFromString(SettingsBackup.serializer(), entries.text(BackupEntries.SETTINGS)),
             )
+        }
+
+    private fun jpegBytes(): ByteArray {
+        val out = ByteArrayOutputStream()
+        Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.JPEG, 90, out)
+        return out.toByteArray()
+    }
+
+    @Test
+    fun `the settings part also holds the name, birthday and picture`() =
+        runTest {
+            profileRepository.saveDetails("Arash", 500L)
+            val picture = jpegBytes()
+            assertTrue(avatarStore.saveFinished(ByteArrayInputStream(picture), 1_000_000L))
+
+            val (_, entries) = exportToZip(setOf(BackupPart.SETTINGS))
+
+            assertEquals(listOf(BackupEntries.MANIFEST, BackupEntries.SETTINGS, BackupEntries.AVATAR), entries.keys.toList())
+            val saved = BackupJson.decodeFromString(SettingsBackup.serializer(), entries.text(BackupEntries.SETTINGS))
+            assertEquals(ProfileBackup("Arash", 500L, hasPicture = true), saved.profile)
+            assertArrayEquals(avatarStore.file()!!.readBytes(), entries.getValue(BackupEntries.AVATAR))
+        }
+
+    @Test
+    fun `a name alone is exported without a picture entry`() =
+        runTest {
+            profileRepository.saveDetails("Arash", null)
+
+            val (_, entries) = exportToZip(setOf(BackupPart.SETTINGS))
+
+            assertEquals(listOf(BackupEntries.MANIFEST, BackupEntries.SETTINGS), entries.keys.toList())
+            val saved = BackupJson.decodeFromString(SettingsBackup.serializer(), entries.text(BackupEntries.SETTINGS))
+            assertEquals(ProfileBackup("Arash", null, hasPicture = false), saved.profile)
+        }
+
+    @Test
+    fun `the data part never carries the profile`() =
+        runTest {
+            profileRepository.saveDetails("Arash", 500L)
+
+            val (_, entries) = exportToZip(setOf(BackupPart.DATA))
+
+            assertEquals(listOf(BackupEntries.MANIFEST, BackupEntries.DATA), entries.keys.toList())
         }
 
     @Test
