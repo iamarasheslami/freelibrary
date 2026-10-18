@@ -13,7 +13,6 @@ import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.app.domain.model.BookSlider
 import com.freelibrary.app.domain.model.CatalogDefaults
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,30 +30,27 @@ class BookListRepository
     constructor(
         private val bookListDao: BookListDao,
     ) {
-        /** The slider of any catalog shelf, by its bookshelf name: its first books and its total size. */
+        /**
+         * The slider of any catalog shelf, by its bookshelf name: its first books, and whether the
+         * shelf holds more. One query answers both: it asks for one book more than the slider shows,
+         * so the slider's total is only counted up to that one extra book, which is all "View more"
+         * needs.
+         */
         fun observeShelfSlider(
             bookshelfName: String,
             filter: BookFilter = BookFilter(),
         ): Flow<BookSlider> =
-            combine(
-                bookListDao.observeBooksOnShelf(
-                    bookshelfName,
-                    filter.browseLanguage,
-                    CatalogDefaults.BOOKS_PER_SLIDER,
-                    filter.formats.toList(),
-                    filter.formats.isEmpty(),
-                    filter.genres.toList(),
-                    filter.genres.isEmpty(),
-                ),
-                bookListDao.observeShelfBookCount(
-                    bookshelfName,
-                    filter.browseLanguage,
-                    filter.formats.toList(),
-                    filter.formats.isEmpty(),
-                    filter.genres.toList(),
-                    filter.genres.isEmpty(),
-                ),
-            ) { rows, total -> BookSlider(rows.map { it.toBookCard() }, total) }
+            bookListDao.observeBooksOnShelf(
+                bookshelfName,
+                filter.browseLanguage,
+                CatalogDefaults.BOOKS_PER_SLIDER + 1,
+                filter.formats.toList(),
+                filter.formats.isEmpty(),
+                filter.genres.toList(),
+                filter.genres.isEmpty(),
+            ).map { rows ->
+                BookSlider(rows.take(CatalogDefaults.BOOKS_PER_SLIDER).map { it.toBookCard() }, rows.size)
+            }
 
         /** The Recently Added slider. */
         fun observeRecentlyAdded(): Flow<List<BookCard>> =

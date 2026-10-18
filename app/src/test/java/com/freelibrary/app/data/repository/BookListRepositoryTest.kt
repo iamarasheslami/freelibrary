@@ -80,7 +80,18 @@ class BookListRepositoryTest {
             val slider = repository.observeShelfSlider(shelfName).first()
 
             assertEquals((1..10).map { "$it" }, slider.books.map { it.externalId })
-            assertEquals(12, slider.totalBooks)
+            assertEquals(10, slider.books.size)
+            assertTrue(slider.hasMore)
+        }
+
+    @Test
+    fun `a shelf with exactly one book more than the slider shows offers View more`() =
+        runTest {
+            shelve(*(1..11).map { addBook("$it") }.toLongArray())
+
+            val slider = repository.observeShelfSlider(shelfName).first()
+
+            assertEquals((1..10).map { "$it" }, slider.books.map { it.externalId })
             assertTrue(slider.hasMore)
         }
 
