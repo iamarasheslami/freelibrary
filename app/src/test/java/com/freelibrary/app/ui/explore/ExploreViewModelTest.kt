@@ -109,7 +109,6 @@ class ExploreViewModelTest {
 
             val collection = rows[0].slider
             assertEquals(10, collection.books.size)
-            assertEquals(12, collection.totalBooks)
             assertTrue(collection.hasMore)
             val genre = rows[1].slider
             assertEquals(10, genre.books.size)

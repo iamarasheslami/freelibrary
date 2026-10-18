@@ -9,7 +9,11 @@ data class BookCard(
     val coverUrl: String?,
 )
 
-/** The first books of a list and how many it holds in all, as a slider shows them. */
+/**
+ * The first books of a list and how many it holds, as a slider shows them. For a catalog shelf
+ * [totalBooks] is counted only up to one more than the slider shows, which is enough to tell
+ * whether to offer "View more".
+ */
 data class BookSlider(
     val books: List<BookCard>,
     val totalBooks: Int,
