@@ -140,4 +140,23 @@
     <string name="backup_error_invalid">This is not a FreeLibrary backup, or it is damaged, or it was made by a newer version of the app.</string>
     <string name="backup_error_failed">Something went wrong and the backup was not completed.</string>
     <string name="backup_error_empty">This backup holds nothing to restore.</string>
+    <string name="book_files_none">This book has no file the app can open.</string>
+    <string name="book_files_downloaded">Downloaded: %1$s</string>
+    <string name="book_files_waiting">Waiting for another download to finish…</string>
+    <string name="book_files_downloading">Downloading %1$s…</string>
+    <string name="book_files_downloading_percent">Downloading %1$s… %2$d%%</string>
+    <string name="book_files_download">Download %1$s</string>
+    <string name="book_files_retry">Try again</string>
+    <string name="book_files_other">Other formats</string>
+    <string name="book_files_choose_title">Download which format?</string>
+    <string name="book_files_cancel">Cancel download</string>
+    <string name="book_files_delete">Delete download</string>
+    <string name="book_files_delete_title">Delete which download?</string>
+    <string name="download_error_offline">No internet connection. Check your connection and try again.</string>
+    <string name="download_error_blocked">The server is limiting downloads right now. Try again later, or turn off your VPN or proxy.</string>
+    <string name="download_error_not_found">This file is no longer available at the source.</string>
+    <string name="download_error_server">The server had a problem. Try again later.</string>
+    <string name="download_error_not_a_book">The server did not send a book. Try another format, or try again later.</string>
+    <string name="download_error_too_large">This file is too large to download.</string>
+    <string name="download_error_storage">The file could not be saved. Check that the phone has free space.</string>
 </resources>
