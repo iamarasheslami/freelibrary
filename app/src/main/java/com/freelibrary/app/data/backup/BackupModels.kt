@@ -15,6 +15,7 @@ object BackupEntries {
     const val DATA = "data.json"
     const val SETTINGS = "settings.json"
     const val BOOKS = "books.json"
+    const val AVATAR = "profile/avatar.jpg"
     const val BOOK_FILE_PREFIX = "books/"
 }
 
@@ -100,6 +101,16 @@ data class SettingsBackup(
     val themeMode: String,
     val trueBlack: Boolean,
     val wifiOnlySync: Boolean,
+    /** The reader's name, birthday and picture marker. Absent in backups made before profiles existed. */
+    val profile: ProfileBackup? = null,
+)
+
+/** The profile inside the SETTINGS part. The picture itself follows as the [BackupEntries.AVATAR] zip entry. */
+@Serializable
+data class ProfileBackup(
+    val name: String? = null,
+    val birthdayUtcMillis: Long? = null,
+    val hasPicture: Boolean = false,
 )
 
 /** One downloaded book file: [entry] is its name inside the zip. */

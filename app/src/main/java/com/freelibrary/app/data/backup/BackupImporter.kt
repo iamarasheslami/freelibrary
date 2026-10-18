@@ -51,6 +51,8 @@ data class ImportSummary(
     val bookFilesRestored: Int,
     /** Book files not restored: the book is not in this phone's catalog, or the phone already has that file. */
     val bookFilesSkipped: Int,
+    /** True when a name, birthday or picture from the backup was restored. */
+    val profileRestored: Boolean = false,
 )
 
 private const val MAX_JSON_BYTES = 32 * 1024 * 1024
@@ -77,6 +79,7 @@ class BackupImporter
         private val downloadedBookDao: DownloadedBookDao,
         private val settingsRepository: SettingsRepository,
         private val bookStorage: BookStorage,
+        private val profileBackupStore: ProfileBackupStore,
     ) {
         /** Reads only the manifest, so the reader can be asked which of the file's parts to restore. */
         suspend fun inspect(input: InputStream): BackupInfo =
@@ -110,6 +113,8 @@ class BackupImporter
                                     restoreData(decode(DataBackup.serializer(), readJson(zip)), tally)
                                 entry.name == BackupEntries.SETTINGS && BackupPart.SETTINGS in wanted ->
                                     restoreSettings(decode(SettingsBackup.serializer(), readJson(zip)), tally)
+                                entry.name == BackupEntries.AVATAR && BackupPart.SETTINGS in wanted ->
+                                    if (profileBackupStore.restorePicture(zip)) tally.profile = true
                                 entry.name == BackupEntries.BOOKS && BackupPart.BOOKS in wanted ->
                                     bookFiles = decode(BooksBackup.serializer(), readJson(zip)).files.associateBy { it.entry }
                                 entry.name.startsWith(BackupEntries.BOOK_FILE_PREFIX) && BackupPart.BOOKS in wanted ->
@@ -128,10 +133,11 @@ class BackupImporter
             var restored = 0
             var skipped = 0
             var settings = false
+            var profile = false
             var filesRestored = 0
             var filesSkipped = 0
 
-            fun toSummary() = ImportSummary(restored, skipped, settings, filesRestored, filesSkipped)
+            fun toSummary() = ImportSummary(restored, skipped, settings, filesRestored, filesSkipped, profile)
         }
 
         private fun readManifest(zip: ZipInputStream): BackupManifest {
@@ -242,6 +248,10 @@ class BackupImporter
             ThemeMode.entries.firstOrNull { it.name == settings.themeMode }?.let { settingsRepository.setThemeMode(it) }
             settingsRepository.setTrueBlack(settings.trueBlack)
             settingsRepository.setWifiOnlySync(settings.wifiOnlySync)
+            settings.profile?.let { profile ->
+                profileBackupStore.restoreDetails(profile)
+                if (profile.name != null || profile.birthdayUtcMillis != null) tally.profile = true
+            }
             tally.settings = true
         }
 

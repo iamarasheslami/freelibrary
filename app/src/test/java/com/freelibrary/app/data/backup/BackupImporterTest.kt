@@ -1,5 +1,6 @@
 package com.freelibrary.app.data.backup
 
+import android.graphics.Bitmap
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.TimeProvider
@@ -12,7 +13,10 @@ import com.freelibrary.app.data.local.entity.Highlight
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.data.profile.AvatarDecoder
+import com.freelibrary.app.data.profile.AvatarStore
 import com.freelibrary.app.data.repository.InMemoryPreferences
+import com.freelibrary.app.data.repository.ProfileRepository
 import com.freelibrary.app.data.repository.SettingsRepository
 import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.flow.first
@@ -43,6 +47,9 @@ class BackupImporterTest {
     private lateinit var settings: SettingsRepository
     private lateinit var exporter: BackupExporter
     private lateinit var importer: BackupImporter
+    private lateinit var profileRepository: ProfileRepository
+    private lateinit var avatarStore: AvatarStore
+    private lateinit var profileStore: ProfileBackupStore
     private lateinit var storageDir: File
     private var bookId: Long = 0
 
@@ -56,7 +63,10 @@ class BackupImporterTest {
                 ).allowMainThreadQueries().build()
             settings = SettingsRepository(InMemoryPreferences())
             storageDir = File(temporaryFolder.root, "books")
-            exporter = BackupExporter(database.backupDao(), settings, TimeProvider { 1_234L })
+            profileRepository = ProfileRepository(InMemoryPreferences())
+            avatarStore = AvatarStore(File(temporaryFolder.root, "profile"), AvatarDecoder { _, _ -> null })
+            profileStore = ProfileBackupStore(profileRepository, avatarStore, TimeProvider { 1_234L })
+            exporter = BackupExporter(database.backupDao(), settings, TimeProvider { 1_234L }, profileStore)
             importer =
                 BackupImporter(
                     database.backupDao(),
@@ -67,6 +77,7 @@ class BackupImporterTest {
                     database.downloadedBookDao(),
                     settings,
                     BookStorage(storageDir),
+                    profileStore,
                 )
             val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
             bookId =
@@ -314,6 +325,134 @@ class BackupImporterTest {
             assertEquals(listOf("$bookId.evil"), storageDir.listFiles()!!.map { it.name })
             assertFalse(File(temporaryFolder.root, "evil").exists())
             assertFalse(File(temporaryFolder.root.parentFile, "evil").exists())
+        }
+
+    private fun jpegBytes(): ByteArray {
+        val out = ByteArrayOutputStream()
+        Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.JPEG, 90, out)
+        return out.toByteArray()
+    }
+
+    private fun settingsJson(profile: String) = """{"themeMode":"DARK","trueBlack":true,"wifiOnlySync":false$profile}""".toByteArray()
+
+    @Test
+    fun `the name, birthday and picture come back after a round trip`() =
+        runTest {
+            profileRepository.saveDetails("Arash", 500L)
+            assertTrue(avatarStore.saveFinished(ByteArrayInputStream(jpegBytes()), 1_000_000L))
+            val bytes = exported(setOf(BackupPart.SETTINGS))
+            profileRepository.saveDetails(null, null)
+            avatarStore.remove()
+            profileRepository.setAvatarVersion(null)
+
+            val summary = restore(bytes, setOf(BackupPart.SETTINGS))
+
+            assertTrue(summary.profileRestored)
+            val profile = profileRepository.profile.first()
+            assertEquals("Arash", profile.name)
+            assertEquals(500L, profile.birthdayUtcMillis)
+            assertEquals(1_234L, profile.avatarVersion)
+            assertTrue(avatarStore.file() != null)
+        }
+
+    @Test
+    fun `a backup without a profile leaves the phone's profile alone`() =
+        runTest {
+            profileRepository.saveDetails("Sam", 400L)
+            val bytes =
+                zipOf(
+                    BackupEntries.MANIFEST to manifestBytes(listOf(BackupPart.SETTINGS)),
+                    BackupEntries.SETTINGS to settingsJson(""),
+                )
+
+            val summary = restore(bytes, setOf(BackupPart.SETTINGS))
+
+            assertTrue(summary.settingsRestored)
+            assertFalse(summary.profileRestored)
+            val profile = profileRepository.profile.first()
+            assertEquals("Sam", profile.name)
+            assertEquals(400L, profile.birthdayUtcMillis)
+        }
+
+    @Test
+    fun `a picture entry that is not an image is not kept`() =
+        runTest {
+            val bytes =
+                zipOf(
+                    BackupEntries.MANIFEST to manifestBytes(listOf(BackupPart.SETTINGS)),
+                    BackupEntries.SETTINGS to settingsJson(""","profile":{"hasPicture":true}"""),
+                    BackupEntries.AVATAR to "this is not a picture".toByteArray(),
+                )
+
+            val summary = restore(bytes, setOf(BackupPart.SETTINGS))
+
+            assertFalse(summary.profileRestored)
+            assertEquals(null, avatarStore.file())
+            assertEquals(null, profileRepository.profile.first().avatarVersion)
+        }
+
+    @Test
+    fun `a bad picture does not replace the phone's own picture`() =
+        runTest {
+            val own = jpegBytes()
+            assertTrue(avatarStore.saveFinished(ByteArrayInputStream(own), 1_000_000L))
+            val bytes =
+                zipOf(
+                    BackupEntries.MANIFEST to manifestBytes(listOf(BackupPart.SETTINGS)),
+                    BackupEntries.SETTINGS to settingsJson(""","profile":{"hasPicture":true}"""),
+                    BackupEntries.AVATAR to "this is not a picture".toByteArray(),
+                )
+
+            restore(bytes, setOf(BackupPart.SETTINGS))
+
+            assertArrayEquals(own, avatarStore.file()!!.readBytes())
+        }
+
+    @Test
+    fun `a picture over the size limit is not kept`() =
+        runTest {
+            val big = jpegBytes() + ByteArray(3 * 1024 * 1024)
+            val bytes =
+                zipOf(
+                    BackupEntries.MANIFEST to manifestBytes(listOf(BackupPart.SETTINGS)),
+                    BackupEntries.SETTINGS to settingsJson(""","profile":{"hasPicture":true}"""),
+                    BackupEntries.AVATAR to big,
+                )
+
+            restore(bytes, setOf(BackupPart.SETTINGS))
+
+            assertEquals(null, avatarStore.file())
+        }
+
+    @Test
+    fun `a birthday in the future is ignored but the name is kept`() =
+        runTest {
+            val bytes =
+                zipOf(
+                    BackupEntries.MANIFEST to manifestBytes(listOf(BackupPart.SETTINGS)),
+                    BackupEntries.SETTINGS to settingsJson(""","profile":{"name":"Arash","birthdayUtcMillis":999999999}"""),
+                )
+
+            restore(bytes, setOf(BackupPart.SETTINGS))
+
+            val profile = profileRepository.profile.first()
+            assertEquals("Arash", profile.name)
+            assertEquals(null, profile.birthdayUtcMillis)
+        }
+
+    @Test
+    fun `the profile is not restored when settings are not chosen`() =
+        runTest {
+            profileRepository.saveDetails("Arash", 500L)
+            assertTrue(avatarStore.saveFinished(ByteArrayInputStream(jpegBytes()), 1_000_000L))
+            val bytes = exported(BackupPart.entries.toSet())
+            profileRepository.saveDetails(null, null)
+            avatarStore.remove()
+
+            restore(bytes, setOf(BackupPart.DATA))
+
+            assertEquals(null, profileRepository.profile.first().name)
+            assertEquals(null, avatarStore.file())
         }
 
     @Test

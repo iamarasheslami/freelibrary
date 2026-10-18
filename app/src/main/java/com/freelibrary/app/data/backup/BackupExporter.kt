@@ -39,6 +39,7 @@ class BackupExporter
         private val backupDao: BackupDao,
         private val settingsRepository: SettingsRepository,
         private val timeProvider: TimeProvider,
+        private val profileBackupStore: ProfileBackupStore,
     ) {
         suspend fun export(
             parts: Set<BackupPart>,
@@ -57,7 +58,15 @@ class BackupExporter
                         zip.putText(BackupEntries.DATA, BackupJson.encodeToString(DataBackup.serializer(), data))
                     }
                     if (BackupPart.SETTINGS in parts) {
-                        zip.putText(BackupEntries.SETTINGS, BackupJson.encodeToString(SettingsBackup.serializer(), readSettings()))
+                        val profile = profileBackupStore.read()
+                        zip.putText(BackupEntries.SETTINGS, BackupJson.encodeToString(SettingsBackup.serializer(), readSettings(profile)))
+                        if (profile?.hasPicture == true) {
+                            profileBackupStore.pictureFile()?.let { picture ->
+                                zip.putNextEntry(ZipEntry(BackupEntries.AVATAR))
+                                picture.inputStream().use { it.copyTo(zip) }
+                                zip.closeEntry()
+                            }
+                        }
                     }
 
                     var bookFiles = 0
@@ -121,11 +130,12 @@ class BackupExporter
                     },
             )
 
-        private suspend fun readSettings(): SettingsBackup =
+        private suspend fun readSettings(profile: ProfileBackup?): SettingsBackup =
             SettingsBackup(
                 themeMode = settingsRepository.themeMode.first().name,
                 trueBlack = settingsRepository.trueBlack.first(),
                 wifiOnlySync = settingsRepository.wifiOnlySync.first(),
+                profile = profile,
             )
 
         private fun ZipOutputStream.putText(
