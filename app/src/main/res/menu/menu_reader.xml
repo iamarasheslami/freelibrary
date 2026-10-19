@@ -3,6 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_larger_text"
+        android:title="@string/reader_larger_text"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_smaller_text"
+        android:title="@string/reader_smaller_text"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_toggle_paging"
         android:title="@string/reader_scroll_view"
         app:showAsAction="never" />

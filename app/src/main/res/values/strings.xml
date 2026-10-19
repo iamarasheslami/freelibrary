@@ -173,4 +173,6 @@
     <string name="reader_page_label">Chapter %1$d of %2$d · page %3$d of %4$d</string>
     <string name="reader_scroll_view">Switch to scroll view</string>
     <string name="reader_page_view">Switch to page view</string>
+    <string name="reader_larger_text">Larger text</string>
+    <string name="reader_smaller_text">Smaller text</string>
 </resources>
