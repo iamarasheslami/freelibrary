@@ -146,8 +146,8 @@ class BookPageFragment : Fragment() {
         val transfer = files.transfer
         val busy = files.busy
 
-        // The EPUB is the default; a PDF is read when it is the only readable file.
-        val readable = BookFileFormat.EPUB.takeIf { it in files.downloaded } ?: BookFileFormat.PDF.takeIf { it in files.downloaded }
+        // The first downloaded format, in the order they are offered (EPUB, PDF, then text), is the one that opens.
+        val readable = BookFileFormat.entries.firstOrNull { it in files.downloaded }
         binding.bookPageReadButton.isVisible = readable != null
         binding.bookPageReadButton.setOnClickListener { readable?.let { openReader(it) } }
 
@@ -182,7 +182,9 @@ class BookPageFragment : Fragment() {
     private fun openReader(format: BookFileFormat) {
         val bookId = shownBookId ?: return
         val directions =
-            if (format == BookFileFormat.PDF) {
+            if (format == BookFileFormat.TEXT) {
+                BookPageFragmentDirections.actionBookPageFragmentToTextReaderFragment(bookId)
+            } else if (format == BookFileFormat.PDF) {
                 BookPageFragmentDirections.actionBookPageFragmentToPdfReaderFragment(bookId)
             } else {
                 BookPageFragmentDirections.actionBookPageFragmentToEpubReaderFragment(bookId)

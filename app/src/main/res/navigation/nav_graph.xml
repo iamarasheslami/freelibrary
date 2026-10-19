@@ -85,6 +85,18 @@
         <action
             android:id="@+id/action_bookPageFragment_to_pdfReaderFragment"
             app:destination="@id/pdfReaderFragment" />
+        <action
+            android:id="@+id/action_bookPageFragment_to_textReaderFragment"
+            app:destination="@id/textReaderFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/textReaderFragment"
+        android:name="com.freelibrary.app.ui.reader.TextReaderFragment"
+        tools:layout="@layout/fragment_text_reader">
+        <argument
+            android:name="bookId"
+            app:argType="long" />
     </fragment>
 
     <fragment
