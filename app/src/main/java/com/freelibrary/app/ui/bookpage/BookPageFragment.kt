@@ -35,7 +35,7 @@ import javax.inject.Inject
 /**
  * A book's own page: cover, title, authors, language, where the book sits on the reader's shelves
  * with the buttons to change that, the book's files with the buttons to download, cancel and delete
- * them, and the catalog summary. Reading comes with the reader, so there is no Read button yet.
+ * them (with a Read button once an EPUB is downloaded), and the catalog summary.
  */
 @AndroidEntryPoint
 class BookPageFragment : Fragment() {
@@ -146,6 +146,9 @@ class BookPageFragment : Fragment() {
         val transfer = files.transfer
         val busy = files.busy
 
+        binding.bookPageReadButton.isVisible = BookFileFormat.EPUB in files.downloaded
+        binding.bookPageReadButton.setOnClickListener { openReader() }
+
         val status = filesStatus(files)
         binding.bookPageFilesStatus.text = status
         binding.bookPageFilesStatus.isVisible = status.isNotEmpty()
@@ -172,6 +175,11 @@ class BookPageFragment : Fragment() {
         binding.bookPageCancelDownloadButton.setOnClickListener { viewModel.onCancelDownload() }
         binding.bookPageDeleteDownloadButton.isVisible = !busy && files.downloaded.isNotEmpty()
         binding.bookPageDeleteDownloadButton.setOnClickListener { deleteDownload(files.downloaded) }
+    }
+
+    private fun openReader() {
+        val bookId = shownBookId ?: return
+        findNavController().navigate(BookPageFragmentDirections.actionBookPageFragmentToEpubReaderFragment(bookId))
     }
 
     private fun filesStatus(files: BookFiles): String {

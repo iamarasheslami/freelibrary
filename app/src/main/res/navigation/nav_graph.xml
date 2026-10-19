@@ -79,6 +79,18 @@
         <argument
             android:name="bookId"
             app:argType="long" />
+        <action
+            android:id="@+id/action_bookPageFragment_to_epubReaderFragment"
+            app:destination="@id/epubReaderFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/epubReaderFragment"
+        android:name="com.freelibrary.app.ui.reader.EpubReaderFragment"
+        tools:layout="@layout/fragment_epub_reader">
+        <argument
+            android:name="bookId"
+            app:argType="long" />
     </fragment>
     <fragment
         android:id="@+id/profileFragment"
