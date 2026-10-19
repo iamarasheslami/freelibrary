@@ -5,12 +5,15 @@ import android.util.Xml
 import org.xmlpull.v1.XmlPullParser
 import java.io.InputStream
 
-/** One file the book lists, with its path inside the EPUB. */
+/** One file the book lists, with its path inside the EPUB and the properties the book gives it. */
 internal data class ManifestItem(
     val id: String,
     val path: String,
     val mediaType: String?,
-)
+    val properties: String? = null,
+) {
+    fun hasProperty(name: String): Boolean = properties?.trim()?.split(Regex("\\s+"))?.contains(name) == true
+}
 
 /** One entry of the reading order; [linear] is false for material outside the main reading path. */
 internal data class SpineRef(
@@ -18,10 +21,12 @@ internal data class SpineRef(
     val linear: Boolean,
 )
 
+/** What the package says about the book. [tocId] is the id of the older style contents file, if the spine names one. */
 internal data class PackageDocument(
     val title: String?,
     val items: Map<String, ManifestItem>,
     val spine: List<SpineRef>,
+    val tocId: String? = null,
 )
 
 /**
@@ -53,6 +58,7 @@ internal object EpubPackageParser {
     ): PackageDocument {
         val parser = newParser(input)
         var title: String? = null
+        var tocId: String? = null
         var inMetadata = false
         val items = LinkedHashMap<String, ManifestItem>()
         val spine = ArrayList<SpineRef>()
@@ -63,6 +69,7 @@ internal object EpubPackageParser {
                     "metadata" -> inMetadata = true
                     "title" -> if (inMetadata && title == null) title = parser.nextText().trim().takeIf { it.isNotEmpty() }
                     "item" -> readItem(parser, packagePath)?.let { items[it.id] = it }
+                    "spine" -> tocId = parser.getAttributeValue(null, "toc")?.trim()?.takeIf { it.isNotEmpty() }
                     "itemref" -> readSpineRef(parser)?.let { spine.add(it) }
                 }
             } else if (event == XmlPullParser.END_TAG && localName(parser.name) == "metadata") {
@@ -70,7 +77,7 @@ internal object EpubPackageParser {
             }
             event = parser.next()
         }
-        return PackageDocument(title, items, spine)
+        return PackageDocument(title, items, spine, tocId)
     }
 
     /**
@@ -130,7 +137,12 @@ internal object EpubPackageParser {
         if (id.isNullOrEmpty() || href.isNullOrEmpty() || href.contains("://")) return null
         val path = resolve(packagePath, href)
         if (path.isEmpty()) return null
-        return ManifestItem(id, path, parser.getAttributeValue(null, "media-type")?.trim())
+        return ManifestItem(
+            id,
+            path,
+            parser.getAttributeValue(null, "media-type")?.trim(),
+            parser.getAttributeValue(null, "properties")?.trim(),
+        )
     }
 
     private fun readSpineRef(parser: XmlPullParser): SpineRef? {
@@ -140,9 +152,9 @@ internal object EpubPackageParser {
         return SpineRef(idref, linear)
     }
 
-    private fun localName(name: String?): String = name.orEmpty().substringAfter(':')
+    internal fun localName(name: String?): String = name.orEmpty().substringAfter(':')
 
-    private fun newParser(input: InputStream): XmlPullParser {
+    internal fun newParser(input: InputStream): XmlPullParser {
         val parser = Xml.newPullParser()
         parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
         parser.setInput(input, null)

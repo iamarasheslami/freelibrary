@@ -11,6 +11,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -20,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.freelibrary.app.R
+import com.freelibrary.app.data.reader.ContentsEntry
 import com.freelibrary.app.data.reader.EpubBook
 import com.freelibrary.app.data.reader.EpubPageServer
 import com.freelibrary.app.data.reader.ReaderStyle
@@ -27,6 +29,7 @@ import com.freelibrary.app.databinding.FragmentEpubReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -36,6 +39,9 @@ private const val RESTORE_RETRY_MS = 60L
 private const val RESTORE_ATTEMPTS = 25
 private const val LABEL_REFRESH_MS = 300L
 private const val END_PROMPT_MS = 10_000
+
+/** Written before a contents line for each level of nesting. */
+private const val CONTENTS_INDENT = "\u2003"
 
 /**
  * Reads an EPUB one chapter at a time in a web view, page by page or as a scroll. The book is never
@@ -59,6 +65,7 @@ class EpubReaderFragment : Fragment() {
     private var chapters: List<String> = emptyList()
     private var paged = true
     private var textPercent = ReaderStyle.DEFAULT_TEXT_PERCENT
+    private var contentsDialog: AlertDialog? = null
     private var currentChapter = 0
     private var currentPagePath: String? = null
     private var pendingPermille = 0
@@ -87,6 +94,7 @@ class EpubReaderFragment : Fragment() {
             if (server != null) {
                 when (item.itemId) {
                     R.id.action_toggle_paging -> viewModel.setPaged(!paged)
+                    R.id.action_contents -> showContents()
                     R.id.action_larger_text -> viewModel.changeTextSize(larger = true)
                     R.id.action_smaller_text -> viewModel.changeTextSize(larger = false)
                 }
@@ -211,6 +219,29 @@ class EpubReaderFragment : Fragment() {
         val height = binding.readerWebView.height
         if (height <= 0) return 0
         return (height / resources.displayMetrics.density).toInt() - 1
+    }
+
+    /** Lists the book's chapters (its own contents, or numbered chapters if it has none) and opens the one picked. */
+    private fun showContents() {
+        val book = book ?: return
+        val entries = book.contents.ifEmpty { chapters.indices.map { ContentsEntry("", it, 0) } }
+        val labels =
+            entries
+                .map { entry ->
+                    val title = entry.title.ifBlank { getString(R.string.reader_chapter_number, entry.chapter + 1) }
+                    CONTENTS_INDENT.repeat(entry.level) + title
+                }.toTypedArray()
+        val here =
+            entries.indexOfFirst { it.chapter == currentChapter }
+                .takeIf { it >= 0 } ?: entries.indexOfLast { it.chapter < currentChapter }
+        contentsDialog?.dismiss()
+        contentsDialog =
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.reader_contents)
+                .setSingleChoiceItems(labels, here) { dialog, which ->
+                    dialog.dismiss()
+                    showChapter(entries[which].chapter, 0, report = true)
+                }.show()
     }
 
     private fun onTextPercentChanged(newValue: Int) {
@@ -357,6 +388,8 @@ class EpubReaderFragment : Fragment() {
         server = null
         book = null
         baseStyle = null
+        contentsDialog?.dismiss()
+        contentsDialog = null
         chapters = emptyList()
         pageReady = false
         _binding?.readerWebView?.let { web ->
