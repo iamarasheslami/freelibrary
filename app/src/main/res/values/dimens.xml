@@ -4,6 +4,7 @@
     <dimen name="spacing_xs">4dp</dimen>
     <dimen name="spacing_s">8dp</dimen>
     <dimen name="spacing_m">16dp</dimen>
+    <dimen name="reader_page_margin">24dp</dimen>
 
     <!-- Book card: the width sets the cover size, and the cover height follows from its 2:3 shape. -->
     <dimen name="book_card_width">112dp</dimen>

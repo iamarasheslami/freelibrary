@@ -52,6 +52,20 @@ class SettingsRepositoryTest {
         }
 
     @Test
+    fun `the reader pages by default and remembers a different choice`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            assertTrue(repository.readerPaged.first())
+
+            repository.setReaderPaged(false)
+            assertFalse(repository.readerPaged.first())
+
+            repository.setReaderPaged(true)
+            assertTrue(repository.readerPaged.first())
+        }
+
+    @Test
     fun `the theme is System until the reader picks one`() =
         runTest {
             val repository = SettingsRepository(InMemoryPreferences())

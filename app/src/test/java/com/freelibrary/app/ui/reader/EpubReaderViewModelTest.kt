@@ -11,8 +11,10 @@ import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.reader.EpubBook
 import com.freelibrary.app.data.repository.BookDetailsRepository
+import com.freelibrary.app.data.repository.InMemoryPreferences
 import com.freelibrary.app.data.repository.ReaderRepository
 import com.freelibrary.app.data.repository.ReadingStateRepository
+import com.freelibrary.app.data.repository.SettingsRepository
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.bookpage.ARG_BOOK_ID
 import kotlinx.coroutines.Dispatchers
@@ -27,8 +29,10 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -49,6 +53,7 @@ class EpubReaderViewModelTest {
     private lateinit var readerRepository: ReaderRepository
     private lateinit var readingState: ReadingStateRepository
     private val openedBooks = mutableListOf<EpubBook>()
+    private val settings = SettingsRepository(InMemoryPreferences())
     private var bookId: Long = 0
 
     private val container =
@@ -135,6 +140,7 @@ class EpubReaderViewModelTest {
             readerRepository,
             readingState,
             BookDetailsRepository(database.bookDao(), database.bookAuthorDao(), database.bookSummaryDao()),
+            settings,
         )
 
     private suspend fun EpubReaderViewModel.settled(): EpubReaderUiState {
@@ -151,6 +157,23 @@ class EpubReaderViewModelTest {
                 value = block()
             }
             value
+        }
+
+    @Test
+    fun `the book is shown page by page until the reader chooses scrolling, and the choice is kept`() =
+        runBlocking<Unit> {
+            downloadEpub()
+            val first = viewModel()
+            first.settled()
+            assertTrue(first.paged.value)
+
+            first.setPaged(false)
+
+            assertFalse(first.paged.value)
+            eventually { settings.readerPaged.first().takeIf { !it } }
+            val second = viewModel()
+            second.settled()
+            assertFalse(second.paged.value)
         }
 
     @Test

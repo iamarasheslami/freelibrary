@@ -51,6 +51,10 @@ class SettingsRepository
         val lastCatalogSyncAt: Flow<Long?> =
             storedPreferences.map { preferences -> preferences[LAST_CATALOG_SYNC_KEY] }
 
+        /** Whether the reader shows a book page by page (true) or as one long scroll per chapter. Page by page until chosen. */
+        val readerPaged: Flow<Boolean> =
+            storedPreferences.map { preferences -> preferences[READER_PAGED_KEY] ?: true }
+
         suspend fun setThemeMode(mode: ThemeMode) {
             dataStore.edit { preferences -> preferences[THEME_MODE_KEY] = mode.name }
         }
@@ -67,10 +71,15 @@ class SettingsRepository
             dataStore.edit { preferences -> preferences[LAST_CATALOG_SYNC_KEY] = atMillis }
         }
 
+        suspend fun setReaderPaged(paged: Boolean) {
+            dataStore.edit { preferences -> preferences[READER_PAGED_KEY] = paged }
+        }
+
         private companion object {
             val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
             val TRUE_BLACK_KEY = booleanPreferencesKey("true_black")
             val WIFI_ONLY_SYNC_KEY = booleanPreferencesKey("wifi_only_sync")
             val LAST_CATALOG_SYNC_KEY = longPreferencesKey("last_catalog_sync_at")
+            val READER_PAGED_KEY = booleanPreferencesKey("reader_paged")
         }
     }
