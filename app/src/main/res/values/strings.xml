@@ -175,4 +175,6 @@
     <string name="reader_page_view">Switch to page view</string>
     <string name="reader_larger_text">Larger text</string>
     <string name="reader_smaller_text">Smaller text</string>
+    <string name="reader_contents">Contents</string>
+    <string name="reader_chapter_number">Chapter %1$d</string>
 </resources>
