@@ -159,4 +159,15 @@
     <string name="download_error_not_a_book">The server did not send a book. Try another format, or try again later.</string>
     <string name="download_error_too_large">This file is too large to download.</string>
     <string name="download_error_storage">The file could not be saved. Check that the phone has free space.</string>
+    <string name="book_files_read">Read</string>
+    <string name="reader_opening">Opening the book</string>
+    <string name="reader_chapter_label">Chapter %1$d of %2$d</string>
+    <string name="reader_previous">Previous</string>
+    <string name="reader_next">Next</string>
+    <string name="reader_error_not_downloaded">This book is not on your phone. Download it from its page first.</string>
+    <string name="reader_error_not_epub">This file is not an EPUB book. Delete the download and download it again.</string>
+    <string name="reader_error_damaged">This book file is damaged. Delete the download and download it again.</string>
+    <string name="reader_error_empty">This book has no pages to read.</string>
+    <string name="reader_end_reached">You reached the end of the book.</string>
+    <string name="reader_mark_finished">Mark as finished</string>
 </resources>
