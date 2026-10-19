@@ -1,6 +1,7 @@
 package com.freelibrary.app.ui.reader
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.TimeProvider
@@ -14,12 +15,15 @@ import com.freelibrary.app.data.repository.ReadingStateRepository
 import com.freelibrary.app.ui.bookpage.ARG_BOOK_ID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -69,11 +73,18 @@ class PdfReaderViewModelTest {
 
     @After
     fun tearDown() {
+        // Work still on its way must finish while the main dispatcher is still set, or it fails in a later test.
+        runBlocking { withTimeoutOrNull(5_000) { created.forEach { it.viewModelScope.coroutineContext[Job]?.cancelAndJoin() } } }
         database.close()
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(arguments: Map<String, Any?> = mapOf(ARG_BOOK_ID to bookId)) =
+    private val created = mutableListOf<PdfReaderViewModel>()
+
+    private fun viewModel(arguments: Map<String, Any?> = mapOf(ARG_BOOK_ID to bookId)): PdfReaderViewModel =
+        build(arguments).also { created.add(it) }
+
+    private fun build(arguments: Map<String, Any?>) =
         PdfReaderViewModel(
             SavedStateHandle(arguments),
             readerRepository,
