@@ -1,6 +1,7 @@
 package com.freelibrary.app.ui.reader
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.TimeProvider
@@ -20,6 +21,8 @@ import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.bookpage.ARG_BOOK_ID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -107,6 +110,8 @@ class EpubReaderViewModelTest {
 
     @After
     fun tearDown() {
+        // A save still on its way must finish while the main dispatcher is still set, or it fails in a later test.
+        runBlocking { withTimeoutOrNull(5_000) { created.forEach { it.viewModelScope.coroutineContext[Job]?.cancelAndJoin() } } }
         openedBooks.forEach { it.close() }
         database.close()
         Dispatchers.resetMain()
@@ -135,7 +140,12 @@ class EpubReaderViewModelTest {
         database.downloadedBookDao().insert(DownloadedBook(bookId = bookId, localFilePath = file.path, format = "epub", downloadedAt = 1L))
     }
 
-    private fun viewModel(arguments: Map<String, Any?> = mapOf(ARG_BOOK_ID to bookId)) =
+    private val created = mutableListOf<EpubReaderViewModel>()
+
+    private fun viewModel(arguments: Map<String, Any?> = mapOf(ARG_BOOK_ID to bookId)): EpubReaderViewModel =
+        build(arguments).also { created.add(it) }
+
+    private fun build(arguments: Map<String, Any?>) =
         EpubReaderViewModel(
             SavedStateHandle(arguments),
             readerRepository,

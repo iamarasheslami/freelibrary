@@ -23,21 +23,16 @@ class ReaderRepository
         private val timeProvider: TimeProvider,
     ) {
         /** The downloaded EPUB of [bookId], or null when none was downloaded or its file has gone. */
-        suspend fun epubFile(bookId: Long): File? =
-            withContext(Dispatchers.IO) {
-                downloadedBookDao
-                    .getFormatsForBook(bookId)
-                    .firstOrNull { it.format.equals(BookFileFormat.EPUB.catalogName, ignoreCase = true) }
-                    ?.let { File(it.localFilePath) }
-                    ?.takeIf { it.isFile }
-            }
+        suspend fun epubFile(bookId: Long): File? = downloadedFile(bookId, BookFileFormat.EPUB)
+
+        /** The downloaded PDF of [bookId], or null when none was downloaded or its file has gone. */
+        suspend fun pdfFile(bookId: Long): File? = downloadedFile(bookId, BookFileFormat.PDF)
 
         /** Where the reader left an EPUB, or null when nothing readable is saved for it. */
-        suspend fun savedEpubPosition(bookId: Long): ReaderPosition.Epub? =
-            readingProgressDao
-                .getForBook(bookId)
-                ?.lastPosition
-                ?.let { ReaderPosition.decode(it) } as? ReaderPosition.Epub
+        suspend fun savedEpubPosition(bookId: Long): ReaderPosition.Epub? = savedPosition(bookId) as? ReaderPosition.Epub
+
+        /** The page the reader left a PDF at, or null when nothing readable is saved for it. */
+        suspend fun savedPdfPosition(bookId: Long): ReaderPosition.Pdf? = savedPosition(bookId) as? ReaderPosition.Pdf
 
         /**
          * Saves where the reader is in [bookId]. Returns false when it could not be saved, for
@@ -53,4 +48,22 @@ class ReaderRepository
             } catch (e: SQLiteException) {
                 false
             }
+
+        private suspend fun downloadedFile(
+            bookId: Long,
+            format: BookFileFormat,
+        ): File? =
+            withContext(Dispatchers.IO) {
+                downloadedBookDao
+                    .getFormatsForBook(bookId)
+                    .firstOrNull { it.format.equals(format.catalogName, ignoreCase = true) }
+                    ?.let { File(it.localFilePath) }
+                    ?.takeIf { it.isFile }
+            }
+
+        private suspend fun savedPosition(bookId: Long): ReaderPosition? =
+            readingProgressDao
+                .getForBook(bookId)
+                ?.lastPosition
+                ?.let { ReaderPosition.decode(it) }
     }

@@ -82,6 +82,18 @@
         <action
             android:id="@+id/action_bookPageFragment_to_epubReaderFragment"
             app:destination="@id/epubReaderFragment" />
+        <action
+            android:id="@+id/action_bookPageFragment_to_pdfReaderFragment"
+            app:destination="@id/pdfReaderFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/pdfReaderFragment"
+        android:name="com.freelibrary.app.ui.reader.PdfReaderFragment"
+        tools:layout="@layout/fragment_pdf_reader">
+        <argument
+            android:name="bookId"
+            app:argType="long" />
     </fragment>
 
     <fragment
