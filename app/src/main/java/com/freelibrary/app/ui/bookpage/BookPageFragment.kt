@@ -146,8 +146,10 @@ class BookPageFragment : Fragment() {
         val transfer = files.transfer
         val busy = files.busy
 
-        binding.bookPageReadButton.isVisible = BookFileFormat.EPUB in files.downloaded
-        binding.bookPageReadButton.setOnClickListener { openReader() }
+        // The EPUB is the default; a PDF is read when it is the only readable file.
+        val readable = BookFileFormat.EPUB.takeIf { it in files.downloaded } ?: BookFileFormat.PDF.takeIf { it in files.downloaded }
+        binding.bookPageReadButton.isVisible = readable != null
+        binding.bookPageReadButton.setOnClickListener { readable?.let { openReader(it) } }
 
         val status = filesStatus(files)
         binding.bookPageFilesStatus.text = status
@@ -177,9 +179,15 @@ class BookPageFragment : Fragment() {
         binding.bookPageDeleteDownloadButton.setOnClickListener { deleteDownload(files.downloaded) }
     }
 
-    private fun openReader() {
+    private fun openReader(format: BookFileFormat) {
         val bookId = shownBookId ?: return
-        findNavController().navigate(BookPageFragmentDirections.actionBookPageFragmentToEpubReaderFragment(bookId))
+        val directions =
+            if (format == BookFileFormat.PDF) {
+                BookPageFragmentDirections.actionBookPageFragmentToPdfReaderFragment(bookId)
+            } else {
+                BookPageFragmentDirections.actionBookPageFragmentToEpubReaderFragment(bookId)
+            }
+        findNavController().navigate(directions)
     }
 
     private fun filesStatus(files: BookFiles): String {

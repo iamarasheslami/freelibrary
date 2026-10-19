@@ -102,6 +102,34 @@ class ReaderRepositoryTest {
         }
 
     @Test
+    fun `the downloaded PDF is found, and a book with only an EPUB has none`() =
+        runBlocking<Unit> {
+            assertNull(repository.pdfFile(bookId))
+            val epub = temporaryFolder.newFile("$bookId.epub")
+            download("epub", epub)
+            assertNull(repository.pdfFile(bookId))
+
+            val pdf = temporaryFolder.newFile("$bookId.pdf")
+            download("pdf", pdf)
+
+            assertEquals(pdf, repository.pdfFile(bookId))
+            assertEquals(epub, repository.epubFile(bookId))
+        }
+
+    @Test
+    fun `a saved PDF page is read back, and other kinds of position are not a PDF position`() =
+        runBlocking<Unit> {
+            assertNull(repository.savedPdfPosition(bookId))
+            repository.savePosition(bookId, ReaderPosition.Pdf(41))
+
+            assertEquals(ReaderPosition.Pdf(41), repository.savedPdfPosition(bookId))
+            assertNull(repository.savedEpubPosition(bookId))
+
+            repository.savePosition(bookId, ReaderPosition.Epub(1, 2))
+            assertNull(repository.savedPdfPosition(bookId))
+        }
+
+    @Test
     fun `with nothing saved there is no position`() =
         runBlocking<Unit> {
             assertNull(repository.savedEpubPosition(bookId))
