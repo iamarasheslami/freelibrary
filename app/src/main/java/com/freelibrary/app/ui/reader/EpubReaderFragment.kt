@@ -58,6 +58,7 @@ class EpubReaderFragment : Fragment() {
     private var baseStyle: ReaderStyle? = null
     private var chapters: List<String> = emptyList()
     private var paged = true
+    private var textPercent = ReaderStyle.DEFAULT_TEXT_PERCENT
     private var currentChapter = 0
     private var currentPagePath: String? = null
     private var pendingPermille = 0
@@ -83,7 +84,13 @@ class EpubReaderFragment : Fragment() {
         binding.readerToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.readerToolbar.inflateMenu(R.menu.menu_reader)
         binding.readerToolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.action_toggle_paging && server != null) viewModel.setPaged(!paged)
+            if (server != null) {
+                when (item.itemId) {
+                    R.id.action_toggle_paging -> viewModel.setPaged(!paged)
+                    R.id.action_larger_text -> viewModel.changeTextSize(larger = true)
+                    R.id.action_smaller_text -> viewModel.changeTextSize(larger = false)
+                }
+            }
             true
         }
         binding.readerPreviousButton.setOnClickListener { showChapter(currentChapter - 1, 0, report = true) }
@@ -93,6 +100,7 @@ class EpubReaderFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.uiState.collect { render(it) } }
                 launch { viewModel.paged.collect { onPagedChanged(it) } }
+                launch { viewModel.textPercent.collect { onTextPercentChanged(it) } }
                 launch { viewModel.endReached.collect { offerToFinish() } }
             }
         }
@@ -163,6 +171,7 @@ class EpubReaderFragment : Fragment() {
         chapters = ready.book.chapters
         baseStyle = readerStyle()
         paged = viewModel.paged.value
+        textPercent = viewModel.textPercent.value
         applyMode()
         binding.readerToolbar.title = ready.title.orEmpty()
         binding.readerLoading.isVisible = false
@@ -184,7 +193,7 @@ class EpubReaderFragment : Fragment() {
     /** Sets up the server, the page margin and the menu for the mode in [paged]. */
     private fun applyMode() {
         val book = book ?: return
-        val style = (baseStyle ?: return).copy(paged = paged, pageHeight = pageHeightInCssPixels())
+        val style = (baseStyle ?: return).copy(paged = paged, textPercent = textPercent, pageHeight = pageHeightInCssPixels())
         server = EpubPageServer(book, style)
         val margin = if (paged) resources.getDimensionPixelSize(R.dimen.reader_page_margin) else 0
         binding.readerPageHost.setPadding(margin, 0, margin, 0)
@@ -202,6 +211,15 @@ class EpubReaderFragment : Fragment() {
         val height = binding.readerWebView.height
         if (height <= 0) return 0
         return (height / resources.displayMetrics.density).toInt() - 1
+    }
+
+    private fun onTextPercentChanged(newValue: Int) {
+        if (server == null || newValue == textPercent) return
+        // Remember where the reader is, then lay the chapter out again at the new size.
+        val permille = _binding?.readerWebView?.takeIf { pageReady }?.scrolledPermille() ?: viewModel.position.permille
+        textPercent = newValue
+        applyMode()
+        showChapter(currentChapter, permille, report = false)
     }
 
     private fun onPagedChanged(newValue: Boolean) {

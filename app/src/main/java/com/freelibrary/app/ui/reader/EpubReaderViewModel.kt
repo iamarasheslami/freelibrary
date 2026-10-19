@@ -8,6 +8,7 @@ import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.reader.EpubBook
 import com.freelibrary.app.data.reader.EpubOpenResult
 import com.freelibrary.app.data.reader.EpubProblem
+import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.data.repository.BookDetailsRepository
 import com.freelibrary.app.data.repository.ReaderRepository
 import com.freelibrary.app.data.repository.ReadingStateRepository
@@ -55,6 +56,9 @@ sealed interface EpubReaderUiState {
 
 private const val SAVE_DELAY_MS = 1_500L
 
+/** How much one press of larger or smaller text changes the size, in percent. */
+private const val TEXT_STEP_PERCENT = 10
+
 /** How far down the last chapter counts as having reached the end of the book, in thousandths. */
 private const val END_PERMILLE = 980
 
@@ -84,6 +88,11 @@ class EpubReaderViewModel
 
         /** True to show the book page by page, false as one long scroll per chapter. Settled before the book is ready. */
         val paged: StateFlow<Boolean> = _paged.asStateFlow()
+
+        private val _textPercent = MutableStateFlow(ReaderStyle.DEFAULT_TEXT_PERCENT)
+
+        /** The text size in percent of the book's own, settled before the book is ready. */
+        val textPercent: StateFlow<Int> = _textPercent.asStateFlow()
 
         /** Where the reader is now: the chapter showing and how far down it. It survives a rotation. */
         var position: ReaderPosition.Epub = ReaderPosition.Epub(0, 0)
@@ -127,6 +136,7 @@ class EpubReaderViewModel
         ) {
             openedBook = book
             _paged.value = settingsRepository.readerPaged.first()
+            _textPercent.value = settingsRepository.readerTextPercent.first()
             val saved = readerRepository.savedEpubPosition(id)
             val chapter = (saved?.chapter ?: 0).coerceIn(0, book.chapters.lastIndex)
             val permille = if (saved != null && saved.chapter == chapter) saved.permille else 0
@@ -150,6 +160,15 @@ class EpubReaderViewModel
         fun setPaged(paged: Boolean) {
             _paged.value = paged
             viewModelScope.launch { settingsRepository.setReaderPaged(paged) }
+        }
+
+        /** The reader asked for larger ([larger] true) or smaller text; the size stays within its limits and is kept. */
+        fun changeTextSize(larger: Boolean) {
+            val step = if (larger) TEXT_STEP_PERCENT else -TEXT_STEP_PERCENT
+            val size = (_textPercent.value + step).coerceIn(ReaderStyle.MIN_TEXT_PERCENT, ReaderStyle.MAX_TEXT_PERCENT)
+            if (size == _textPercent.value) return
+            _textPercent.value = size
+            viewModelScope.launch { settingsRepository.setReaderTextPercent(size) }
         }
 
         /** The reader is at [chapter], [permille] thousandths of the way through it. */

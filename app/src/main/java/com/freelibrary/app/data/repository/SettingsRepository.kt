@@ -5,8 +5,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -71,6 +73,18 @@ class SettingsRepository
             dataStore.edit { preferences -> preferences[LAST_CATALOG_SYNC_KEY] = atMillis }
         }
 
+        /** The reader's text size in percent of the book's own size; 100 until the reader changes it. */
+        val readerTextPercent: Flow<Int> =
+            storedPreferences.map { preferences ->
+                (preferences[READER_TEXT_PERCENT_KEY] ?: ReaderStyle.DEFAULT_TEXT_PERCENT)
+                    .coerceIn(ReaderStyle.MIN_TEXT_PERCENT, ReaderStyle.MAX_TEXT_PERCENT)
+            }
+
+        suspend fun setReaderTextPercent(percent: Int) {
+            val kept = percent.coerceIn(ReaderStyle.MIN_TEXT_PERCENT, ReaderStyle.MAX_TEXT_PERCENT)
+            dataStore.edit { preferences -> preferences[READER_TEXT_PERCENT_KEY] = kept }
+        }
+
         suspend fun setReaderPaged(paged: Boolean) {
             dataStore.edit { preferences -> preferences[READER_PAGED_KEY] = paged }
         }
@@ -81,5 +95,6 @@ class SettingsRepository
             val WIFI_ONLY_SYNC_KEY = booleanPreferencesKey("wifi_only_sync")
             val LAST_CATALOG_SYNC_KEY = longPreferencesKey("last_catalog_sync_at")
             val READER_PAGED_KEY = booleanPreferencesKey("reader_paged")
+            val READER_TEXT_PERCENT_KEY = intPreferencesKey("reader_text_percent")
         }
     }

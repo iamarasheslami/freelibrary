@@ -10,6 +10,7 @@ import com.freelibrary.app.data.local.entity.DownloadedBook
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.reader.EpubBook
+import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.data.repository.BookDetailsRepository
 import com.freelibrary.app.data.repository.InMemoryPreferences
 import com.freelibrary.app.data.repository.ReaderRepository
@@ -157,6 +158,31 @@ class EpubReaderViewModelTest {
                 value = block()
             }
             value
+        }
+
+    @Test
+    fun `the text size steps within its limits and the size is kept`() =
+        runBlocking<Unit> {
+            downloadEpub()
+            val first = viewModel()
+            first.settled()
+            assertEquals(ReaderStyle.DEFAULT_TEXT_PERCENT, first.textPercent.value)
+
+            first.changeTextSize(larger = true)
+            assertEquals(110, first.textPercent.value)
+            first.changeTextSize(larger = false)
+            first.changeTextSize(larger = false)
+            assertEquals(90, first.textPercent.value)
+
+            repeat(40) { first.changeTextSize(larger = false) }
+            assertEquals(ReaderStyle.MIN_TEXT_PERCENT, first.textPercent.value)
+            repeat(40) { first.changeTextSize(larger = true) }
+            assertEquals(ReaderStyle.MAX_TEXT_PERCENT, first.textPercent.value)
+
+            eventually { settings.readerTextPercent.first().takeIf { it == ReaderStyle.MAX_TEXT_PERCENT } }
+            val second = viewModel()
+            second.settled()
+            assertEquals(ReaderStyle.MAX_TEXT_PERCENT, second.textPercent.value)
         }
 
     @Test

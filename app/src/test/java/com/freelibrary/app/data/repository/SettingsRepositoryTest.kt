@@ -3,6 +3,7 @@ package com.freelibrary.app.data.repository
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -49,6 +50,23 @@ class SettingsRepositoryTest {
             repository.recordCatalogSync(2_000L)
 
             assertEquals(2_000L, repository.lastCatalogSyncAt.first())
+        }
+
+    @Test
+    fun `the reader text size is the books own until changed and stays within its limits`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            assertEquals(ReaderStyle.DEFAULT_TEXT_PERCENT, repository.readerTextPercent.first())
+
+            repository.setReaderTextPercent(130)
+            assertEquals(130, repository.readerTextPercent.first())
+
+            repository.setReaderTextPercent(9_999)
+            assertEquals(ReaderStyle.MAX_TEXT_PERCENT, repository.readerTextPercent.first())
+
+            repository.setReaderTextPercent(1)
+            assertEquals(ReaderStyle.MIN_TEXT_PERCENT, repository.readerTextPercent.first())
         }
 
     @Test
