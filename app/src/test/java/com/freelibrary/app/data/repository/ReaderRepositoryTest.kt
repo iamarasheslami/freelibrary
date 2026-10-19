@@ -130,6 +130,20 @@ class ReaderRepositoryTest {
         }
 
     @Test
+    fun `the downloaded text is found, and a saved text place is read back`() =
+        runBlocking<Unit> {
+            assertNull(repository.textFile(bookId))
+            assertNull(repository.savedTextPosition(bookId))
+            val text = temporaryFolder.newFile("$bookId.txt")
+            download("txt", text)
+            repository.savePosition(bookId, ReaderPosition.Text(12_345))
+
+            assertEquals(text, repository.textFile(bookId))
+            assertEquals(ReaderPosition.Text(12_345), repository.savedTextPosition(bookId))
+            assertNull(repository.savedPdfPosition(bookId))
+        }
+
+    @Test
     fun `with nothing saved there is no position`() =
         runBlocking<Unit> {
             assertNull(repository.savedEpubPosition(bookId))

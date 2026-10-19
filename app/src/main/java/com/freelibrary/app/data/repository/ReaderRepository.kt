@@ -28,11 +28,17 @@ class ReaderRepository
         /** The downloaded PDF of [bookId], or null when none was downloaded or its file has gone. */
         suspend fun pdfFile(bookId: Long): File? = downloadedFile(bookId, BookFileFormat.PDF)
 
+        /** The downloaded plain text of [bookId], or null when none was downloaded or its file has gone. */
+        suspend fun textFile(bookId: Long): File? = downloadedFile(bookId, BookFileFormat.TEXT)
+
         /** Where the reader left an EPUB, or null when nothing readable is saved for it. */
         suspend fun savedEpubPosition(bookId: Long): ReaderPosition.Epub? = savedPosition(bookId) as? ReaderPosition.Epub
 
         /** The page the reader left a PDF at, or null when nothing readable is saved for it. */
         suspend fun savedPdfPosition(bookId: Long): ReaderPosition.Pdf? = savedPosition(bookId) as? ReaderPosition.Pdf
+
+        /** The place the reader left a plain text book at, or null when nothing readable is saved for it. */
+        suspend fun savedTextPosition(bookId: Long): ReaderPosition.Text? = savedPosition(bookId) as? ReaderPosition.Text
 
         /**
          * Saves where the reader is in [bookId]. Returns false when it could not be saved, for

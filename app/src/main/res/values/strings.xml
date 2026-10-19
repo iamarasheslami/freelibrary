@@ -181,6 +181,9 @@
     <string name="pdf_go_to_page">Go to page</string>
     <string name="pdf_go_to_page_hint">Page number (1 to %1$d)</string>
     <string name="pdf_page_error">This page could not be drawn.</string>
+    <string name="text_part_label">Part %1$d of %2$d</string>
+    <string name="text_page_label">Part %1$d of %2$d · page %3$d of %4$d</string>
+    <string name="reader_error_text_too_large">This text file is too large to open on this phone.</string>
     <string name="reader_error_not_pdf">This file is not a PDF. Delete the download and download it again.</string>
     <string name="reader_error_pdf_password">This PDF is locked with a password, which the reader cannot open yet.</string>
 </resources>
