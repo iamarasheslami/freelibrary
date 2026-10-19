@@ -3,6 +3,7 @@ package com.freelibrary.app.data.reader
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -39,7 +40,7 @@ class EpubPageServerTest {
         """.trimIndent()
 
     private val pageWithHead = "<html><head><title>T</title></head><body>One</body></html>"
-    private val link = """<link rel="stylesheet" type="text/css" href="${EpubPageServer.STYLE_URL}"/>"""
+    private val link = """<link rel="stylesheet" type="text/css" href="${EpubPageServer.STYLE_URL}?v=${style.css().hashCode()}"/>"""
 
     @After
     fun tearDown() {
@@ -191,6 +192,37 @@ class EpubPageServerTest {
     fun `the text size is kept within sensible limits`() {
         assertTrue(style.copy(textPercent = 5).css().contains("font-size: ${ReaderStyle.MIN_TEXT_PERCENT}%"))
         assertTrue(style.copy(textPercent = 5000).css().contains("font-size: ${ReaderStyle.MAX_TEXT_PERCENT}%"))
+    }
+
+    @Test
+    fun `the page view style lays the chapter out in screen wide columns`() {
+        val paged = style.copy(paged = true).css()
+
+        assertTrue(paged.contains("column-width: 100vw !important"))
+        assertTrue(paged.contains("column-gap: 0 !important"))
+        assertTrue(paged.contains("height: 100vh !important"))
+        assertTrue(paged.contains("color: #112233 !important"))
+        assertTrue(paged.contains("font-size: 120% !important"))
+        assertFalse(style.css().contains("column-width"))
+    }
+
+    @Test
+    fun `the page view can be given the exact height of the screen in pixels`() {
+        val paged = style.copy(paged = true, pageHeight = 640).css()
+
+        assertTrue(paged.contains("height: 640px !important"))
+        assertFalse(paged.contains("100vh !important; padding"))
+    }
+
+    @Test
+    fun `a changed style changes the stamp on the style link`() {
+        val scrolling = server()
+        val first = scrolling.serve("OEBPS/ch1.xhtml")!!.text()
+
+        val paged = EpubPageServer(opened.first(), style.copy(paged = true))
+        val second = paged.serve("OEBPS/ch1.xhtml")!!.text()
+
+        assertTrue(first != second)
     }
 
     @Test

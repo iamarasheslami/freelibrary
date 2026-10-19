@@ -170,4 +170,7 @@
     <string name="reader_error_empty">This book has no pages to read.</string>
     <string name="reader_end_reached">You reached the end of the book.</string>
     <string name="reader_mark_finished">Mark as finished</string>
+    <string name="reader_page_label">Chapter %1$d of %2$d · page %3$d of %4$d</string>
+    <string name="reader_scroll_view">Switch to scroll view</string>
+    <string name="reader_page_view">Switch to page view</string>
 </resources>

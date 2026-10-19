@@ -11,6 +11,7 @@ import com.freelibrary.app.data.reader.EpubProblem
 import com.freelibrary.app.data.repository.BookDetailsRepository
 import com.freelibrary.app.data.repository.ReaderRepository
 import com.freelibrary.app.data.repository.ReadingStateRepository
+import com.freelibrary.app.data.repository.SettingsRepository
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.bookpage.ARG_BOOK_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -61,7 +62,8 @@ private const val END_PERMILLE = 980
  * Opens a downloaded EPUB for the reader screen and keeps where the reader is. Opening a book
  * follows the shelf rules (it becomes Currently Reading unless it is already finished). The position
  * is saved a moment after the reader stops moving, and at once when [saveNow] is called. Reaching
- * the end of the last chapter asks once whether to mark the book finished.
+ * the end of the last chapter asks once whether to mark the book finished. Whether the book is
+ * shown page by page or as a scroll is a setting the reader keeps.
  */
 @HiltViewModel
 class EpubReaderViewModel
@@ -71,11 +73,17 @@ class EpubReaderViewModel
         private val readerRepository: ReaderRepository,
         private val readingStateRepository: ReadingStateRepository,
         private val detailsRepository: BookDetailsRepository,
+        private val settingsRepository: SettingsRepository,
     ) : ViewModel() {
         private val bookId: Long? = savedStateHandle.get<Long>(ARG_BOOK_ID)
 
         private val _uiState = MutableStateFlow<EpubReaderUiState>(EpubReaderUiState.Loading)
         val uiState: StateFlow<EpubReaderUiState> = _uiState.asStateFlow()
+
+        private val _paged = MutableStateFlow(true)
+
+        /** True to show the book page by page, false as one long scroll per chapter. Settled before the book is ready. */
+        val paged: StateFlow<Boolean> = _paged.asStateFlow()
 
         /** Where the reader is now: the chapter showing and how far down it. It survives a rotation. */
         var position: ReaderPosition.Epub = ReaderPosition.Epub(0, 0)
@@ -118,6 +126,7 @@ class EpubReaderViewModel
             book: EpubBook,
         ) {
             openedBook = book
+            _paged.value = settingsRepository.readerPaged.first()
             val saved = readerRepository.savedEpubPosition(id)
             val chapter = (saved?.chapter ?: 0).coerceIn(0, book.chapters.lastIndex)
             val permille = if (saved != null && saved.chapter == chapter) saved.permille else 0
@@ -137,7 +146,13 @@ class EpubReaderViewModel
             _uiState.value = EpubReaderUiState.Ready(book, title ?: book.title)
         }
 
-        /** The reader is at [chapter], [permille] thousandths of the way down it. */
+        /** The reader chose page view ([paged] true) or scroll view; the choice is kept for next time. */
+        fun setPaged(paged: Boolean) {
+            _paged.value = paged
+            viewModelScope.launch { settingsRepository.setReaderPaged(paged) }
+        }
+
+        /** The reader is at [chapter], [permille] thousandths of the way through it. */
         fun onPositionChanged(
             chapter: Int,
             permille: Int,
