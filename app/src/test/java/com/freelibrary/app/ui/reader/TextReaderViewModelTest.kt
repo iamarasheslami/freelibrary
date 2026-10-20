@@ -170,6 +170,34 @@ class TextReaderViewModelTest {
         }
 
     @Test
+    fun `a place asked for opens the book there instead of where the reader stopped`() =
+        runBlocking<Unit> {
+            downloadText(text)
+            val reference = TextBook.fromText(text)!!
+            readerRepository.savePosition(bookId, ReaderPosition.Text(10))
+            val viewModel = viewModel(mapOf(ARG_BOOK_ID to bookId, ARG_START_POSITION to "text:100000"))
+
+            viewModel.settled()
+
+            val (part, permille) = reference.locate(100_000)
+            assertEquals(TextPlace(part, permille), viewModel.position)
+        }
+
+    @Test
+    fun `a place of another kind of book is ignored`() =
+        runBlocking<Unit> {
+            downloadText(text)
+            val reference = TextBook.fromText(text)!!
+            readerRepository.savePosition(bookId, ReaderPosition.Text(100_000))
+            val viewModel = viewModel(mapOf(ARG_BOOK_ID to bookId, ARG_START_POSITION to "epub:1:250"))
+
+            viewModel.settled()
+
+            val (part, permille) = reference.locate(100_000)
+            assertEquals(TextPlace(part, permille), viewModel.position)
+        }
+
+    @Test
     fun `the place is saved as a number of characters`() =
         runBlocking<Unit> {
             downloadText(text)

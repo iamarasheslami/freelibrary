@@ -25,6 +25,7 @@ import com.freelibrary.app.data.reader.ContentsEntry
 import com.freelibrary.app.data.reader.EpubBook
 import com.freelibrary.app.data.reader.EpubPageServer
 import com.freelibrary.app.data.reader.ReaderStyle
+import com.freelibrary.app.data.repository.BookmarkRepository
 import com.freelibrary.app.databinding.FragmentEpubReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
@@ -34,6 +35,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
+import javax.inject.Inject
 
 private const val RESTORE_RETRY_MS = 60L
 private const val RESTORE_ATTEMPTS = 25
@@ -53,6 +55,8 @@ private const val CONTENTS_INDENT = "\u2003"
  */
 @AndroidEntryPoint
 class EpubReaderFragment : Fragment() {
+    @Inject lateinit var bookmarkRepository: BookmarkRepository
+
     private val viewModel: EpubReaderViewModel by viewModels()
 
     private var _binding: FragmentEpubReaderBinding? = null
@@ -95,6 +99,7 @@ class EpubReaderFragment : Fragment() {
                 when (item.itemId) {
                     R.id.action_toggle_paging -> viewModel.setPaged(!paged)
                     R.id.action_contents -> showContents()
+                    R.id.action_add_bookmark -> addBookmark()
                     R.id.action_larger_text -> viewModel.changeTextSize(larger = true)
                     R.id.action_smaller_text -> viewModel.changeTextSize(larger = false)
                 }
@@ -219,6 +224,11 @@ class EpubReaderFragment : Fragment() {
         val height = binding.readerWebView.height
         if (height <= 0) return 0
         return (height / resources.displayMetrics.density).toInt() - 1
+    }
+
+    /** Asks for a note and bookmarks the place the reader is at. */
+    private fun addBookmark() {
+        promptForBookmark(bookmarkRepository, viewModel.position)
     }
 
     /** Lists the book's chapters (its own contents, or numbered chapters if it has none) and opens the one picked. */

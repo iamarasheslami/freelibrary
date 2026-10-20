@@ -19,7 +19,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.freelibrary.app.R
 import com.freelibrary.app.data.reader.PdfBook
+import com.freelibrary.app.data.repository.BookmarkRepository
 import com.freelibrary.app.databinding.FragmentPdfReaderBinding
+import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -28,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 private const val END_PROMPT_MS = 10_000
 
@@ -38,6 +41,8 @@ private const val END_PROMPT_MS = 10_000
  */
 @AndroidEntryPoint
 class PdfReaderFragment : Fragment() {
+    @Inject lateinit var bookmarkRepository: BookmarkRepository
+
     private val viewModel: PdfReaderViewModel by viewModels()
 
     private var _binding: FragmentPdfReaderBinding? = null
@@ -67,7 +72,10 @@ class PdfReaderFragment : Fragment() {
         binding.pdfReaderToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.pdfReaderToolbar.inflateMenu(R.menu.menu_pdf_reader)
         binding.pdfReaderToolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.action_go_to_page) askForPage()
+            when (item.itemId) {
+                R.id.action_go_to_page -> askForPage()
+                R.id.action_add_bookmark -> addBookmark()
+            }
             true
         }
         binding.pdfPreviousButton.setOnClickListener { goToPage(currentPage - 1) }
@@ -155,6 +163,12 @@ class PdfReaderFragment : Fragment() {
     private fun onZoomSettled(zoom: Float) {
         val level = PdfZoomMath.renderLevel(zoom)
         if (level != renderedLevel) draw(currentPage, level, keepView = true)
+    }
+
+    /** Asks for a note and bookmarks the page the reader is on. */
+    private fun addBookmark() {
+        if (book == null) return
+        promptForBookmark(bookmarkRepository, ReaderPosition.Pdf(currentPage.coerceAtLeast(0)))
     }
 
     private fun askForPage() {

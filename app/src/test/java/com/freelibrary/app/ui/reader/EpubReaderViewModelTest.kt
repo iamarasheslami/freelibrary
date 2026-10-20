@@ -287,6 +287,30 @@ class EpubReaderViewModelTest {
         }
 
     @Test
+    fun `a place asked for opens the book there instead of where the reader stopped`() =
+        runBlocking<Unit> {
+            downloadEpub()
+            readerRepository.savePosition(bookId, ReaderPosition.Epub(0, 100))
+            val viewModel = viewModel(mapOf(ARG_BOOK_ID to bookId, ARG_START_POSITION to "epub:1:250"))
+
+            viewModel.settled()
+
+            assertEquals(ReaderPosition.Epub(1, 250), viewModel.position)
+        }
+
+    @Test
+    fun `a place of another kind of book is ignored`() =
+        runBlocking<Unit> {
+            downloadEpub()
+            readerRepository.savePosition(bookId, ReaderPosition.Epub(1, 400))
+            val viewModel = viewModel(mapOf(ARG_BOOK_ID to bookId, ARG_START_POSITION to "pdf:3"))
+
+            viewModel.settled()
+
+            assertEquals(ReaderPosition.Epub(1, 400), viewModel.position)
+        }
+
+    @Test
     fun `a file that is not an EPUB cannot be opened`() =
         runBlocking<Unit> {
             val file = temporaryFolder.newFile("$bookId.epub")

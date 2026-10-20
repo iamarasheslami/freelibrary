@@ -85,6 +85,9 @@ class TextReaderViewModel
     ) : ViewModel() {
         private val bookId: Long? = savedStateHandle.get<Long>(ARG_BOOK_ID)
 
+        /** The place the reader was asked to open at (a bookmark), if any; it wins over the saved place. */
+        private val startPosition: ReaderPosition? = savedStateHandle.startPosition()
+
         private val _uiState = MutableStateFlow<TextReaderUiState>(TextReaderUiState.Loading)
         val uiState: StateFlow<TextReaderUiState> = _uiState.asStateFlow()
 
@@ -136,7 +139,8 @@ class TextReaderViewModel
         ) {
             _paged.value = settingsRepository.readerPaged.first()
             _textPercent.value = settingsRepository.readerTextPercent.first()
-            val (part, permille) = readerRepository.savedTextPosition(id)?.let { book.locate(it.offset) } ?: (0 to 0)
+            val saved = (startPosition as? ReaderPosition.Text) ?: readerRepository.savedTextPosition(id)
+            val (part, permille) = saved?.let { book.locate(it.offset) } ?: (0 to 0)
             position = TextPlace(part, permille)
             // Neither of these may stop the reader from reading.
             try {

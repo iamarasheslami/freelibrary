@@ -72,6 +72,9 @@ class PdfReaderViewModel
     ) : ViewModel() {
         private val bookId: Long? = savedStateHandle.get<Long>(ARG_BOOK_ID)
 
+        /** The place the reader was asked to open at (a bookmark), if any; it wins over the saved place. */
+        private val startPosition: ReaderPosition? = savedStateHandle.startPosition()
+
         private val _uiState = MutableStateFlow<PdfReaderUiState>(PdfReaderUiState.Loading)
         val uiState: StateFlow<PdfReaderUiState> = _uiState.asStateFlow()
 
@@ -116,7 +119,8 @@ class PdfReaderViewModel
             book: PdfBook,
         ) {
             openedBook = book
-            page = (readerRepository.savedPdfPosition(id)?.page ?: 0).coerceIn(0, book.pageCount - 1)
+            val saved = (startPosition as? ReaderPosition.Pdf) ?: readerRepository.savedPdfPosition(id)
+            page = (saved?.page ?: 0).coerceIn(0, book.pageCount - 1)
             // Neither of these may stop the reader from reading.
             try {
                 readingStateRepository.onBookOpened(id)
