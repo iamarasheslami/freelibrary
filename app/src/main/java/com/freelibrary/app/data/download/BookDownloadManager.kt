@@ -140,7 +140,7 @@ class BookDownloadManager
                 oneAtATime.withLock {
                     transfers.update { it + (bookId to Transfer.Running(format, DownloadProgress(0L, null))) }
                     val outcome =
-                        downloader.download(bookId, format, url) { progress ->
+                        downloader.downloadFirstThatWorks(bookId, format, DownloadSources.candidates(url, format)) { progress ->
                             transfers.update { current ->
                                 if (current[bookId] is Transfer.Running) {
                                     current + (bookId to Transfer.Running(format, progress))

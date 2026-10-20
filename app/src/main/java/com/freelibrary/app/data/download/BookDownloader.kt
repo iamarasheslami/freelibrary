@@ -13,6 +13,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -103,6 +104,40 @@ class BookDownloader internal constructor(
         // Logging must never break a download, and plain unit tests have no Android log.
         runCatching { Log.w("BookDownloader", what, error) }
     }
+
+    /**
+     * Tries [urls] in the order given until one delivers the book, and gives that outcome. The order
+     * never changes. A site that cannot be reached is not tried again for the rest of the list, and a
+     * file that is too large, or a phone with no room, stops the search, because another source would
+     * fail the same way. When none works the outcome is [DownloadError.OFFLINE], or
+     * [DownloadError.NOT_FOUND] when every source lacked the file. With a single address, its own error is reported.
+     */
+    suspend fun downloadFirstThatWorks(
+        bookId: Long,
+        format: BookFileFormat,
+        urls: List<String>,
+        onProgress: (DownloadProgress) -> Unit = {},
+    ): DownloadOutcome {
+        if (urls.size == 1) return download(bookId, format, urls.first(), onProgress)
+        val unreachable = mutableSetOf<String>()
+        var everySourceLackedIt = urls.isNotEmpty()
+        for (url in urls) {
+            val site = siteOf(url)
+            if (site != null && site in unreachable) continue
+            when (val outcome = download(bookId, format, url, onProgress)) {
+                is DownloadOutcome.Done -> return outcome
+                is DownloadOutcome.Failed -> {
+                    val error = outcome.error
+                    if (error == DownloadError.TOO_LARGE || error == DownloadError.STORAGE) return outcome
+                    if (error == DownloadError.OFFLINE && site != null) unreachable.add(site)
+                    if (error != DownloadError.NOT_FOUND) everySourceLackedIt = false
+                }
+            }
+        }
+        return DownloadOutcome.Failed(if (everySourceLackedIt) DownloadError.NOT_FOUND else DownloadError.OFFLINE)
+    }
+
+    private fun siteOf(url: String): String? = url.toHttpUrlOrNull()?.let { "${it.host}:${it.port}" }
 
     /** Deletes the downloaded file of [format] for book [bookId] and its record. Does nothing when there is none. */
     suspend fun delete(

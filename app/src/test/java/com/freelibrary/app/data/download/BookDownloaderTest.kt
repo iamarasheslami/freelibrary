@@ -214,6 +214,85 @@ class BookDownloaderTest {
         }
 
     @Test
+    fun `the next source is tried when one fails, in the order given`() =
+        runTest {
+            val bytes = epubBytes()
+            respond(ByteArray(0), code = 404)
+            respond(bytes)
+
+            val outcome = downloader.downloadFirstThatWorks(bookId, BookFileFormat.EPUB, listOf(url("/a"), url("/b")))
+
+            assertArrayEquals(bytes, (outcome as DownloadOutcome.Done).file.readBytes())
+            assertEquals(listOf("/a", "/b"), listOf(server.takeRequest().path, server.takeRequest().path))
+            assertEquals(listOf("$bookId.epub"), filesLeft().map { it.name })
+        }
+
+    @Test
+    fun `the first source that works wins and the rest are not asked`() =
+        runTest {
+            respond(epubBytes())
+            respond(epubBytes())
+
+            val outcome = downloader.downloadFirstThatWorks(bookId, BookFileFormat.EPUB, listOf(url("/a"), url("/b")))
+
+            assertTrue(outcome is DownloadOutcome.Done)
+            assertEquals(1, server.requestCount)
+        }
+
+    @Test
+    fun `when no source works the outcome is offline, or not found when every source lacks the file`() =
+        runTest {
+            respond(ByteArray(0), code = 500)
+            respond(ByteArray(0), code = 403)
+            assertFailed(
+                DownloadError.OFFLINE,
+                downloader.downloadFirstThatWorks(bookId, BookFileFormat.EPUB, listOf(url("/a"), url("/b"))),
+            )
+
+            respond(ByteArray(0), code = 404)
+            respond(ByteArray(0), code = 404)
+            assertFailed(
+                DownloadError.NOT_FOUND,
+                downloader.downloadFirstThatWorks(bookId, BookFileFormat.EPUB, listOf(url("/a"), url("/b"))),
+            )
+        }
+
+    @Test
+    fun `a single address reports its own error`() =
+        runTest {
+            respond(ByteArray(0), code = 403)
+
+            assertFailed(DownloadError.BLOCKED, downloader.downloadFirstThatWorks(bookId, BookFileFormat.EPUB, listOf(url("/a"))))
+        }
+
+    @Test
+    fun `a file that is too large stops the search`() =
+        runTest {
+            respond(epubBytes(2_000_000))
+            respond(epubBytes())
+
+            assertFailed(
+                DownloadError.TOO_LARGE,
+                downloader.downloadFirstThatWorks(bookId, BookFileFormat.EPUB, listOf(url("/a"), url("/b"))),
+            )
+            assertEquals(1, server.requestCount)
+        }
+
+    @Test
+    fun `a site that cannot be reached is passed over`() =
+        runTest {
+            val unreachable = MockWebServer().also { it.start() }
+            val dead = unreachable.url("/a").toString()
+            unreachable.shutdown()
+            respond(epubBytes())
+
+            val outcome = downloader.downloadFirstThatWorks(bookId, BookFileFormat.EPUB, listOf(dead, dead + "2", url("/b")))
+
+            assertTrue(outcome is DownloadOutcome.Done)
+            assertEquals(1, server.requestCount)
+        }
+
+    @Test
     fun `an unreachable site means offline`() =
         runTest {
             val address = url()
