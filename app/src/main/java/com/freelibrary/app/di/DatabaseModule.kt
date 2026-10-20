@@ -2,7 +2,9 @@ package com.freelibrary.app.di
 
 import android.content.Context
 import androidx.room.Room
+import com.freelibrary.app.data.local.FIRST_RELEASED_VERSION
 import com.freelibrary.app.data.local.FreeLibraryDatabase
+import com.freelibrary.app.data.local.MIGRATIONS
 import com.freelibrary.app.data.local.dao.AuthorDao
 import com.freelibrary.app.data.local.dao.BackupDao
 import com.freelibrary.app.data.local.dao.BookAuthorDao
@@ -37,9 +39,8 @@ private const val DATABASE_NAME = "catalog.sqlite"
  * giving every install a complete, searchable catalog with zero network
  * requests needed on first launch.
  *
- * fallbackToDestructiveMigration is used deliberately pre-release: no real
- * user data exists yet to preserve across schema changes. This must be
- * replaced with real Migration objects before any public release.
+ * Schema changes are handled by the migrations in MIGRATIONS. Only databases older
+ * than FIRST_RELEASED_VERSION (development phones) may be wiped; a reader's database is never.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -51,7 +52,8 @@ object DatabaseModule {
     ): FreeLibraryDatabase {
         return Room.databaseBuilder(context, FreeLibraryDatabase::class.java, DATABASE_NAME)
             .createFromAsset(DATABASE_NAME)
-            .fallbackToDestructiveMigration()
+            .addMigrations(*MIGRATIONS)
+            .fallbackToDestructiveMigrationFrom(true, *(1 until FIRST_RELEASED_VERSION).toList().toIntArray())
             .build()
     }
 

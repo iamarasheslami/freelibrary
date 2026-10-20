@@ -42,10 +42,8 @@ import com.freelibrary.app.data.local.entity.Subject
  * table is built out; version is bumped and a migration written whenever the
  * schema changes after release.
  *
- * Pre-release note: schema version bumps currently rely on
- * fallbackToDestructiveMigration() at the database-builder call site, since no
- * shipped user data exists yet to preserve. Real Migration objects must replace
- * this before any public release.
+ * The version is [DATABASE_VERSION]; every bump needs a migration in [MIGRATIONS]
+ * (see Migrations.kt), because a reader's own data lives in this database.
  */
 @Database(
     entities = [
@@ -66,7 +64,7 @@ import com.freelibrary.app.data.local.entity.Subject
         BookShelfState::class,
         BookSummary::class,
     ],
-    version = 11,
+    version = DATABASE_VERSION,
     exportSchema = true,
 )
 abstract class FreeLibraryDatabase : RoomDatabase() {
