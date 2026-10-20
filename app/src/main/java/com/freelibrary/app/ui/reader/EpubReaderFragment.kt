@@ -100,6 +100,7 @@ class EpubReaderFragment : Fragment() {
                     R.id.action_toggle_paging -> viewModel.setPaged(!paged)
                     R.id.action_contents -> showContents()
                     R.id.action_add_bookmark -> addBookmark()
+                    R.id.action_bookmarks -> openBookmarkList()
                     R.id.action_larger_text -> viewModel.changeTextSize(larger = true)
                     R.id.action_smaller_text -> viewModel.changeTextSize(larger = false)
                 }

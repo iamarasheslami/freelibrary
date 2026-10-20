@@ -75,6 +75,7 @@ class PdfReaderFragment : Fragment() {
             when (item.itemId) {
                 R.id.action_go_to_page -> askForPage()
                 R.id.action_add_bookmark -> addBookmark()
+                R.id.action_bookmarks -> openBookmarkList()
             }
             true
         }
