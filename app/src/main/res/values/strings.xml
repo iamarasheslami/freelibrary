@@ -184,6 +184,22 @@
     <string name="text_part_label">Part %1$d of %2$d</string>
     <string name="text_page_label">Part %1$d of %2$d · page %3$d of %4$d</string>
     <string name="reader_error_text_too_large">This text file is too large to open on this phone.</string>
+    <string name="bookmarks_title">Bookmarks</string>
+    <string name="bookmarks_empty">No bookmarks yet.\nOpen the menu while reading and choose Add bookmark.</string>
+    <string name="bookmark_add_title">Add bookmark</string>
+    <string name="bookmark_add_button">Add</string>
+    <string name="bookmark_note_hint">Note (optional)</string>
+    <string name="bookmark_added">Bookmark added</string>
+    <string name="bookmark_not_saved">The bookmark could not be saved.</string>
+    <string name="bookmark_delete">Delete bookmark</string>
+    <string name="bookmark_deleted">Bookmark deleted</string>
+    <string name="bookmark_undo">Undo</string>
+    <string name="bookmark_details">%1$s · %2$s</string>
+    <string name="bookmark_place_epub">Chapter %1$d · %2$d%%</string>
+    <string name="bookmark_place_pdf">Page %1$d</string>
+    <string name="bookmark_place_text_percent">About %1$d%% through</string>
+    <string name="bookmark_place_text">In the text</string>
+    <string name="bookmark_cannot_open">This book is not downloaded in the format of this bookmark, so it cannot be opened. Download it from the book page.</string>
     <string name="reader_error_not_pdf">This file is not a PDF. Delete the download and download it again.</string>
     <string name="reader_error_pdf_password">This PDF is locked with a password, which the reader cannot open yet.</string>
 </resources>

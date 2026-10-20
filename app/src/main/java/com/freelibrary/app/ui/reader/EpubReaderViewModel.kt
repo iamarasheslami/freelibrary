@@ -81,6 +81,9 @@ class EpubReaderViewModel
     ) : ViewModel() {
         private val bookId: Long? = savedStateHandle.get<Long>(ARG_BOOK_ID)
 
+        /** The place the reader was asked to open at (a bookmark), if any; it wins over the saved place. */
+        private val startPosition: ReaderPosition? = savedStateHandle.startPosition()
+
         private val _uiState = MutableStateFlow<EpubReaderUiState>(EpubReaderUiState.Loading)
         val uiState: StateFlow<EpubReaderUiState> = _uiState.asStateFlow()
 
@@ -137,7 +140,7 @@ class EpubReaderViewModel
             openedBook = book
             _paged.value = settingsRepository.readerPaged.first()
             _textPercent.value = settingsRepository.readerTextPercent.first()
-            val saved = readerRepository.savedEpubPosition(id)
+            val saved = (startPosition as? ReaderPosition.Epub) ?: readerRepository.savedEpubPosition(id)
             val chapter = (saved?.chapter ?: 0).coerceIn(0, book.chapters.lastIndex)
             val permille = if (saved != null && saved.chapter == chapter) saved.permille else 0
             position = ReaderPosition.Epub(chapter, permille)

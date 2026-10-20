@@ -193,6 +193,14 @@
                     tools:text="Remove from my shelf"
                     tools:visibility="visible" />
 
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/bookPageBookmarksButton"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_s"
+                    android:text="@string/bookmarks_title" />
+
                 <TextView
                     android:id="@+id/bookPageAboutHeading"
                     android:layout_width="match_parent"

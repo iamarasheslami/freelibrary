@@ -7,4 +7,9 @@
         android:title="@string/pdf_go_to_page"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_add_bookmark"
+        android:title="@string/bookmark_add_title"
+        app:showAsAction="never" />
+
 </menu>

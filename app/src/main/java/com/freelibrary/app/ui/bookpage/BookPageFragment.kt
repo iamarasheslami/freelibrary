@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
+import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -67,6 +68,7 @@ class BookPageFragment : Fragment() {
         binding.bookPageToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         ViewCompat.setAccessibilityHeading(binding.bookPageTitle, true)
         ViewCompat.setAccessibilityHeading(binding.bookPageAboutHeading, true)
+        binding.bookPageBookmarksButton.setOnClickListener { openBookmarks() }
 
         val typefaces = CoverTypefaces.from(requireContext())
         viewLifecycleOwner.lifecycleScope.launch {
@@ -190,6 +192,11 @@ class BookPageFragment : Fragment() {
                 BookPageFragmentDirections.actionBookPageFragmentToEpubReaderFragment(bookId)
             }
         findNavController().navigate(directions)
+    }
+
+    private fun openBookmarks() {
+        val bookId = shownBookId ?: return
+        findNavController().navigate(R.id.action_bookPageFragment_to_bookmarksFragment, bundleOf(ARG_BOOK_ID to bookId))
     }
 
     private fun filesStatus(files: BookFiles): String {

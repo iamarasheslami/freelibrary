@@ -22,6 +22,7 @@ import androidx.navigation.fragment.findNavController
 import com.freelibrary.app.R
 import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.data.reader.TextBook
+import com.freelibrary.app.data.repository.BookmarkRepository
 import com.freelibrary.app.databinding.FragmentTextReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
@@ -30,6 +31,7 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
+import javax.inject.Inject
 
 private const val TEXT_RESTORE_RETRY_MS = 60L
 private const val TEXT_RESTORE_ATTEMPTS = 25
@@ -47,6 +49,8 @@ private const val TEXT_BASE_URL = "https://text.invalid/"
  */
 @AndroidEntryPoint
 class TextReaderFragment : Fragment() {
+    @Inject lateinit var bookmarkRepository: BookmarkRepository
+
     private val viewModel: TextReaderViewModel by viewModels()
 
     private var _binding: FragmentTextReaderBinding? = null
@@ -85,6 +89,7 @@ class TextReaderFragment : Fragment() {
             if (started) {
                 when (item.itemId) {
                     R.id.action_toggle_paging -> viewModel.setPaged(!paged)
+                    R.id.action_add_bookmark -> addBookmark()
                     R.id.action_larger_text -> viewModel.changeTextSize(larger = true)
                     R.id.action_smaller_text -> viewModel.changeTextSize(larger = false)
                 }
@@ -266,6 +271,13 @@ class TextReaderFragment : Fragment() {
         } else {
             web.snapToPage()
         }
+    }
+
+    /** Asks for a note and bookmarks the place the reader is at. */
+    private fun addBookmark() {
+        val book = book ?: return
+        val place = viewModel.position
+        promptForBookmark(bookmarkRepository, ReaderPosition.Text(book.offsetOf(place.part, place.permille)))
     }
 
     private fun updatePartBar() {

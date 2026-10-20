@@ -88,12 +88,38 @@
         <action
             android:id="@+id/action_bookPageFragment_to_textReaderFragment"
             app:destination="@id/textReaderFragment" />
+        <action
+            android:id="@+id/action_bookPageFragment_to_bookmarksFragment"
+            app:destination="@id/bookmarksFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/bookmarksFragment"
+        android:name="com.freelibrary.app.ui.bookmarks.BookmarksFragment"
+        tools:layout="@layout/fragment_bookmarks">
+        <argument
+            android:name="bookId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_bookmarksFragment_to_epubReaderFragment"
+            app:destination="@id/epubReaderFragment" />
+        <action
+            android:id="@+id/action_bookmarksFragment_to_pdfReaderFragment"
+            app:destination="@id/pdfReaderFragment" />
+        <action
+            android:id="@+id/action_bookmarksFragment_to_textReaderFragment"
+            app:destination="@id/textReaderFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/textReaderFragment"
         android:name="com.freelibrary.app.ui.reader.TextReaderFragment"
         tools:layout="@layout/fragment_text_reader">
+        <argument
+            android:name="startPosition"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
         <argument
             android:name="bookId"
             app:argType="long" />
@@ -104,6 +130,11 @@
         android:name="com.freelibrary.app.ui.reader.PdfReaderFragment"
         tools:layout="@layout/fragment_pdf_reader">
         <argument
+            android:name="startPosition"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
             android:name="bookId"
             app:argType="long" />
     </fragment>
@@ -112,6 +143,11 @@
         android:id="@+id/epubReaderFragment"
         android:name="com.freelibrary.app.ui.reader.EpubReaderFragment"
         tools:layout="@layout/fragment_epub_reader">
+        <argument
+            android:name="startPosition"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
         <argument
             android:name="bookId"
             app:argType="long" />

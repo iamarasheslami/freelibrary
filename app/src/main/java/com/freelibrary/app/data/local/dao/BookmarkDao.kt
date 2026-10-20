@@ -14,6 +14,10 @@ interface BookmarkDao {
     @Query("SELECT * FROM bookmarks WHERE bookId = :bookId ORDER BY createdAt ASC")
     suspend fun getForBook(bookId: Long): List<Bookmark>
 
+    /** Live list of a book's bookmarks, oldest first. */
+    @Query("SELECT * FROM bookmarks WHERE bookId = :bookId ORDER BY createdAt ASC, id ASC")
+    fun observeForBook(bookId: Long): Flow<List<Bookmark>>
+
     @Query("DELETE FROM bookmarks WHERE id = :bookmarkId")
     suspend fun delete(bookmarkId: Long)
 
