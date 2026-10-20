@@ -12,12 +12,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.navOptions
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.freelibrary.app.R
 import com.freelibrary.app.databinding.FragmentBookmarksBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.bookpage.ARG_BOOK_ID
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
+import com.freelibrary.app.ui.reader.ARG_FROM_READER
 import com.freelibrary.app.ui.reader.ARG_START_POSITION
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -64,6 +66,8 @@ class BookmarksFragment : Fragment() {
     }
 
     private fun open(item: BookmarkItem) {
+        // Opened from a reader: the reader it came from is replaced, so Back goes to the book page.
+        val fromReader = arguments?.getBoolean(ARG_FROM_READER, false) ?: false
         viewLifecycleOwner.lifecycleScope.launch {
             val position = item.bookmark.position
             val opens = viewModel.canOpen(position)
@@ -81,7 +85,8 @@ class BookmarksFragment : Fragment() {
                     is ReaderPosition.Pdf -> R.id.action_bookmarksFragment_to_pdfReaderFragment
                     is ReaderPosition.Text -> R.id.action_bookmarksFragment_to_textReaderFragment
                 }
-            navController.navigate(action, bundleOf(ARG_BOOK_ID to item.bookmark.bookId, ARG_START_POSITION to position.encode()))
+            val arguments = bundleOf(ARG_BOOK_ID to item.bookmark.bookId, ARG_START_POSITION to position.encode())
+            navController.navigate(action, arguments, if (fromReader) navOptions { popUpTo(R.id.bookPageFragment) } else null)
         }
     }
 

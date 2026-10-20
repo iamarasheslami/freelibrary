@@ -5,6 +5,10 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/homeFragment">
 
+    <action
+        android:id="@+id/action_global_bookmarksFragment"
+        app:destination="@id/bookmarksFragment" />
+
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.freelibrary.app.ui.home.HomeFragment"
@@ -97,6 +101,10 @@
         android:id="@+id/bookmarksFragment"
         android:name="com.freelibrary.app.ui.bookmarks.BookmarksFragment"
         tools:layout="@layout/fragment_bookmarks">
+        <argument
+            android:name="fromReader"
+            android:defaultValue="false"
+            app:argType="boolean" />
         <argument
             android:name="bookId"
             app:argType="long" />
