@@ -48,15 +48,10 @@ class TextBook private constructor(
     /** The number of characters in the book. */
     val length: Int get() = text.length
 
-    /** The page for part [part], painted with [style]. */
-    fun html(
-        part: Int,
-        style: ReaderStyle,
-    ): String {
+    /** The text of part [part], ready to be laid out: paragraphs one blank line apart, prose joined into running lines. */
+    fun plain(part: Int): String {
         val range = parts[part]
-        val body = TextReflow.toHtml(text.substring(range.start, range.end))
-        return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/><title></title>" +
-            "<style>${style.css()}</style></head><body>$body</body></html>"
+        return TextReflow.toPlain(text.substring(range.start, range.end))
     }
 
     /** The place [permille] thousandths of the way through part [part], as a number of characters. */
@@ -89,7 +84,6 @@ class TextBook private constructor(
         private const val MIN_LAST_PART_CHARS = 2_000
 
         private const val MAX_PERMILLE = 1000
-        private val LINE_BREAKS = Regex("\\n(?:[ \\t]*\\n)*")
 
         /** Opens [file]. Reads files from disk, so call it off the main thread. */
         fun open(file: File): TextOpenResult {
@@ -130,15 +124,29 @@ class TextBook private constructor(
         private fun split(text: String): List<TextPart> {
             val parts = ArrayList<TextPart>()
             var start = 0
-            for (match in LINE_BREAKS.findAll(text)) {
-                val end = match.range.last + 1
+            // Line ends are found by hand: a pattern search over a whole book is slow and heavy on an old phone.
+            var lineEnd = text.indexOf('\n')
+            while (lineEnd >= 0) {
+                var end = lineEnd + 1
+                var breaks = 1
+                var scan = end
+                while (true) {
+                    while (scan < text.length && (text[scan] == ' ' || text[scan] == '\t')) scan++
+                    if (scan < text.length && text[scan] == '\n') {
+                        scan++
+                        end = scan
+                        breaks++
+                    } else {
+                        break
+                    }
+                }
                 val size = end - start
-                val paragraphBreak = match.value.count { it == '\n' } >= 2
                 // Cut at a paragraph break; with none in sight, at any line end once the part is twice as long.
-                if (size >= PART_TARGET_CHARS && (paragraphBreak || size >= 2 * PART_TARGET_CHARS)) {
+                if (size >= PART_TARGET_CHARS && (breaks >= 2 || size >= 2 * PART_TARGET_CHARS)) {
                     parts.add(TextPart(start, end))
                     start = end
                 }
+                lineEnd = text.indexOf('\n', end)
             }
             if (start < text.length) {
                 if (parts.isNotEmpty() && text.length - start < MIN_LAST_PART_CHARS) {
