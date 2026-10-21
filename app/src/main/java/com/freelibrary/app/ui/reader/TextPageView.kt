@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Typeface
-import android.text.Layout
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.StaticLayout
@@ -133,8 +132,6 @@ class TextPageView
                     StaticLayout.Builder.obtain(content, 0, content.length, paint, (width - 2 * sidePadding).coerceAtLeast(1))
                         .setLineSpacing(0f, LINE_SPACING)
                         .setIncludePad(false)
-                        .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE)
-                        .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE)
                         .build()
                 layout = built
                 if (paged) {
