@@ -20,19 +20,12 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- Holds the web view. In page view its side padding is the page margin, so every page is exactly as wide as the web view. -->
-        <FrameLayout
-            android:id="@+id/textPageHost"
+        <com.freelibrary.app.ui.reader.TextPageView
+            android:id="@+id/textPage"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <com.freelibrary.app.ui.reader.ReaderWebView
-                android:id="@+id/textWebView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone" />
-
-        </FrameLayout>
+            android:layout_height="match_parent"
+            android:scrollbars="vertical"
+            android:visibility="invisible" />
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
             android:id="@+id/textLoading"

@@ -1,7 +1,6 @@
 package com.freelibrary.app.data.reader
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -14,8 +13,6 @@ class TextBookTest {
     @get:Rule
     val temporaryFolder = TemporaryFolder()
 
-    private val style = ReaderStyle(textColor = 0x112233, backgroundColor = 0xFFFFFF, linkColor = 0xAA0000)
-
     private fun book(text: String): TextBook = TextBook.fromText(text)!!
 
     private fun longText(paragraphs: Int = 120) = (1..paragraphs).joinToString("\n\n") { "a".repeat(1_000) + it }
@@ -27,27 +24,24 @@ class TextBookTest {
                 "This one is long enough as well, so they run together,\nand so ends it."
         val verse = "Roses are red\nViolets are blue\nSugar is sweet"
 
-        val html = book("$prose\n\n$verse").html(0, style)
+        val plain = book("$prose\n\n$verse").plain(0)
 
-        assertTrue(html.contains("<p>This line is long enough to be one of a wrapped paragraph. This one is long enough"))
-        assertTrue(html.contains("<p style=\"white-space:pre-wrap\">Roses are red\nViolets are blue\nSugar is sweet</p>"))
+        val expectedProse =
+            "This line is long enough to be one of a wrapped paragraph. " +
+                "This one is long enough as well, so they run together, and so ends it."
+        assertEquals("$expectedProse\n\n$verse", plain)
     }
 
     @Test
-    fun `indented lines keep their line ends and the text is escaped`() {
-        val html = book("    indented and quoted <b> & more\n    second line is indented as well").html(0, style)
+    fun `indented lines keep their line ends`() {
+        val plain = book("    indented and quoted <b> & more\n    second line is indented as well").plain(0)
 
-        assertTrue(html.contains("white-space:pre-wrap"))
-        assertTrue(html.contains("&lt;b&gt; &amp; more"))
-        assertFalse(html.contains("<b>"))
+        assertEquals("    indented and quoted <b> & more\n    second line is indented as well", plain)
     }
 
     @Test
-    fun `the page carries the style of the app`() {
-        val html = book("Hello there").html(0, style.copy(paged = true))
-
-        assertTrue(html.contains("color: #112233 !important"))
-        assertTrue(html.contains("column-width: 100vw"))
+    fun `blank runs between paragraphs become one blank line`() {
+        assertEquals("One\n\nTwo", book("One\n\n\n\n  \nTwo").plain(0))
     }
 
     @Test
@@ -120,8 +114,8 @@ class TextBookTest {
         val fromUtf8 = (TextBook.open(utf8) as TextOpenResult.Opened).book
         val fromOld = (TextBook.open(old) as TextOpenResult.Opened).book
 
-        assertTrue(fromUtf8.html(0, style).contains("caf\u00e9 au lait"))
-        assertTrue(fromOld.html(0, style).contains("caf\u00e9"))
+        assertTrue(fromUtf8.plain(0).contains("caf\u00e9 au lait"))
+        assertTrue(fromOld.plain(0).contains("caf\u00e9"))
     }
 
     @Test
