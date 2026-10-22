@@ -1,5 +1,6 @@
 package com.freelibrary.app.ui.settings
 
+import androidx.lifecycle.viewModelScope
 import com.freelibrary.app.data.repository.CatalogSyncer
 import com.freelibrary.app.data.repository.InMemoryPreferences
 import com.freelibrary.app.data.repository.ReadingHistory
@@ -10,13 +11,17 @@ import com.freelibrary.app.ui.cover.CoverCache
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -67,8 +72,13 @@ class SettingsViewModelTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
     }
 
+    private val created = mutableListOf<SettingsViewModel>()
+
     @After
     fun tearDown() {
+        // Work still on its way (the cover cache size is read on another thread) must finish while the
+        // main dispatcher is still set, or it fails in a later test.
+        runBlocking { withTimeoutOrNull(5_000) { created.forEach { it.viewModelScope.coroutineContext[Job]?.cancelAndJoin() } } }
         Dispatchers.resetMain()
     }
 
@@ -79,6 +89,7 @@ class SettingsViewModelTest {
         history: ReadingHistory = FakeHistory(),
     ): SettingsViewModel {
         val viewModel = SettingsViewModel(settings, syncer, cache, history)
+        created.add(viewModel)
         backgroundScope.launch { viewModel.state.collect {} }
         return viewModel
     }
