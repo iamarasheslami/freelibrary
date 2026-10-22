@@ -18,6 +18,7 @@ data class ReaderStyle(
     val textPercent: Int = DEFAULT_TEXT_PERCENT,
     val paged: Boolean = false,
     val pageHeight: Int = 0,
+    val rightToLeft: Boolean = false,
 ) {
     private val pageBoxHeight: String get() = if (pageHeight > 0) "${pageHeight}px" else "100vh"
 
@@ -27,7 +28,8 @@ data class ReaderStyle(
         val background = hex(backgroundColor)
         val link = hex(linkColor)
         val percent = textPercent.coerceIn(MIN_TEXT_PERCENT, MAX_TEXT_PERCENT)
-        return if (paged) pagedCss(text, background, link, percent) else scrollCss(text, background, link, percent)
+        val sheet = if (paged) pagedCss(text, background, link, percent) else scrollCss(text, background, link, percent)
+        return if (rightToLeft) sheet + "\n" + rightToLeftCss() else sheet
     }
 
     private fun scrollCss(
@@ -42,6 +44,7 @@ data class ReaderStyle(
         body * { color: inherit !important; }
         a, a * { color: $link !important; }
         img, svg, video { max-width: 100% !important; height: auto !important; }
+        p, li, dd, blockquote { text-align: justify; }
         pre { white-space: pre-wrap !important; }
         """.trimIndent()
 
@@ -61,7 +64,20 @@ data class ReaderStyle(
         pre { white-space: pre-wrap !important; }
         h1, h2, h3 { break-after: avoid !important; }
         p { orphans: 2; widows: 2; }
+        p, li, dd, blockquote { text-align: justify; }
         """.trimIndent()
+
+    /**
+     * In a right to left book the text runs right to left. In page view only the content does: the
+     * columns keep their order, so the web view scrolls exactly as in any other book, and the reader
+     * turns pages the other way round instead.
+     */
+    private fun rightToLeftCss(): String =
+        if (paged) {
+            "body > * { direction: rtl !important; }"
+        } else {
+            "body { direction: rtl !important; }"
+        }
 
     private fun hex(color: Int): String = String.format(Locale.ROOT, "#%06X", color and 0xFFFFFF)
 

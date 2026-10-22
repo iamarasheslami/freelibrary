@@ -207,13 +207,20 @@ class EpubReaderFragment : Fragment() {
     /** Sets up the server, the page margin and the menu for the mode in [paged]. */
     private fun applyMode() {
         val book = book ?: return
-        val style = (baseStyle ?: return).copy(paged = paged, textPercent = textPercent, pageHeight = pageHeightInCssPixels())
+        val style =
+            (baseStyle ?: return).copy(
+                paged = paged,
+                textPercent = textPercent,
+                pageHeight = pageHeightInCssPixels(),
+                rightToLeft = book.rightToLeft,
+            )
         server = EpubPageServer(book, style)
         val margin = if (paged) resources.getDimensionPixelSize(R.dimen.reader_page_margin) else 0
         binding.readerPageHost.setPadding(margin, 0, margin, 0)
         binding.readerPageHost.setBackgroundColor(style.backgroundColor)
         binding.readerWebView.setBackgroundColor(style.backgroundColor)
         binding.readerWebView.paged = paged
+        binding.readerWebView.rightToLeft = book.rightToLeft
         binding.readerWebView.isVerticalScrollBarEnabled = !paged
         binding.readerWebView.isHorizontalScrollBarEnabled = false
         binding.readerToolbar.menu.findItem(R.id.action_toggle_paging)

@@ -53,25 +53,39 @@ internal object PageMath {
         return ((permille.coerceIn(0, MAX).toLong() * (pageCount - 1) + MAX / 2) / MAX).toInt()
     }
 
-    /** Whether a swipe that moved [dx] pixels sideways turns forward (true) or back (false); null if it was too short. */
+    /**
+     * Whether a swipe that moved [dx] pixels sideways turns forward (true) or back (false); null if it
+     * was too short. In a right to left book ([rightToLeft]) a swipe to the right turns forward.
+     */
     fun swipeForward(
         dx: Float,
         threshold: Float,
-    ): Boolean? =
-        when {
-            dx <= -threshold -> true
-            dx >= threshold -> false
-            else -> null
-        }
+        rightToLeft: Boolean = false,
+    ): Boolean? {
+        val towardsRight =
+            when {
+                dx <= -threshold -> false
+                dx >= threshold -> true
+                else -> return null
+            }
+        return towardsRight == rightToLeft
+    }
 
-    /** Whether a tap at [x] on a view [width] wide turns forward (true) or back (false); null in the middle. */
+    /**
+     * Whether a tap at [x] on a view [width] wide turns forward (true) or back (false); null in the
+     * middle. In a right to left book ([rightToLeft]) the left edge turns forward.
+     */
     fun tapForward(
         x: Float,
         width: Int,
-    ): Boolean? =
-        when {
-            x < width * EDGE_FRACTION -> false
-            x > width * (1 - EDGE_FRACTION) -> true
-            else -> null
-        }
+        rightToLeft: Boolean = false,
+    ): Boolean? {
+        val atRightEdge =
+            when {
+                x < width * EDGE_FRACTION -> false
+                x > width * (1 - EDGE_FRACTION) -> true
+                else -> return null
+            }
+        return atRightEdge != rightToLeft
+    }
 }

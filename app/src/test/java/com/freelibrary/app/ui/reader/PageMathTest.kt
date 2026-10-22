@@ -68,6 +68,20 @@ class PageMathTest {
     }
 
     @Test
+    fun `in a right to left book a swipe to the right turns forward`() {
+        assertEquals(true, PageMath.swipeForward(100f, 48f, rightToLeft = true))
+        assertEquals(false, PageMath.swipeForward(-100f, 48f, rightToLeft = true))
+        assertNull(PageMath.swipeForward(10f, 48f, rightToLeft = true))
+    }
+
+    @Test
+    fun `in a right to left book a tap at the left edge turns forward`() {
+        assertEquals(true, PageMath.tapForward(10f, 400, rightToLeft = true))
+        assertEquals(false, PageMath.tapForward(390f, 400, rightToLeft = true))
+        assertNull(PageMath.tapForward(200f, 400, rightToLeft = true))
+    }
+
+    @Test
     fun `a swipe turns forward when it moves left and back when it moves right`() {
         assertEquals(true, PageMath.swipeForward(-100f, 50f))
         assertEquals(true, PageMath.swipeForward(-50f, 50f))
