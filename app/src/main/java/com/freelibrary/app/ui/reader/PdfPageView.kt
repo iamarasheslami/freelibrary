@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.AttributeSet
@@ -120,6 +122,24 @@ class PdfPageView
             clampOffsets()
             invalidate()
             if (previous !== page) previous?.recycle()
+        }
+
+        /**
+         * Shows pages in dark theme colours: white becomes [paper] and black becomes [ink]. With either
+         * one null the page shows as it is. The change happens while drawing, so it costs no memory and
+         * takes effect at once.
+         */
+        fun setNightColors(
+            paper: Int?,
+            ink: Int?,
+        ) {
+            paint.colorFilter =
+                if (paper == null || ink == null) {
+                    null
+                } else {
+                    ColorMatrixColorFilter(ColorMatrix(PdfNightColors.matrix(paper, ink)))
+                }
+            invalidate()
         }
 
         private fun isZoomed(): Boolean = zoom > PdfZoomMath.ZOOMED_THRESHOLD
