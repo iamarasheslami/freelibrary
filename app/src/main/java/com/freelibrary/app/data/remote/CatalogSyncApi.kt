@@ -3,7 +3,7 @@ package com.freelibrary.app.data.remote
 import com.freelibrary.shared.BookExport
 import com.freelibrary.shared.Manifest
 import retrofit2.http.GET
-import retrofit2.http.Path
+import retrofit2.http.Url
 
 /**
  * Fetches the sync manifest and individual book data from the
@@ -12,12 +12,16 @@ import retrofit2.http.Path
  * back to the catalog source, only reads updates from it.
  */
 interface CatalogSyncApi {
-    @GET("manifest.json")
-    suspend fun getManifest(): Manifest
+    /** The manifest at [path], relative to [BASE_URL] (for example "manifest.json" or "sources/oapen/manifest.json"). */
+    @GET
+    suspend fun getManifest(
+        @Url path: String,
+    ): Manifest
 
-    @GET("books/{externalId}.json")
+    /** The book file at [path], relative to [BASE_URL] (for example "books/1342.json"). */
+    @GET
     suspend fun getBook(
-        @Path("externalId") externalId: String,
+        @Url path: String,
     ): BookExport
 
     companion object {

@@ -76,7 +76,10 @@ class CatalogSyncRepositoryTest {
         server.shutdown()
     }
 
-    private fun buildRepository(dispatcher: Dispatcher): CatalogSyncRepository {
+    private fun buildRepository(
+        dispatcher: Dispatcher,
+        sources: CatalogSources = CatalogSources(),
+    ): CatalogSyncRepository {
         server.dispatcher = dispatcher
         val api = createCatalogSyncApi(baseUrl = server.url("/").toString())
         return CatalogSyncRepository(
@@ -92,6 +95,7 @@ class CatalogSyncRepositoryTest {
             bookFormatDao = database.bookFormatDao(),
             bookFtsDao = database.bookFtsDao(),
             bookSummaryDao = database.bookSummaryDao(),
+            sources = sources,
         )
     }
 
@@ -353,5 +357,56 @@ class CatalogSyncRepositoryTest {
             val saved = savedBook()
             assertEquals("https://example.org/new.jpg", saved.coverUrl)
             assertNull(database.bookSummaryDao().getSummaryForBook(saved.id))
+        }
+
+    private val oapen =
+        CatalogSource(
+            name = "OAPEN Library",
+            attribution = "Open access books via OAPEN (https://www.oapen.org)",
+            folder = "sources/oapen/",
+        )
+
+    private fun json(body: String) = MockResponse().setBody(body).setHeader("Content-Type", "application/json")
+
+    /** Both sources hold a book numbered 1342; [oapenManifest] is what the second source's manifest answers. */
+    private fun twoSources(oapenManifest: () -> MockResponse) =
+        object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                when (request.path) {
+                    "/manifest.json" -> json(manifestFor("1342", "2026-10-02"))
+                    "/books/1342.json" -> json(richBookJson("1342", "Gutenberg book", "Austen, Jane", "2026-10-02"))
+                    "/sources/oapen/manifest.json" -> oapenManifest()
+                    "/sources/oapen/books/1342.json" -> json(richBookJson("1342", "OAPEN book", "Smith, Ann", "2026-10-02"))
+                    else -> MockResponse().setResponseCode(404)
+                }
+        }
+
+    @Test
+    fun `a second source is synced from its own folder and kept apart from the first`() =
+        runTest {
+            val sources = CatalogSources(listOf(CatalogSource.GUTENBERG, oapen))
+            repository = buildRepository(twoSources { json(manifestFor("1342", "2026-10-02")) }, sources)
+
+            val result = repository.sync()
+
+            assertEquals(2, result.added)
+            val gutenbergId = database.sourceDao().findByName("Project Gutenberg")!!.id
+            val oapenId = database.sourceDao().findByName("OAPEN Library")!!.id
+            assertEquals("Gutenberg book", database.bookDao().getBySourceAndExternalId(gutenbergId, "1342")?.title)
+            assertEquals("OAPEN book", database.bookDao().getBySourceAndExternalId(oapenId, "1342")?.title)
+            assertEquals(2, database.bookDao().count())
+        }
+
+    @Test
+    fun `a second source that cannot be fetched is one failure and the first source still syncs`() =
+        runTest {
+            val sources = CatalogSources(listOf(CatalogSource.GUTENBERG, oapen))
+            repository = buildRepository(twoSources { MockResponse().setResponseCode(500) }, sources)
+
+            val result = repository.sync()
+
+            assertEquals(1, result.added)
+            assertEquals(1, result.failed)
+            assertEquals(listOf("OAPEN Library: Failed to fetch sync manifest"), result.failureSamples)
         }
 }
