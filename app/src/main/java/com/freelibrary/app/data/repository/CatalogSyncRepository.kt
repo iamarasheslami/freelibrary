@@ -27,8 +27,6 @@ import com.freelibrary.shared.BookExport
 import com.freelibrary.shared.SearchText
 import javax.inject.Inject
 
-private const val SOURCE_NAME = "Project Gutenberg"
-private const val SOURCE_ATTRIBUTION = "Public domain works via Project Gutenberg (https://www.gutenberg.org)"
 private const val MAX_FAILURE_SAMPLES = 5
 
 /** Thrown when the sync cannot proceed at all, e.g. the manifest itself could not be fetched. */
@@ -39,7 +37,16 @@ data class SyncResult(
     val updated: Int,
     val failed: Int,
     val failureSamples: List<String>,
-)
+) {
+    /** The two results added together, keeping at most a handful of failure samples. */
+    operator fun plus(other: SyncResult): SyncResult =
+        SyncResult(
+            added = added + other.added,
+            updated = updated + other.updated,
+            failed = failed + other.failed,
+            failureSamples = (failureSamples + other.failureSamples).take(MAX_FAILURE_SAMPLES),
+        )
+}
 
 /**
  * Syncs the local catalog against the manifest published by
@@ -74,13 +81,33 @@ class CatalogSyncRepository
         private val bookFormatDao: BookFormatDao,
         private val bookFtsDao: BookFtsDao,
         private val bookSummaryDao: BookSummaryDao,
+        private val sources: CatalogSources,
     ) {
+        /**
+         * Syncs every source in turn and adds up the results. Project Gutenberg comes first and the sync
+         * does not run at all without its manifest; any other source that cannot be fetched is counted as
+         * one failure and the rest carry on.
+         */
         suspend fun sync(): SyncResult {
-            val sourceId = getOrCreateSourceId()
+            var total = SyncResult(added = 0, updated = 0, failed = 0, failureSamples = emptyList())
+            for ((index, source) in sources.all.withIndex()) {
+                total +=
+                    try {
+                        syncSource(source)
+                    } catch (e: CatalogSyncException) {
+                        if (index == 0) throw e
+                        SyncResult(added = 0, updated = 0, failed = 1, failureSamples = listOf("${source.name}: ${e.message}"))
+                    }
+            }
+            return total
+        }
+
+        private suspend fun syncSource(source: CatalogSource): SyncResult {
+            val sourceId = getOrCreateSourceId(source)
 
             val manifest =
                 try {
-                    api.getManifest()
+                    api.getManifest(source.manifestPath)
                 } catch (e: Exception) {
                     throw CatalogSyncException("Failed to fetch sync manifest", e)
                 }
@@ -98,7 +125,7 @@ class CatalogSyncRepository
                 if (!needsSync) continue
 
                 try {
-                    val bookExport = api.getBook(entry.externalId)
+                    val bookExport = api.getBook(source.bookPath(entry.externalId))
                     val wasNew = upsertBook(sourceId, bookExport)
                     if (wasNew) added++ else updated++
                 } catch (e: Exception) {
@@ -112,9 +139,9 @@ class CatalogSyncRepository
             return SyncResult(added = added, updated = updated, failed = failed, failureSamples = failureSamples)
         }
 
-        private suspend fun getOrCreateSourceId(): Long {
-            sourceDao.findByName(SOURCE_NAME)?.let { return it.id }
-            return sourceDao.insert(Source(name = SOURCE_NAME, attribution = SOURCE_ATTRIBUTION))
+        private suspend fun getOrCreateSourceId(source: CatalogSource): Long {
+            sourceDao.findByName(source.name)?.let { return it.id }
+            return sourceDao.insert(Source(name = source.name, attribution = source.attribution))
         }
 
         /** Returns true if this was a brand-new book (insert), false if it updated an existing one. */

@@ -39,7 +39,7 @@ class CatalogSyncApiTest {
                 """.trimIndent()
             server.enqueue(MockResponse().setBody(responseBody).setHeader("Content-Type", "application/json"))
 
-            val manifest = api.getManifest()
+            val manifest = api.getManifest("manifest.json")
 
             assertEquals("2026-09-16", manifest.baselineVersion)
             assertEquals(1, manifest.books.size)
@@ -67,7 +67,7 @@ class CatalogSyncApiTest {
                 """.trimIndent()
             server.enqueue(MockResponse().setBody(responseBody).setHeader("Content-Type", "application/json"))
 
-            val book = api.getBook("1342")
+            val book = api.getBook("books/1342.json")
 
             assertEquals("Pride and Prejudice", book.title)
             assertEquals("Jane Austen", book.creators.first().name)
@@ -83,9 +83,22 @@ class CatalogSyncApiTest {
                 ).setHeader("Content-Type", "application/json"),
             )
 
-            api.getBook("158")
+            api.getBook("books/158.json")
 
             val recordedRequest = server.takeRequest()
             assertEquals("/books/158.json", recordedRequest.path)
+        }
+
+    @Test
+    fun `getManifest reads a manifest from a folder below the root`() =
+        runTest {
+            server.enqueue(
+                MockResponse().setBody("""{"generatedAt":"2026-10-22","baselineVersion":"2026-10-22","books":[]}""")
+                    .setHeader("Content-Type", "application/json"),
+            )
+
+            api.getManifest("sources/oapen/manifest.json")
+
+            assertEquals("/sources/oapen/manifest.json", server.takeRequest().path)
         }
 }
