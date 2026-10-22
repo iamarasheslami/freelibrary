@@ -26,6 +26,8 @@ import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.util.Formatter
+import java.util.Locale
 import javax.inject.Inject
 
 /** 1 January 1900, the earliest birthday the picker offers, as midnight UTC in milliseconds. */
@@ -134,11 +136,14 @@ class EditProfileFragment : Fragment() {
 
     /** The picked day is midnight UTC, so it is also written in UTC; otherwise it could show as the day before. */
     private fun formatBirthday(utcMillis: Long): String =
-        DateUtils.formatDateTime(
+        DateUtils.formatDateRange(
             requireContext(),
+            Formatter(StringBuilder(), Locale.getDefault()),
             utcMillis,
-            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR or DateUtils.FORMAT_UTC,
-        )
+            utcMillis,
+            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR,
+            "UTC",
+        ).toString()
 
     private fun showBirthdayPicker() {
         val constraints =

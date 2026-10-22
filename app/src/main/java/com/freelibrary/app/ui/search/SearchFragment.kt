@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.StringRes
-import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -70,7 +69,7 @@ class SearchFragment : Fragment() {
                 false
             }
         }
-        ViewCompat.setAccessibilityLiveRegion(binding.searchMessage, ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE)
+        binding.searchMessage.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
 
         val adapter = SearchResultAdapter(::openBook)
         binding.searchResults.adapter = adapter
