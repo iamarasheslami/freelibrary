@@ -27,6 +27,7 @@ import com.freelibrary.app.databinding.FragmentSettingsBinding
 import com.freelibrary.app.domain.model.ThemeMode
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -118,6 +119,7 @@ class SettingsFragment : Fragment() {
         binding.profileRow.setOnClickListener { openProfileEditor() }
         binding.syncNowButton.setOnClickListener { viewModel.syncNow() }
         binding.clearCacheButton.setOnClickListener { viewModel.clearCoverCache() }
+        binding.clearHistoryButton.setOnClickListener { confirmClearHistory() }
 
         binding.backupExportButton.setOnClickListener { chooseExportParts() }
         binding.backupImportButton.setOnClickListener { openBackupFile.launch(arrayOf("*/*")) }
@@ -130,6 +132,7 @@ class SettingsFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.state.collect { render(it) } }
                 launch { backupViewModel.status.collect { renderBackup(it) } }
+                launch { viewModel.historyCleared.collect { showHistoryResult(it) } }
             }
         }
     }
@@ -247,6 +250,21 @@ class SettingsFragment : Fragment() {
             BackupFailure.INVALID_FILE -> R.string.backup_error_invalid
             BackupFailure.FAILED -> R.string.backup_error_failed
         }
+
+    /** Asks first, because clearing the reading history cannot be undone. */
+    private fun confirmClearHistory() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.history_clear_title)
+            .setMessage(R.string.history_clear_message)
+            .setPositiveButton(R.string.settings_history_clear) { _, _ -> viewModel.clearReadingHistory() }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showHistoryResult(cleared: Boolean) {
+        val message = if (cleared) R.string.history_cleared else R.string.history_clear_failed
+        Snackbar.make(binding.settingsRoot, message, Snackbar.LENGTH_SHORT).show()
+    }
 
     private fun showMessage(message: String) {
         MaterialAlertDialogBuilder(requireContext())
