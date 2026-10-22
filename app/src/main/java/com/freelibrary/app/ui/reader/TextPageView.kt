@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Typeface
+import android.graphics.text.LineBreaker
 import android.os.Build
-import android.text.Layout
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.StaticLayout
@@ -136,7 +136,7 @@ class TextPageView
                         .setIncludePad(false)
                 // Justified text needs Android 8; older phones keep ragged edges.
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    builder.setJustificationMode(Layout.JUSTIFICATION_MODE_INTER_WORD)
+                    builder.setJustificationMode(LineBreaker.JUSTIFICATION_MODE_INTER_WORD)
                 }
                 val built = builder.build()
                 layout = built
