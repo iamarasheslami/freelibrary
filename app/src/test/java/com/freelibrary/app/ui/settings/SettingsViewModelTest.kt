@@ -2,6 +2,7 @@ package com.freelibrary.app.ui.settings
 
 import com.freelibrary.app.data.repository.CatalogSyncer
 import com.freelibrary.app.data.repository.InMemoryPreferences
+import com.freelibrary.app.data.repository.ReadingHistory
 import com.freelibrary.app.data.repository.SettingsRepository
 import com.freelibrary.app.data.repository.SyncResult
 import com.freelibrary.app.domain.model.ThemeMode
@@ -48,6 +49,17 @@ class SettingsViewModelTest {
         }
     }
 
+    private class FakeHistory(
+        private val failure: Exception? = null,
+    ) : ReadingHistory {
+        var clears = 0
+
+        override suspend fun clear() {
+            failure?.let { throw it }
+            clears++
+        }
+    }
+
     private val settings = SettingsRepository(InMemoryPreferences())
 
     @Before
@@ -64,8 +76,9 @@ class SettingsViewModelTest {
     private fun TestScope.watched(
         syncer: CatalogSyncer = FakeSyncer { null },
         cache: CoverCache = FakeCoverCache(),
+        history: ReadingHistory = FakeHistory(),
     ): SettingsViewModel {
-        val viewModel = SettingsViewModel(settings, syncer, cache)
+        val viewModel = SettingsViewModel(settings, syncer, cache, history)
         backgroundScope.launch { viewModel.state.collect {} }
         return viewModel
     }
@@ -74,6 +87,28 @@ class SettingsViewModelTest {
         added: Int = 0,
         updated: Int = 0,
     ) = SyncResult(added = added, updated = updated, failed = 0, failureSamples = emptyList())
+
+    @Test
+    fun `clearing the reading history clears it once and reports success`() =
+        runTest {
+            val history = FakeHistory()
+            val viewModel = watched(history = history)
+
+            viewModel.clearReadingHistory()
+
+            assertEquals(1, history.clears)
+            assertEquals(true, viewModel.historyCleared.first())
+        }
+
+    @Test
+    fun `a reading history that could not be cleared is reported as failed`() =
+        runTest {
+            val viewModel = watched(history = FakeHistory(failure = IllegalStateException("disk full")))
+
+            viewModel.clearReadingHistory()
+
+            assertEquals(false, viewModel.historyCleared.first())
+        }
 
     @Test
     fun `it starts with the system theme, true black off, Wi-Fi only on and no sync yet`() =

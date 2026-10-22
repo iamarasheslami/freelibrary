@@ -3,15 +3,19 @@ package com.freelibrary.app.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freelibrary.app.data.repository.CatalogSyncer
+import com.freelibrary.app.data.repository.ReadingHistory
 import com.freelibrary.app.data.repository.SettingsRepository
 import com.freelibrary.app.domain.model.ThemeMode
 import com.freelibrary.app.ui.cover.CoverCache
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -51,9 +55,14 @@ class SettingsViewModel
         private val settings: SettingsRepository,
         private val catalogSyncer: CatalogSyncer,
         private val coverCache: CoverCache,
+        private val readingHistory: ReadingHistory,
     ) : ViewModel() {
         private val syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
         private val coverCacheBytes = MutableStateFlow(0L)
+        private val historyEvents = Channel<Boolean>(Channel.CONFLATED)
+
+        /** Emits once for every "Clear reading history": true when it worked, false when it did not. */
+        val historyCleared: Flow<Boolean> = historyEvents.receiveAsFlow()
 
         private val stored =
             combine(
@@ -109,6 +118,24 @@ class SettingsViewModel
             viewModelScope.launch {
                 withContext(Dispatchers.IO) { coverCache.clear() }
                 coverCacheBytes.value = withContext(Dispatchers.IO) { coverCache.sizeBytes() }
+            }
+        }
+
+        /** Forgets what the reader has read (see [ReadingHistory.clear]) and reports whether that worked. */
+        fun clearReadingHistory() {
+            viewModelScope.launch {
+                val cleared =
+                    try {
+                        readingHistory.clear()
+                        true
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (
+                        @Suppress("TooGenericExceptionCaught") e: Exception,
+                    ) {
+                        false
+                    }
+                historyEvents.trySend(cleared)
             }
         }
 

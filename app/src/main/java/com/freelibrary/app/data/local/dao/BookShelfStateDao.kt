@@ -42,4 +42,8 @@ interface BookShelfStateDao {
     /** Backs a "clear my reading history" action. */
     @Query("DELETE FROM book_shelf_state")
     suspend fun deleteAll()
+
+    /** Removes every shelf row except the ones in [keep]; backs clearing the reading history while the Want to Read list stays. */
+    @Query("DELETE FROM book_shelf_state WHERE state != :keep")
+    suspend fun deleteAllExcept(keep: ShelfState)
 }
