@@ -30,6 +30,9 @@ class ReaderWebView
         /** True while the chapter is laid out as pages side by side. */
         var paged: Boolean = false
 
+        /** True for a right to left book: a swipe to the right and a tap at the left edge turn forward. */
+        var rightToLeft: Boolean = false
+
         /** Asked for the next (true) or the previous (false) page, by a swipe or a tap at an edge. */
         var onTurnPage: ((forward: Boolean) -> Unit)? = null
 
@@ -74,7 +77,8 @@ class ReaderWebView
             val count = pageCount()
             val target = currentPage() + if (forward) 1 else -1
             if (target !in 0 until count) return false
-            animateTo(PageMath.scrollXOf(target, width, count))
+            val x = PageMath.scrollXOf(target, width, count)
+            if (rightToLeft) slideIn(x, fromLeft = forward) else animateTo(x)
             return true
         }
 
@@ -83,8 +87,30 @@ class ReaderWebView
             animateTo(PageMath.scrollXOf(currentPage(), width, pageCount()))
         }
 
+        /**
+         * Turning a page in a right to left book: the columns lie left to right underneath, so sliding
+         * the scroll would move the page against the finger. Instead the scroll jumps to the new page and
+         * the view slides in from the side the finger came from ([fromLeft] for a swipe to the right).
+         */
+        private fun slideIn(
+            x: Int,
+            fromLeft: Boolean,
+        ) {
+            animator?.cancel()
+            scrollTo(x, 0)
+            val start = if (fromLeft) -width.toFloat() else width.toFloat()
+            translationX = start
+            animator =
+                ObjectAnimator.ofFloat(this, "translationX", start, 0f).apply {
+                    duration = PAGE_TURN_MS
+                    interpolator = DecelerateInterpolator()
+                    start()
+                }
+        }
+
         private fun animateTo(x: Int) {
             animator?.cancel()
+            translationX = 0f
             animator =
                 ObjectAnimator.ofInt(this, "scrollX", scrollX, x).apply {
                     duration = PAGE_TURN_MS
@@ -115,6 +141,7 @@ class ReaderWebView
                     swiping = false
                     movedAway = false
                     animator?.cancel()
+                    translationX = 0f
                 }
                 MotionEvent.ACTION_MOVE -> {
                     if (!movedAway && (abs(event.x - downX) > touchSlop || abs(event.y - downY) > touchSlop)) {
@@ -127,12 +154,12 @@ class ReaderWebView
                 MotionEvent.ACTION_UP -> {
                     if (swiping) {
                         swiping = false
-                        val forward = PageMath.swipeForward(event.x - downX, swipeThreshold)
+                        val forward = PageMath.swipeForward(event.x - downX, swipeThreshold, rightToLeft)
                         if (forward == null) snapToPage() else onTurnPage?.invoke(forward)
                         return true
                     }
                     if (movedAway) return true
-                    val edge = if (isTap(event)) PageMath.tapForward(event.x, width) else null
+                    val edge = if (isTap(event)) PageMath.tapForward(event.x, width, rightToLeft) else null
                     if (edge != null) {
                         cancelTouchInWebView(event)
                         onTurnPage?.invoke(edge)

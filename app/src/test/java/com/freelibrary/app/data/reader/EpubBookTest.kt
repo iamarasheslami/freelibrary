@@ -1,6 +1,7 @@
 package com.freelibrary.app.data.reader
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -80,6 +81,40 @@ class EpubBookTest {
             assertEquals("Moby-Dick", book.title)
             assertEquals(listOf("OEBPS/ch1.xhtml", "OEBPS/text/ch 2.xhtml"), book.chapters)
         }
+    }
+
+    private fun bookWith(
+        language: String,
+        spineAttributes: String = "",
+    ): File =
+        epub(
+            "META-INF/container.xml" to container,
+            "OEBPS/content.opf" to
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+                  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>T</dc:title><dc:language>$language</dc:language></metadata>
+                  <manifest>${page("c1", "ch1.xhtml")}</manifest>
+                  <spine $spineAttributes><itemref idref="c1"/></spine>
+                </package>
+                """.trimIndent(),
+            "OEBPS/ch1.xhtml" to "<html><body>One</body></html>",
+        )
+
+    @Test
+    fun `a book in Arabic reads right to left`() {
+        opened(bookWith("ar")).use { assertTrue(it.rightToLeft) }
+    }
+
+    @Test
+    fun `a book whose spine says right to left reads right to left whatever its language`() {
+        opened(bookWith("en", """page-progression-direction="rtl"""")).use { assertTrue(it.rightToLeft) }
+    }
+
+    @Test
+    fun `a book in English or with no direction reads left to right`() {
+        opened(bookWith("en")).use { assertFalse(it.rightToLeft) }
+        opened(standardBook()).use { assertFalse(it.rightToLeft) }
     }
 
     @Test

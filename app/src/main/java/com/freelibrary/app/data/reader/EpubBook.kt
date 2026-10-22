@@ -49,6 +49,8 @@ class EpubBook private constructor(
     val chapters: List<String>,
     val contents: List<ContentsEntry>,
     private val mediaTypes: Map<String, String>,
+    /** True for a book written from right to left: its spine says so, or its language is one that is. */
+    val rightToLeft: Boolean,
 ) : Closeable {
     /** The content of the file at [path] inside the book, or null if there is none. The caller closes it. */
     fun read(path: String): InputStream? {
@@ -94,7 +96,8 @@ class EpubBook private constructor(
                 if (chapters.isEmpty()) return EpubOpenResult.Failed(EpubProblem.EMPTY)
                 val mediaTypes = document.items.values.mapNotNull { item -> item.mediaType?.let { item.path to it } }.toMap()
                 val contents = readContents(zip, document, chapters)
-                EpubOpenResult.Opened(EpubBook(zip, document.title, chapters, contents, mediaTypes))
+                val rightToLeft = document.rtlProgression || TextDirection.isRightToLeft(document.language)
+                EpubOpenResult.Opened(EpubBook(zip, document.title, chapters, contents, mediaTypes, rightToLeft))
             } catch (e: XmlPullParserException) {
                 EpubOpenResult.Failed(EpubProblem.DAMAGED)
             } catch (e: IOException) {

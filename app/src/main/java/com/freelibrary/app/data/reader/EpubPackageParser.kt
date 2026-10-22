@@ -27,6 +27,8 @@ internal data class PackageDocument(
     val items: Map<String, ManifestItem>,
     val spine: List<SpineRef>,
     val tocId: String? = null,
+    val language: String? = null,
+    val rtlProgression: Boolean = false,
 )
 
 /**
@@ -59,6 +61,8 @@ internal object EpubPackageParser {
         val parser = newParser(input)
         var title: String? = null
         var tocId: String? = null
+        var language: String? = null
+        var rtlProgression = false
         var inMetadata = false
         val items = LinkedHashMap<String, ManifestItem>()
         val spine = ArrayList<SpineRef>()
@@ -68,8 +72,13 @@ internal object EpubPackageParser {
                 when (localName(parser.name)) {
                     "metadata" -> inMetadata = true
                     "title" -> if (inMetadata && title == null) title = parser.nextText().trim().takeIf { it.isNotEmpty() }
+                    "language" -> if (inMetadata && language == null) language = parser.nextText().trim().takeIf { it.isNotEmpty() }
                     "item" -> readItem(parser, packagePath)?.let { items[it.id] = it }
-                    "spine" -> tocId = parser.getAttributeValue(null, "toc")?.trim()?.takeIf { it.isNotEmpty() }
+                    "spine" -> {
+                        tocId = parser.getAttributeValue(null, "toc")?.trim()?.takeIf { it.isNotEmpty() }
+                        val progression = parser.getAttributeValue(null, "page-progression-direction")?.trim()
+                        rtlProgression = progression.equals("rtl", ignoreCase = true)
+                    }
                     "itemref" -> readSpineRef(parser)?.let { spine.add(it) }
                 }
             } else if (event == XmlPullParser.END_TAG && localName(parser.name) == "metadata") {
@@ -77,7 +86,7 @@ internal object EpubPackageParser {
             }
             event = parser.next()
         }
-        return PackageDocument(title, items, spine, tocId)
+        return PackageDocument(title, items, spine, tocId, language, rtlProgression)
     }
 
     /**
