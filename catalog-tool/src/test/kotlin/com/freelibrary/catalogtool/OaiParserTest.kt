@@ -75,11 +75,14 @@ class OaiParserTest {
         assertEquals("2022", book.issuedDate)
         assertEquals("en", book.language)
         assertEquals(listOf("DZHW", "DAAD"), book.creators.map { it.name })
-        assertEquals(listOf("Society and Social Sciences"), book.bookshelves)
+        assertEquals(listOf("Category: Society and Social Sciences"), book.bookshelves)
         assertEquals("The study has been analysing the international nature of studies.", book.summary)
         assertEquals("https://library.oapen.org/bitstream/20.500.12657/101963/3/9783763967605.pdf.jpg", book.coverUrl)
         assertEquals(
-            listOf(ParsedFormat("https://library.oapen.org/bitstream/20.500.12657/101963/1/9783763967605.pdf", "application/pdf")),
+            listOf(
+                ParsedFormat("https://library.oapen.org/bitstream/20.500.12657/101963/1/9783763967605.pdf", "application/pdf"),
+                ParsedFormat("https://library.oapen.org/bitstream/20.500.12657/101963/2/9783763967605.pdf.txt", "text/plain"),
+            ),
             book.formats,
         )
         assertNull(book.locc)
@@ -101,8 +104,8 @@ class OaiParserTest {
     @Test
     fun `records that are not usable books are skipped and counted`() {
         val chapter = BOOK_RECORD.replace("""<field name="value">book</field>""", """<field name="value">chapter</field>""")
-        val noFile = BOOK_RECORD.replace("application/pdf", "text/html")
-        val insecure = BOOK_RECORD.replace("https://library.oapen.org/bitstream/20.500.12657/101963/1/", "http://example.org/")
+        val noFile = BOOK_RECORD.replace("application/pdf", "text/html").replace("text/plain", "text/html")
+        val insecure = BOOK_RECORD.replace("https://library.oapen.org/bitstream/", "http://example.org/")
         val deleted =
             """<record><header status="deleted"><identifier>oai:library.oapen.org:20.500.12657/5</identifier>""" +
                 """<datestamp>2025-05-16T11:24:10Z</datestamp></header></record>"""
@@ -111,6 +114,18 @@ class OaiParserTest {
 
         assertEquals(1, page.books.size)
         assertEquals(4, page.skipped)
+    }
+
+    @Test
+    fun `a book with only the extracted text is kept with a text file`() {
+        val textOnly = BOOK_RECORD.replace("application/pdf", "text/html")
+
+        val book = parseOaiPage(listRecords(textOnly)).books.single().book
+
+        assertEquals(
+            listOf(ParsedFormat("https://library.oapen.org/bitstream/20.500.12657/101963/2/9783763967605.pdf.txt", "text/plain")),
+            book.formats,
+        )
     }
 
     @Test

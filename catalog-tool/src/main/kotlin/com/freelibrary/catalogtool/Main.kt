@@ -50,6 +50,10 @@ fun main() {
     val today = LocalDate.now().toString()
     val manifestEntries = mutableListOf<ManifestEntry>()
 
+    // A rebuild must not change what the sync compares: a Gutenberg book keeps the date the existing
+    // manifest (copied into data/export before the run) gives it, and only a new book gets today's date.
+    val previousDates = readManifest(exportManifestDir)?.books?.associate { it.externalId to it.lastModified } ?: emptyMap()
+
     var parsedCount = 0
     var skippedCount = 0
     var parseFailedCount = 0
@@ -75,9 +79,10 @@ fun main() {
         }
 
         try {
-            writer.insertBook(sourceId, book, lastModified = today)
-            writeBookExport(exportBooksDir, book.toExport(lastModified = today))
-            manifestEntries.add(ManifestEntry(externalId = book.externalId, lastModified = today))
+            val modified = previousDates[book.externalId] ?: today
+            writer.insertBook(sourceId, book, lastModified = modified)
+            writeBookExport(exportBooksDir, book.toExport(lastModified = modified))
+            manifestEntries.add(ManifestEntry(externalId = book.externalId, lastModified = modified))
             parsedCount++
             if (parsedCount % COMMIT_BATCH_SIZE == 0) {
                 writer.commit()
