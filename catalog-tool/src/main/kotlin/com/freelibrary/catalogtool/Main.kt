@@ -92,6 +92,19 @@ fun main() {
     }
 
     writer.commit()
+
+    var oapenResult: OapenImportResult? = null
+    var oapenFailure: Exception? = null
+    try {
+        oapenResult =
+            importOapen(writer, exportManifestDir.resolve("sources/oapen"), today) { onPage ->
+                harvestOapen(onPage = onPage)
+            }
+    } catch (e: Exception) {
+        oapenFailure = e
+        println("OAPEN harvest failed: ${e.message}")
+    }
+    writer.commit()
     connection.close()
 
     writeManifest(
@@ -113,4 +126,11 @@ fun main() {
     }
     println("Database written to $outputPath")
     println("Export files written to $exportManifestDir (manifest.json + ${manifestEntries.size} book files)")
+    oapenResult?.let {
+        println("OAPEN: ${it.written} books written, ${it.skipped} records skipped, ${it.failed} write failures")
+        it.failureSamples.forEach { sample -> println("  $sample") }
+    }
+    oapenFailure?.let {
+        throw IllegalStateException("The OAPEN harvest failed, so the database holds an incomplete OAPEN set", it)
+    }
 }

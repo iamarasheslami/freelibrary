@@ -25,8 +25,13 @@ private val sharedHttpClient: HttpClient =
  * this never caches to disk - suited to small, one-off fetches like an RSS
  * feed or a single book's RDF file, not the large full archive.
  */
-fun fetchBytes(url: String): ByteArray {
-    val request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build()
+fun fetchBytes(
+    url: String,
+    userAgent: String? = null,
+): ByteArray {
+    val builder = HttpRequest.newBuilder().uri(URI.create(url)).GET()
+    if (userAgent != null) builder.header("User-Agent", userAgent)
+    val request = builder.build()
 
     val response =
         try {
