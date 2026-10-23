@@ -35,11 +35,3 @@ tasks.register<JavaExec>("nightlySync") {
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass.set("com.freelibrary.catalogtool.NightlySyncKt")
 }
-
-tasks.register<JavaExec>("oapenPreview") {
-    group = "application"
-    description = "Reads the first pages of the OAPEN books feed and prints what the parser makes of them (-Ppages=N)."
-    classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("com.freelibrary.catalogtool.OapenPreviewKt")
-    args = listOfNotNull(project.findProperty("pages") as String?)
-}
