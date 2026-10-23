@@ -8,6 +8,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 private const val BOOK_TYPE = "book"
 private const val BUNDLE_ORIGINAL = "ORIGINAL"
 private const val BUNDLE_THUMBNAIL = "THUMBNAIL"
+private const val BUNDLE_TEXT = "TEXT"
 private const val THEMA_PREFIX = "thema EDItEUR::"
 private val WHITESPACE_RUN = Regex("\\s+")
 
@@ -117,26 +118,37 @@ private fun parseRecord(record: Element): OaiBook? {
     )
 }
 
-/** The broad subject area from each thema classification, e.g. "Society and Social Sciences". */
+/** The broad subject area of each thema classification as a genre shelf, e.g. "Category: Society and Social Sciences". */
 private fun extractBookshelves(dc: Element): List<String> =
     values(dc, "subject", "classification")
         .filter { it.startsWith(THEMA_PREFIX) }
         .mapNotNull { it.removePrefix(THEMA_PREFIX).split("::").getOrNull(0)?.substringAfter(" ", "")?.trim()?.ifBlank { null } }
+        .map { "Category: $it" }
         .distinct()
 
-/** The https PDF and EPUB files of the book itself (not the extracted text, thumbnail or export files). */
-private fun extractFormats(metadata: Element): List<ParsedFormat> =
-    bitstreams(metadata, BUNDLE_ORIGINAL)
-        .mapNotNull { bitstream ->
-            val url = fieldValue(bitstream, "url")
-            val mime = fieldValue(bitstream, "format")
-            if (url != null && mime != null && url.startsWith("https://") && (mime == "application/pdf" || mime.contains("epub"))) {
-                ParsedFormat(url = url, mimeType = mime)
-            } else {
-                null
-            }
-        }
-        .distinctBy { it.url }
+/**
+ * The https files a reader can open: the PDF and EPUB files of the book itself, then the plain text OAPEN
+ * extracts from the PDF (a much smaller download, listed last because its layout is rougher). The
+ * thumbnail and the metadata export files are not book files.
+ */
+private fun extractFormats(metadata: Element): List<ParsedFormat> {
+    val own = bitstreams(metadata, BUNDLE_ORIGINAL).mapNotNull { bookFile(it, ::isBookMime) }
+    val text = bitstreams(metadata, BUNDLE_TEXT).mapNotNull { bookFile(it, ::isTextMime) }
+    return (own + text).distinctBy { it.url }
+}
+
+private fun isBookMime(mime: String): Boolean = mime == "application/pdf" || mime.contains("epub")
+
+private fun isTextMime(mime: String): Boolean = mime.startsWith("text/plain")
+
+private fun bookFile(
+    bitstream: Element,
+    accepts: (String) -> Boolean,
+): ParsedFormat? {
+    val url = fieldValue(bitstream, "url") ?: return null
+    val mime = fieldValue(bitstream, "format") ?: return null
+    return if (url.startsWith("https://") && accepts(mime)) ParsedFormat(url = url, mimeType = mime) else null
+}
 
 private fun extractCoverUrl(metadata: Element): String? =
     bitstreams(metadata, BUNDLE_THUMBNAIL)
