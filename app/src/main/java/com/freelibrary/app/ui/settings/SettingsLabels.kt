@@ -4,6 +4,7 @@ import androidx.annotation.IdRes
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import com.freelibrary.app.R
+import com.freelibrary.app.domain.model.AppSize
 import com.freelibrary.app.domain.model.ThemeMode
 
 /** What to say about the reader's own sync, decided apart from any view so it can be tested. */
@@ -30,6 +31,20 @@ internal object SettingsLabels {
             ThemeMode.LIGHT -> R.id.themeLight
             ThemeMode.DARK -> R.id.themeDark
         }
+
+    /** The size button that stands for [size]. */
+    @IdRes
+    fun sizeButtonId(size: AppSize): Int =
+        when (size) {
+            AppSize.SMALL -> R.id.sizeSmall
+            AppSize.MEDIUM -> R.id.sizeMedium
+            AppSize.LARGE -> R.id.sizeLarge
+        }
+
+    /** The size a size button stands for, or null for any other id. */
+    fun sizeForButtonId(
+        @IdRes id: Int,
+    ): AppSize? = AppSize.entries.firstOrNull { sizeButtonId(it) == id }
 
     fun syncMessage(status: SyncStatus): SyncMessage =
         when (status) {

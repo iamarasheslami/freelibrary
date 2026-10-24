@@ -41,6 +41,11 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="settings_size">App size</string>
+    <string name="settings_size_summary">Makes text, covers and buttons smaller or larger everywhere.</string>
+    <string name="size_small">Small</string>
+    <string name="size_medium">Medium</string>
+    <string name="size_large">Large</string>
     <string name="settings_sync">Catalog sync</string>
     <string name="settings_wifi_only">Sync only on Wi-Fi</string>
     <string name="settings_wifi_only_summary">Does not use mobile data to update the catalog.</string>

@@ -1,5 +1,7 @@
 package com.freelibrary.app
 
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -18,6 +20,7 @@ import com.freelibrary.app.ui.shell.MainTab
 import com.freelibrary.app.ui.shell.SplashOverlay
 import com.freelibrary.app.ui.shell.StartupGate
 import com.freelibrary.app.ui.shell.mainTabFor
+import com.freelibrary.app.ui.theme.AppScale
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -41,6 +44,23 @@ class MainActivity : AppCompatActivity() {
     lateinit var startupGate: StartupGate
 
     private lateinit var binding: ActivityMainBinding
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppScale.wrap(newBase))
+    }
+
+    /**
+     * AppCompat builds its own configuration for night mode and would drop the scaled density, so
+     * the density of the wrapped base context is put back on it.
+     */
+    override fun applyOverrideConfiguration(overrideConfiguration: Configuration?) {
+        if (overrideConfiguration != null) {
+            val uiMode = overrideConfiguration.uiMode
+            overrideConfiguration.setTo(baseContext.resources.configuration)
+            overrideConfiguration.uiMode = uiMode
+        }
+        super.applyOverrideConfiguration(overrideConfiguration)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // The manifest gives the launch window its plain start-up theme; the real theme goes on before the layout exists.
