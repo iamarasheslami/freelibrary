@@ -26,17 +26,17 @@ class SettingsRepositoryTest {
     val temporaryFolder = TemporaryFolder()
 
     @Test
-    fun `sync is Wi-Fi only until the reader turns that off`() =
+    fun `sync is allowed on any connection until the reader turns Wi-Fi only on`() =
         runTest {
             val repository = SettingsRepository(InMemoryPreferences())
 
-            assertTrue(repository.wifiOnlySync.first())
-
-            repository.setWifiOnlySync(false)
             assertFalse(repository.wifiOnlySync.first())
 
             repository.setWifiOnlySync(true)
             assertTrue(repository.wifiOnlySync.first())
+
+            repository.setWifiOnlySync(false)
+            assertFalse(repository.wifiOnlySync.first())
         }
 
     @Test
@@ -84,11 +84,11 @@ class SettingsRepositoryTest {
         }
 
     @Test
-    fun `the theme is System until the reader picks one`() =
+    fun `the theme is Dark until the reader picks one`() =
         runTest {
             val repository = SettingsRepository(InMemoryPreferences())
 
-            assertEquals(ThemeMode.SYSTEM, repository.themeMode.first())
+            assertEquals(ThemeMode.DARK, repository.themeMode.first())
         }
 
     @Test
@@ -104,45 +104,12 @@ class SettingsRepositoryTest {
         }
 
     @Test
-    fun `an unknown stored theme falls back to System`() =
+    fun `an unknown stored theme falls back to Dark`() =
         runTest {
             val dataStore = InMemoryPreferences()
             dataStore.edit { it[stringPreferencesKey("theme_mode")] = "SEPIA" }
 
-            assertEquals(ThemeMode.SYSTEM, SettingsRepository(dataStore).themeMode.first())
-        }
-
-    @Test
-    fun `true black is off until the reader turns it on`() =
-        runTest {
-            val repository = SettingsRepository(InMemoryPreferences())
-
-            assertFalse(repository.trueBlack.first())
-        }
-
-    @Test
-    fun `true black can be turned on and off again`() =
-        runTest {
-            val repository = SettingsRepository(InMemoryPreferences())
-
-            repository.setTrueBlack(true)
-            assertTrue(repository.trueBlack.first())
-
-            repository.setTrueBlack(false)
-            assertFalse(repository.trueBlack.first())
-        }
-
-    @Test
-    fun `the theme and true black are stored independently`() =
-        runTest {
-            val repository = SettingsRepository(InMemoryPreferences())
-
-            repository.setThemeMode(ThemeMode.DARK)
-            repository.setTrueBlack(true)
-            repository.setThemeMode(ThemeMode.LIGHT)
-
-            assertEquals(ThemeMode.LIGHT, repository.themeMode.first())
-            assertTrue(repository.trueBlack.first())
+            assertEquals(ThemeMode.DARK, SettingsRepository(dataStore).themeMode.first())
         }
 
     @Test

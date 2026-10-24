@@ -65,7 +65,7 @@ class BackupModelsTest {
 
     @Test
     fun `settings and the book list survive a round trip`() {
-        val settings = SettingsBackup(themeMode = "DARK", trueBlack = true, wifiOnlySync = false)
+        val settings = SettingsBackup(themeMode = "DARK", wifiOnlySync = false)
         val books = BooksBackup(listOf(BookFileBackup(book, format = "epub", entry = "books/1", downloadedAt = 3L)))
 
         assertEquals(

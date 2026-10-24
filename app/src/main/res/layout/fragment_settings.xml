@@ -122,49 +122,6 @@
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
-            <LinearLayout
-                android:id="@+id/trueBlackRow"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_s"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="false"
-                android:gravity="center_vertical"
-                android:importantForAccessibility="no"
-                android:minHeight="56dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/settings_true_black"
-                        android:textAppearance="?attr/textAppearanceBodyLarge" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/settings_true_black_summary"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-
-                </LinearLayout>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/trueBlackSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_m"
-                    android:contentDescription="@string/settings_true_black" />
-
-            </LinearLayout>
-
             <!-- Catalog sync -->
             <TextView
                 android:layout_width="match_parent"

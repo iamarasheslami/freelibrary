@@ -122,13 +122,12 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `it starts with the system theme, true black off, Wi-Fi only on and no sync yet`() =
+    fun `it starts dark, with Wi-Fi only off and no sync yet`() =
         runTest {
             val state = watched().state.value
 
-            assertEquals(ThemeMode.SYSTEM, state.themeMode)
-            assertEquals(false, state.trueBlack)
-            assertEquals(true, state.wifiOnlySync)
+            assertEquals(ThemeMode.DARK, state.themeMode)
+            assertEquals(false, state.wifiOnlySync)
             assertNull(state.lastSyncAt)
         }
 
@@ -137,13 +136,12 @@ class SettingsViewModelTest {
         runTest {
             val viewModel = watched()
 
-            viewModel.setThemeMode(ThemeMode.DARK)
-            viewModel.setTrueBlack(true)
-            viewModel.setWifiOnlySync(false)
+            viewModel.setThemeMode(ThemeMode.LIGHT)
+            viewModel.setWifiOnlySync(true)
 
-            val state = viewModel.state.first { it.themeMode == ThemeMode.DARK && it.trueBlack && !it.wifiOnlySync }
-            assertEquals(ThemeMode.DARK, state.themeMode)
-            assertEquals(ThemeMode.DARK, settings.themeMode.first())
+            val state = viewModel.state.first { it.themeMode == ThemeMode.LIGHT && it.wifiOnlySync }
+            assertEquals(ThemeMode.LIGHT, state.themeMode)
+            assertEquals(ThemeMode.LIGHT, settings.themeMode.first())
         }
 
     @Test

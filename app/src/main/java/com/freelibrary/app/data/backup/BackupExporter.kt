@@ -133,7 +133,6 @@ class BackupExporter
         private suspend fun readSettings(profile: ProfileBackup?): SettingsBackup =
             SettingsBackup(
                 themeMode = settingsRepository.themeMode.first().name,
-                trueBlack = settingsRepository.trueBlack.first(),
                 wifiOnlySync = settingsRepository.wifiOnlySync.first(),
                 profile = profile,
             )

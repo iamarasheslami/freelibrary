@@ -41,8 +41,6 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="settings_true_black">True black</string>
-    <string name="settings_true_black_summary">Pure black in dark mode. Saves battery on OLED screens.</string>
     <string name="settings_sync">Catalog sync</string>
     <string name="settings_wifi_only">Sync only on Wi-Fi</string>
     <string name="settings_wifi_only_summary">Does not use mobile data to update the catalog.</string>

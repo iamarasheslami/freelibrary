@@ -39,9 +39,8 @@ sealed interface SyncStatus {
 
 /** Everything the Settings screen shows. */
 data class SettingsState(
-    val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val trueBlack: Boolean = false,
-    val wifiOnlySync: Boolean = true,
+    val themeMode: ThemeMode = ThemeMode.DARK,
+    val wifiOnlySync: Boolean = false,
     val lastSyncAt: Long? = null,
     val syncStatus: SyncStatus = SyncStatus.Idle,
     val coverCacheBytes: Long = 0L,
@@ -67,11 +66,10 @@ class SettingsViewModel
         private val stored =
             combine(
                 settings.themeMode,
-                settings.trueBlack,
                 settings.wifiOnlySync,
                 settings.lastCatalogSyncAt,
-            ) { themeMode, trueBlack, wifiOnly, lastSyncAt ->
-                SettingsState(themeMode = themeMode, trueBlack = trueBlack, wifiOnlySync = wifiOnly, lastSyncAt = lastSyncAt)
+            ) { themeMode, wifiOnly, lastSyncAt ->
+                SettingsState(themeMode = themeMode, wifiOnlySync = wifiOnly, lastSyncAt = lastSyncAt)
             }
 
         val state: StateFlow<SettingsState> =
@@ -85,10 +83,6 @@ class SettingsViewModel
 
         fun setThemeMode(mode: ThemeMode) {
             viewModelScope.launch { settings.setThemeMode(mode) }
-        }
-
-        fun setTrueBlack(enabled: Boolean) {
-            viewModelScope.launch { settings.setTrueBlack(enabled) }
         }
 
         fun setWifiOnlySync(enabled: Boolean) {

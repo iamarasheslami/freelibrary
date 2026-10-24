@@ -99,7 +99,6 @@ data class DataBackup(
 @Serializable
 data class SettingsBackup(
     val themeMode: String,
-    val trueBlack: Boolean,
     val wifiOnlySync: Boolean,
     /** The reader's name, birthday and picture marker. Absent in backups made before profiles existed. */
     val profile: ProfileBackup? = null,
