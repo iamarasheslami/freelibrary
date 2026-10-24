@@ -51,4 +51,13 @@
     <style name="Widget.FreeLibrary.Toolbar" parent="Widget.Material3.Toolbar">
         <item name="android:background">@android:color/transparent</item>
     </style>
+
+    <!-- Only the launch window uses this; MainActivity puts the real theme on before its layout exists. -->
+    <style name="Theme.FreeLibrary.Starting" parent="Theme.FreeLibrary">
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">@color/splash_background</item>
+        <item name="android:navigationBarColor">@color/splash_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+    </style>
 </resources>
