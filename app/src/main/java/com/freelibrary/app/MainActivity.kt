@@ -6,6 +6,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.navOptions
@@ -14,8 +15,13 @@ import com.freelibrary.app.databinding.ActivityMainBinding
 import com.freelibrary.app.ui.insets.withoutBottomSystemBar
 import com.freelibrary.app.ui.shell.BottomBar
 import com.freelibrary.app.ui.shell.MainTab
+import com.freelibrary.app.ui.shell.SplashOverlay
+import com.freelibrary.app.ui.shell.StartupGate
 import com.freelibrary.app.ui.shell.mainTabFor
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 /**
@@ -23,23 +29,41 @@ import javax.inject.Inject
  * fragments managed by the NavHostFragment declared in activity_main.xml. Below them sits the
  * bottom bar (Home, Explore, Profile), shown only on those three pages.
  *
- * It also puts the true black overlay on its theme while dark mode is showing and the reader
- * chose true black, and recreates itself when that choice changes.
- * The first time it is created in a process it also starts the catalog sync in the background.
+ * Until Home has its first content a start-up screen with the logo covers the page, and then hands over
+ * to it with a short animation. The first time it is created in a process it also starts the catalog sync in the background.
  */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var catalogSyncRunner: CatalogSyncRunner
 
+    @Inject
+    lateinit var startupGate: StartupGate
+
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // The manifest gives the launch window its plain start-up theme; the real theme goes on before the layout exists.
+        setTheme(R.style.Theme_FreeLibrary)
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setUpBottomBar()
+        setUpSplash()
         catalogSyncRunner.startOnce()
+    }
+
+    /** Keeps the start-up screen until Home is ready, but never longer than [SPLASH_TIMEOUT_MS]. */
+    private fun setUpSplash() {
+        val splash = SplashOverlay(binding.splashOverlay, binding.splashLogo, binding.appContent)
+        if (startupGate.ready.value) {
+            splash.hideNow()
+            return
+        }
+        lifecycleScope.launch {
+            withTimeoutOrNull(SPLASH_TIMEOUT_MS) { startupGate.ready.first { it } }
+            splash.reveal()
+        }
     }
 
     private fun setUpBottomBar() {
@@ -82,5 +106,9 @@ class MainActivity : AppCompatActivity() {
                 restoreState = true
             },
         )
+    }
+
+    private companion object {
+        const val SPLASH_TIMEOUT_MS = 4_000L
     }
 }

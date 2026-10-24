@@ -18,6 +18,7 @@ import com.freelibrary.app.domain.model.HomeSection
 import com.freelibrary.app.ui.booklist.toArgs
 import com.freelibrary.app.ui.cover.CoverTypefaces
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
+import com.freelibrary.app.ui.shell.StartupGate
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,6 +33,8 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
     @Inject lateinit var imageLoader: ImageLoader
+
+    @Inject lateinit var startupGate: StartupGate
 
     private val viewModel: HomeViewModel by viewModels()
 
@@ -70,7 +73,10 @@ class HomeFragment : Fragment() {
                         is HomeUiState.Content -> {
                             adapter.submitSections(state.sections)
                             // Tells the system the first screen is ready to use, so start-up time can be measured to this point.
-                            binding.homeList.post { activity?.reportFullyDrawn() }
+                            binding.homeList.post {
+                                activity?.reportFullyDrawn()
+                                startupGate.markReady()
+                            }
                         }
                     }
                 }

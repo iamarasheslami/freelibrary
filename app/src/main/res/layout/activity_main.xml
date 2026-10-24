@@ -1,123 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/navHostFragment"
-        android:name="androidx.navigation.fragment.NavHostFragment"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        app:defaultNavHost="true"
-        app:navGraph="@navigation/nav_graph" />
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/bottomBar"
+        android:id="@+id/appContent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <View
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/navHostFragment"
+            android:name="androidx.navigation.fragment.NavHostFragment"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?attr/colorOutlineVariant" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:defaultNavHost="true"
+            app:navGraph="@navigation/nav_graph" />
 
         <LinearLayout
+            android:id="@+id/bottomBar"
             android:layout_width="match_parent"
-            android:baselineAligned="false"
-            android:layout_height="56dp"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            android:orientation="vertical">
 
-            <FrameLayout
-                android:id="@+id/tabHome"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?attr/colorOutlineVariant" />
 
-                <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/bg_tab_pill"
-                    android:minWidth="64dp"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="@string/tab_home"
-                        android:src="@drawable/ic_home"
-                        app:tint="@color/tab_content" />
-                </FrameLayout>
-            </FrameLayout>
-
-            <FrameLayout
-                android:id="@+id/tabExplore"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:baselineAligned="false"
+                android:layout_height="56dp"
+                android:orientation="horizontal">
 
                 <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/bg_tab_pill"
-                    android:minWidth="64dp"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp">
+                    android:id="@+id/tabHome"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
 
-                    <TextView
+                    <FrameLayout
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="32dp"
                         android:layout_gravity="center"
-                        android:maxLines="1"
-                        android:text="@string/tab_explore"
-                        android:textAppearance="?attr/textAppearanceLabelLarge"
-                        android:textColor="@color/tab_content" />
-                </FrameLayout>
-            </FrameLayout>
+                        android:background="@drawable/bg_tab_pill"
+                        android:minWidth="64dp"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp">
 
-            <FrameLayout
-                android:id="@+id/tabProfile"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@string/tab_home"
+                            android:src="@drawable/ic_home"
+                            app:tint="@color/tab_content" />
+                    </FrameLayout>
+                </FrameLayout>
 
                 <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center"
-                    android:background="@drawable/bg_tab_pill"
-                    android:minWidth="64dp"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp">
+                    android:id="@+id/tabExplore"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
                         android:layout_gravity="center"
-                        android:contentDescription="@string/tab_profile"
-                        android:src="@drawable/ic_profile"
-                        app:tint="@color/tab_content" />
-                </FrameLayout>
-            </FrameLayout>
+                        android:background="@drawable/bg_tab_pill"
+                        android:minWidth="64dp"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp">
 
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:maxLines="1"
+                            android:text="@string/tab_explore"
+                            android:textAppearance="?attr/textAppearanceLabelLarge"
+                            android:textColor="@color/tab_content" />
+                    </FrameLayout>
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/tabProfile"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_tab_pill"
+                        android:minWidth="64dp"
+                        android:paddingStart="20dp"
+                        android:paddingEnd="20dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@string/tab_profile"
+                            android:src="@drawable/ic_profile"
+                            app:tint="@color/tab_content" />
+                    </FrameLayout>
+                </FrameLayout>
+
+            </LinearLayout>
         </LinearLayout>
+
     </LinearLayout>
 
-</LinearLayout>
+    <!-- The start-up screen; MainActivity removes it once Home has content. -->
+    <FrameLayout
+        android:id="@+id/splashOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?android:attr/colorBackground"
+        android:clickable="true"
+        android:focusable="false"
+        android:importantForAccessibility="no">
+
+        <ImageView
+            android:id="@+id/splashLogo"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_brand_mark" />
+
+    </FrameLayout>
+
+</FrameLayout>
