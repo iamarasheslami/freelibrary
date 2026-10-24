@@ -42,12 +42,12 @@ class ThemeModeApplierTest {
     }
 
     @Test
-    fun `startup follows the device when no theme was stored`() {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+    fun `startup is dark when no theme was stored`() {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
 
         applier.applyStored()
 
-        assertEquals(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, AppCompatDelegate.getDefaultNightMode())
+        assertEquals(AppCompatDelegate.MODE_NIGHT_YES, AppCompatDelegate.getDefaultNightMode())
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

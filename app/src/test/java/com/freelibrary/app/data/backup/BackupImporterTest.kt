@@ -237,20 +237,17 @@ class BackupImporterTest {
     @Test
     fun `the settings come back after a round trip`() =
         runTest {
-            settings.setThemeMode(ThemeMode.DARK)
-            settings.setTrueBlack(true)
-            settings.setWifiOnlySync(false)
-            val bytes = exported(setOf(BackupPart.SETTINGS))
             settings.setThemeMode(ThemeMode.LIGHT)
-            settings.setTrueBlack(false)
             settings.setWifiOnlySync(true)
+            val bytes = exported(setOf(BackupPart.SETTINGS))
+            settings.setThemeMode(ThemeMode.DARK)
+            settings.setWifiOnlySync(false)
 
             val summary = restore(bytes, setOf(BackupPart.SETTINGS))
 
             assertTrue(summary.settingsRestored)
-            assertEquals(ThemeMode.DARK, settings.themeMode.first())
-            assertTrue(settings.trueBlack.first())
-            assertFalse(settings.wifiOnlySync.first())
+            assertEquals(ThemeMode.LIGHT, settings.themeMode.first())
+            assertTrue(settings.wifiOnlySync.first())
         }
 
     @Test

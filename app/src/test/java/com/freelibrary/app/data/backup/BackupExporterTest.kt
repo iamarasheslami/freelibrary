@@ -135,15 +135,14 @@ class BackupExporterTest {
     @Test
     fun `the settings part holds the current settings`() =
         runTest {
-            settings.setThemeMode(ThemeMode.DARK)
-            settings.setTrueBlack(true)
-            settings.setWifiOnlySync(false)
+            settings.setThemeMode(ThemeMode.LIGHT)
+            settings.setWifiOnlySync(true)
 
             val (_, entries) = exportToZip(setOf(BackupPart.SETTINGS))
 
             assertEquals(listOf(BackupEntries.MANIFEST, BackupEntries.SETTINGS), entries.keys.toList())
             assertEquals(
-                SettingsBackup("DARK", trueBlack = true, wifiOnlySync = false),
+                SettingsBackup("LIGHT", wifiOnlySync = true),
                 BackupJson.decodeFromString(SettingsBackup.serializer(), entries.text(BackupEntries.SETTINGS)),
             )
         }

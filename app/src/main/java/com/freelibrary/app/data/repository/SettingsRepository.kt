@@ -31,23 +31,19 @@ class SettingsRepository
         private val storedPreferences: Flow<Preferences> =
             dataStore.data.catch { error -> if (error is IOException) emit(emptyPreferences()) else throw error }
 
-        /** The chosen theme; System until the reader picks one. */
+        /** The chosen theme; Dark until the reader picks one. */
         val themeMode: Flow<ThemeMode> =
             storedPreferences.map { preferences ->
                 val stored = preferences[THEME_MODE_KEY]
-                ThemeMode.entries.firstOrNull { it.name == stored } ?: ThemeMode.SYSTEM
+                ThemeMode.entries.firstOrNull { it.name == stored } ?: ThemeMode.DARK
             }
-
-        /** Whether dark mode uses pure black surfaces, which saves power on OLED screens. Off until chosen. */
-        val trueBlack: Flow<Boolean> =
-            storedPreferences.map { preferences -> preferences[TRUE_BLACK_KEY] ?: false }
 
         /**
          * Whether the catalog syncs by itself only on a connection that is not metered (normally
-         * Wi-Fi), so it never uses the reader's mobile data. On until the reader turns it off.
+         * Wi-Fi), so it never uses the reader's mobile data. Off until the reader turns it on.
          */
         val wifiOnlySync: Flow<Boolean> =
-            storedPreferences.map { preferences -> preferences[WIFI_ONLY_SYNC_KEY] ?: true }
+            storedPreferences.map { preferences -> preferences[WIFI_ONLY_SYNC_KEY] ?: false }
 
         /** When the catalog last synced successfully, in epoch milliseconds; null if it never has. */
         val lastCatalogSyncAt: Flow<Long?> =
@@ -59,10 +55,6 @@ class SettingsRepository
 
         suspend fun setThemeMode(mode: ThemeMode) {
             dataStore.edit { preferences -> preferences[THEME_MODE_KEY] = mode.name }
-        }
-
-        suspend fun setTrueBlack(enabled: Boolean) {
-            dataStore.edit { preferences -> preferences[TRUE_BLACK_KEY] = enabled }
         }
 
         suspend fun setWifiOnlySync(enabled: Boolean) {
@@ -91,7 +83,6 @@ class SettingsRepository
 
         private companion object {
             val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
-            val TRUE_BLACK_KEY = booleanPreferencesKey("true_black")
             val WIFI_ONLY_SYNC_KEY = booleanPreferencesKey("wifi_only_sync")
             val LAST_CATALOG_SYNC_KEY = longPreferencesKey("last_catalog_sync_at")
             val READER_PAGED_KEY = booleanPreferencesKey("reader_paged")

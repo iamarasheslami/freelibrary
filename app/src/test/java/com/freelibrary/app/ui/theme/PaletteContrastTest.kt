@@ -17,7 +17,6 @@ import kotlin.math.pow
 class PaletteContrastTest {
     private val light = readColors("src/main/res/values/colors.xml")
     private val dark = readColors("src/main/res/values-night/colors.xml")
-    private val trueBlack = readColors("src/main/res/values/colors_true_black.xml")
 
     private val containers =
         listOf(
@@ -52,27 +51,6 @@ class PaletteContrastTest {
             "md_outline" to "md_surface_container_highest",
         )
 
-    private val blackSurfaces =
-        listOf(
-            "md_black_surface",
-            "md_black_surface_container_lowest",
-            "md_black_surface_container_low",
-            "md_black_surface_container",
-            "md_black_surface_container_high",
-            "md_black_surface_container_highest",
-        )
-
-    private val blackTextPairs =
-        listOf("md_on_surface", "md_on_surface_variant", "md_primary", "md_secondary", "md_error")
-            .flatMap { text -> blackSurfaces.map { surface -> text to surface } } +
-            ("md_on_surface_variant" to "md_black_surface_variant")
-
-    private val blackBoundaryPairs =
-        listOf(
-            "md_black_outline" to "md_black_surface",
-            "md_black_outline" to "md_black_surface_container_highest",
-        )
-
     @Test
     fun `light and dark define the same color names`() {
         assertEquals(light.keys, dark.keys)
@@ -99,31 +77,6 @@ class PaletteContrastTest {
             }
 
         assertTrue(failures.joinToString("\n"), failures.isEmpty())
-    }
-
-    @Test
-    fun `true black surfaces keep the dark text readable`() = assertContrast("true black", dark + trueBlack, blackTextPairs, TEXT_MINIMUM)
-
-    @Test
-    fun `the true black outline stays visible`() = assertContrast("true black", dark + trueBlack, blackBoundaryPairs, BOUNDARY_MINIMUM)
-
-    @Test
-    fun `true black defines exactly the colors the overlay uses`() {
-        val expected =
-            setOf(
-                "md_black_background",
-                "md_black_surface",
-                "md_black_surface_variant",
-                "md_black_surface_container_lowest",
-                "md_black_surface_container_low",
-                "md_black_surface_container",
-                "md_black_surface_container_high",
-                "md_black_surface_container_highest",
-                "md_black_outline",
-                "md_black_outline_variant",
-            )
-
-        assertEquals(expected, trueBlack.keys)
     }
 
     @Test

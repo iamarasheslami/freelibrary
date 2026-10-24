@@ -111,8 +111,6 @@ class SettingsFragment : Fragment() {
         binding.themeLight.setOnClickListener { viewModel.setThemeMode(ThemeMode.LIGHT) }
         binding.themeDark.setOnClickListener { viewModel.setThemeMode(ThemeMode.DARK) }
 
-        binding.trueBlackSwitch.setOnClickListener { viewModel.setTrueBlack(binding.trueBlackSwitch.isChecked) }
-        binding.trueBlackRow.setOnClickListener { binding.trueBlackSwitch.performClick() }
         binding.wifiOnlySwitch.setOnClickListener { viewModel.setWifiOnlySync(binding.wifiOnlySwitch.isChecked) }
         binding.wifiOnlyRow.setOnClickListener { binding.wifiOnlySwitch.performClick() }
 
@@ -140,7 +138,6 @@ class SettingsFragment : Fragment() {
     private fun render(state: SettingsState) {
         val themeButton = SettingsLabels.themeButtonId(state.themeMode)
         if (binding.themeGroup.checkedButtonId != themeButton) binding.themeGroup.check(themeButton)
-        if (binding.trueBlackSwitch.isChecked != state.trueBlack) binding.trueBlackSwitch.isChecked = state.trueBlack
         if (binding.wifiOnlySwitch.isChecked != state.wifiOnlySync) binding.wifiOnlySwitch.isChecked = state.wifiOnlySync
 
         val running = state.syncStatus == SyncStatus.Running

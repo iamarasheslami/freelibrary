@@ -246,7 +246,6 @@ class BackupImporter
             tally: Tally,
         ) {
             ThemeMode.entries.firstOrNull { it.name == settings.themeMode }?.let { settingsRepository.setThemeMode(it) }
-            settingsRepository.setTrueBlack(settings.trueBlack)
             settingsRepository.setWifiOnlySync(settings.wifiOnlySync)
             settings.profile?.let { profile ->
                 profileBackupStore.restoreDetails(profile)
