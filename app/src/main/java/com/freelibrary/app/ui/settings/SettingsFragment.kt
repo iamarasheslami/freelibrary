@@ -26,6 +26,7 @@ import com.freelibrary.app.data.backup.ImportSummary
 import com.freelibrary.app.databinding.FragmentSettingsBinding
 import com.freelibrary.app.domain.model.ThemeMode
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
+import com.freelibrary.app.ui.theme.AppScale
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -110,6 +111,15 @@ class SettingsFragment : Fragment() {
         binding.themeSystem.setOnClickListener { viewModel.setThemeMode(ThemeMode.SYSTEM) }
         binding.themeLight.setOnClickListener { viewModel.setThemeMode(ThemeMode.LIGHT) }
         binding.themeDark.setOnClickListener { viewModel.setThemeMode(ThemeMode.DARK) }
+
+        binding.sizeGroup.check(SettingsLabels.sizeButtonId(AppScale.current(requireContext())))
+        binding.sizeGroup.addOnButtonCheckedListener { _, id, checked ->
+            val size = SettingsLabels.sizeForButtonId(id)
+            if (checked && size != null && size != AppScale.current(requireContext())) {
+                AppScale.save(requireContext(), size)
+                requireActivity().recreate()
+            }
+        }
 
         binding.wifiOnlySwitch.setOnClickListener { viewModel.setWifiOnlySync(binding.wifiOnlySwitch.isChecked) }
         binding.wifiOnlyRow.setOnClickListener { binding.wifiOnlySwitch.performClick() }

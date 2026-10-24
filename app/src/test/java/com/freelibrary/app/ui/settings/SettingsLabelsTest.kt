@@ -1,6 +1,7 @@
 package com.freelibrary.app.ui.settings
 
 import com.freelibrary.app.R
+import com.freelibrary.app.domain.model.AppSize
 import com.freelibrary.app.domain.model.ThemeMode
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -41,5 +42,14 @@ class SettingsLabelsTest {
     fun `the About links point at the project`() {
         assertEquals(true, AboutLinks.SOURCE.startsWith("https://github.com/iamarasheslami/freelibrary"))
         assertEquals(true, AboutLinks.NOTICES.endsWith("THIRD_PARTY_NOTICES.md"))
+    }
+
+    @Test
+    fun `every size has its own button and the button leads back to it`() {
+        val ids = AppSize.entries.map { SettingsLabels.sizeButtonId(it) }
+
+        assertEquals(AppSize.entries.size, ids.toSet().size)
+        AppSize.entries.forEach { assertEquals(it, SettingsLabels.sizeForButtonId(SettingsLabels.sizeButtonId(it))) }
+        assertEquals(null, SettingsLabels.sizeForButtonId(R.id.themeDark))
     }
 }
