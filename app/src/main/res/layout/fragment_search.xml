@@ -48,14 +48,14 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/searchScopeTitle"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.FreeLibrary.Button.Glass"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/search_scope_title" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/searchScopeAuthor"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            style="@style/Widget.FreeLibrary.Button.Glass"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/search_scope_author" />
