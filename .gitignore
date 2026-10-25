@@ -40,3 +40,4 @@ catalog-tool/data/
 
 # Bundled catalog database, fetched via ./gradlew fetchCatalogDatabase
 app/src/main/assets/catalog.sqlite
+*.patch
