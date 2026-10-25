@@ -185,7 +185,56 @@
         <action
             android:id="@+id/action_settingsFragment_to_editProfileFragment"
             app:destination="@id/editProfileFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_appearanceSettingsFragment"
+            app:destination="@id/appearanceSettingsFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_syncSettingsFragment"
+            app:destination="@id/syncSettingsFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_storageSettingsFragment"
+            app:destination="@id/storageSettingsFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_privacySettingsFragment"
+            app:destination="@id/privacySettingsFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_backupSettingsFragment"
+            app:destination="@id/backupSettingsFragment" />
+        <action
+            android:id="@+id/action_settingsFragment_to_aboutSettingsFragment"
+            app:destination="@id/aboutSettingsFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/appearanceSettingsFragment"
+        android:name="com.freelibrary.app.ui.settings.AppearanceSettingsFragment"
+        tools:layout="@layout/fragment_settings_appearance" />
+
+    <fragment
+        android:id="@+id/syncSettingsFragment"
+        android:name="com.freelibrary.app.ui.settings.SyncSettingsFragment"
+        tools:layout="@layout/fragment_settings_sync" />
+
+    <fragment
+        android:id="@+id/storageSettingsFragment"
+        android:name="com.freelibrary.app.ui.settings.StorageSettingsFragment"
+        tools:layout="@layout/fragment_settings_storage" />
+
+    <fragment
+        android:id="@+id/privacySettingsFragment"
+        android:name="com.freelibrary.app.ui.settings.PrivacySettingsFragment"
+        tools:layout="@layout/fragment_settings_privacy" />
+
+    <fragment
+        android:id="@+id/backupSettingsFragment"
+        android:name="com.freelibrary.app.ui.settings.BackupSettingsFragment"
+        tools:layout="@layout/fragment_settings_backup" />
+
+    <fragment
+        android:id="@+id/aboutSettingsFragment"
+        android:name="com.freelibrary.app.ui.settings.AboutSettingsFragment"
+        tools:layout="@layout/fragment_settings_about" />
+
 
     <fragment
         android:id="@+id/editProfileFragment"
