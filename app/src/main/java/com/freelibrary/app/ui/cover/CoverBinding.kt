@@ -44,7 +44,7 @@ fun generatedCoverFor(
 
 /**
  * Shows a book's cover in this view. The generated cover is on screen at once and stays if the book
- * has no picture, the request fails or the phone is offline. Otherwise the small cover replaces it
+ * has no picture, the request fails or the phone is offline. Otherwise the medium cover replaces it
  * when it arrives. Calling this again on a recycled view cancels the earlier request.
  */
 fun ImageView.loadCover(
@@ -53,7 +53,7 @@ fun ImageView.loadCover(
     imageLoader: ImageLoader,
 ) {
     val generated = generatedCoverFor(book, typefaces)
-    load(smallCoverUrl(book.coverUrl), imageLoader) {
+    load(mediumCoverUrl(book.coverUrl), imageLoader) {
         placeholder(generated)
         error(generated)
         fallback(generated)

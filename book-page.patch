@@ -1,0 +1,944 @@
+diff --git a/app/src/main/java/com/freelibrary/app/data/reader/EpubPageServer.kt b/app/src/main/java/com/freelibrary/app/data/reader/EpubPageServer.kt
+index 366e460..46e771c 100644
+--- a/app/src/main/java/com/freelibrary/app/data/reader/EpubPageServer.kt
++++ b/app/src/main/java/com/freelibrary/app/data/reader/EpubPageServer.kt
+@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream
+ import java.io.ByteArrayOutputStream
+ import java.io.InputStream
+ import java.util.Locale
++import kotlin.math.roundToInt
+ 
+ /**
+  * How the reader paints a page: the colours of the app's current theme and the text size. With
+@@ -19,6 +20,11 @@ data class ReaderStyle(
+     val paged: Boolean = false,
+     val pageHeight: Int = 0,
+     val rightToLeft: Boolean = false,
++    /**
++     * The app's size setting as a factor (0.85 for Small). The web view draws at the phone's own
++     * density and ignores the app's, so the text size has to follow the setting through this.
++     */
++    val appScale: Float = 1f,
+ ) {
+     private val pageBoxHeight: String get() = if (pageHeight > 0) "${pageHeight}px" else "100vh"
+ 
+@@ -27,7 +33,7 @@ data class ReaderStyle(
+         val text = hex(textColor)
+         val background = hex(backgroundColor)
+         val link = hex(linkColor)
+-        val percent = textPercent.coerceIn(MIN_TEXT_PERCENT, MAX_TEXT_PERCENT)
++        val percent = (textPercent.coerceIn(MIN_TEXT_PERCENT, MAX_TEXT_PERCENT) * appScale).roundToInt()
+         val sheet = if (paged) pagedCss(text, background, link, percent) else scrollCss(text, background, link, percent)
+         return if (rightToLeft) sheet + "\n" + rightToLeftCss() else sheet
+     }
+diff --git a/app/src/main/java/com/freelibrary/app/ui/bookpage/BookActions.kt b/app/src/main/java/com/freelibrary/app/ui/bookpage/BookActions.kt
+new file mode 100644
+index 0000000..4dd1c64
+--- /dev/null
++++ b/app/src/main/java/com/freelibrary/app/ui/bookpage/BookActions.kt
+@@ -0,0 +1,46 @@
++package com.freelibrary.app.ui.bookpage
++
++import com.freelibrary.app.data.download.BookFiles
++
++/** One icon button under a book's cover and title. */
++sealed interface BookAction {
++    /** Opens the book; with several downloaded formats the reader picks one from a list. */
++    data object Read : BookAction
++
++    /** Downloads the book; the reader picks the format from a list of everything offered. */
++    data object Download : BookAction
++
++    data object CancelDownload : BookAction
++
++    data object DeleteDownload : BookAction
++
++    data object Bookmarks : BookAction
++
++    data class Shelf(
++        val action: ShelfAction,
++    ) : BookAction
++}
++
++/**
++ * The buttons a book's page shows, in order: Read, then Download (or Cancel while a download is
++ * waiting or running), then the shelf buttons, Bookmarks, and Delete download last. [files] is null
++ * until the book's files are known, and [controls] until the book is loaded.
++ */
++fun bookActionsFor(
++    files: BookFiles?,
++    controls: ShelfControls?,
++): List<BookAction> =
++    buildList {
++        if (files != null) {
++            if (files.downloaded.isNotEmpty()) add(BookAction.Read)
++            if (files.busy) {
++                add(BookAction.CancelDownload)
++            } else if (files.toDownload.isNotEmpty()) {
++                add(BookAction.Download)
++            }
++        }
++        controls?.primary?.let { add(BookAction.Shelf(it)) }
++        controls?.secondary?.let { add(BookAction.Shelf(it)) }
++        add(BookAction.Bookmarks)
++        if (files != null && !files.busy && files.downloaded.isNotEmpty()) add(BookAction.DeleteDownload)
++    }
+diff --git a/app/src/main/java/com/freelibrary/app/ui/bookpage/BookPageFragment.kt b/app/src/main/java/com/freelibrary/app/ui/bookpage/BookPageFragment.kt
+index 153b2cf..b9cbfc0 100644
+--- a/app/src/main/java/com/freelibrary/app/ui/bookpage/BookPageFragment.kt
++++ b/app/src/main/java/com/freelibrary/app/ui/bookpage/BookPageFragment.kt
+@@ -4,7 +4,9 @@ import android.os.Bundle
+ import android.view.LayoutInflater
+ import android.view.View
+ import android.view.ViewGroup
++import androidx.annotation.DrawableRes
+ import androidx.annotation.StringRes
++import androidx.appcompat.widget.PopupMenu
+ import androidx.core.os.bundleOf
+ import androidx.core.view.ViewCompat
+ import androidx.core.view.isVisible
+@@ -22,11 +24,11 @@ import com.freelibrary.app.data.download.DownloadProgress
+ import com.freelibrary.app.data.download.Transfer
+ import com.freelibrary.app.data.local.entity.ShelfState
+ import com.freelibrary.app.databinding.FragmentBookPageBinding
++import com.freelibrary.app.databinding.ItemBookActionBinding
+ import com.freelibrary.app.domain.model.BookFileFormat
+ import com.freelibrary.app.ui.cover.CoverTypefaces
+ import com.freelibrary.app.ui.cover.loadCover
+ import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
+-import com.google.android.material.button.MaterialButton
+ import com.google.android.material.dialog.MaterialAlertDialogBuilder
+ import dagger.hilt.android.AndroidEntryPoint
+ import kotlinx.coroutines.launch
+@@ -34,9 +36,9 @@ import java.util.Locale
+ import javax.inject.Inject
+ 
+ /**
+- * A book's own page: cover, title, authors, language, where the book sits on the reader's shelves
+- * with the buttons to change that, the book's files with the buttons to download, cancel and delete
+- * them (with a Read button once an EPUB is downloaded), and the catalog summary.
++ * A book's own page: cover, title, authors, language, where the book sits on the reader's shelves,
++ * the state of its files, a row of icon buttons (Read, Download, the shelf buttons, Bookmarks, Delete)
++ * and the catalog summary. Tapping the cover of a downloaded book reads it.
+  */
+ @AndroidEntryPoint
+ class BookPageFragment : Fragment() {
+@@ -50,6 +52,11 @@ class BookPageFragment : Fragment() {
+     /** The book whose fixed details (title, cover, summary) are already on screen. */
+     private var shownBookId: Long? = null
+ 
++    /** What the action buttons are built from, and what is on screen now, so they are rebuilt only when they change. */
++    private var currentFiles: BookFiles? = null
++    private var currentControls: ShelfControls? = null
++    private var shownActions: List<BookAction>? = null
++
+     override fun onCreateView(
+         inflater: LayoutInflater,
+         container: ViewGroup?,
+@@ -68,7 +75,6 @@ class BookPageFragment : Fragment() {
+         binding.bookPageToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
+         ViewCompat.setAccessibilityHeading(binding.bookPageTitle, true)
+         ViewCompat.setAccessibilityHeading(binding.bookPageAboutHeading, true)
+-        binding.bookPageBookmarksButton.setOnClickListener { openBookmarks() }
+ 
+         val typefaces = CoverTypefaces.from(requireContext())
+         viewLifecycleOwner.lifecycleScope.launch {
+@@ -128,57 +134,90 @@ class BookPageFragment : Fragment() {
+         val status = content.shelfState?.let(::statusLabel)
+         binding.bookPageStatus.isVisible = status != null
+         if (status != null) binding.bookPageStatus.setText(status)
+-        bindAction(binding.bookPagePrimaryButton, content.controls.primary)
+-        bindAction(binding.bookPageSecondaryButton, content.controls.secondary)
+-    }
+-
+-    private fun bindAction(
+-        button: MaterialButton,
+-        action: ShelfAction?,
+-    ) {
+-        button.isVisible = action != null
+-        if (action == null) return
+-        button.setText(actionLabel(action))
+-        button.setOnClickListener { viewModel.onShelfAction(action) }
++        currentControls = content.controls
++        showActions()
+     }
+ 
+     private fun showFiles(files: BookFiles?) {
++        currentFiles = files
+         binding.bookPageFiles.isVisible = files != null
++        showActions()
+         if (files == null) return
+-        val transfer = files.transfer
+-        val busy = files.busy
+-
+-        // The first downloaded format, in the order they are offered (EPUB, PDF, then text), is the one that opens.
+-        val readable = BookFileFormat.entries.firstOrNull { it in files.downloaded }
+-        binding.bookPageReadButton.isVisible = readable != null
+-        binding.bookPageReadButton.setOnClickListener { readable?.let { openReader(it) } }
+ 
+         val status = filesStatus(files)
+         binding.bookPageFilesStatus.text = status
+         binding.bookPageFilesStatus.isVisible = status.isNotEmpty()
+-        showProgress(transfer)
+-
+-        val target =
+-            (transfer as? Transfer.Failed)?.format?.takeIf { it in files.toDownload }
+-                ?: files.toDownload.firstOrNull()
+-        val download = binding.bookPageDownloadButton
+-        download.isVisible = !busy && target != null
+-        if (target != null) {
+-            download.text =
+-                if (transfer is Transfer.Failed) {
+-                    getString(R.string.book_files_retry)
+-                } else {
+-                    getString(R.string.book_files_download, getString(formatLabel(target)))
+-                }
+-            download.setOnClickListener { viewModel.onDownload(target) }
++        showProgress(files.transfer)
++
++        // Tapping the cover of a downloaded book reads it, like the Read button.
++        val readable = files.downloaded
++        binding.bookPageCover.isClickable = readable.isNotEmpty()
++        binding.bookPageCover.setOnClickListener(if (readable.isEmpty()) null else View.OnClickListener { read(binding.bookPageCover) })
++    }
++
++    /** Builds the row of icon buttons again, but only when the set of buttons has changed. */
++    private fun showActions() {
++        val actions = bookActionsFor(currentFiles, currentControls)
++        if (actions == shownActions) return
++        shownActions = actions
++        val row = binding.bookPageActions
++        row.removeAllViews()
++        for (action in actions) {
++            val item = ItemBookActionBinding.inflate(layoutInflater, row, false)
++            item.bookActionIcon.setImageResource(actionIcon(action))
++            item.bookActionLabel.setText(actionLabelFor(action))
++            item.root.contentDescription = getString(actionLabelFor(action))
++            item.root.setOnClickListener { perform(action, item.root) }
++            row.addView(item.root)
++        }
++    }
++
++    private fun perform(
++        action: BookAction,
++        anchor: View,
++    ) {
++        when (action) {
++            BookAction.Read -> read(anchor)
++            BookAction.Download -> download(anchor)
++            BookAction.CancelDownload -> viewModel.onCancelDownload()
++            BookAction.DeleteDownload -> currentFiles?.let { deleteDownload(it.downloaded) }
++            BookAction.Bookmarks -> openBookmarks()
++            is BookAction.Shelf -> viewModel.onShelfAction(action.action)
++        }
++    }
++
++    /** Opens the downloaded book; with more than one downloaded format the reader picks from a list. */
++    private fun read(anchor: View) {
++        val downloaded = currentFiles?.downloaded.orEmpty()
++        when (downloaded.size) {
++            0 -> Unit
++            1 -> openReader(downloaded.first())
++            else -> chooseFormat(anchor, downloaded) { openReader(it) }
+         }
++    }
+ 
+-        binding.bookPageOtherFormatsButton.isVisible = !busy && files.toDownload.size > 1
+-        binding.bookPageOtherFormatsButton.setOnClickListener { chooseFormatToDownload(files.toDownload) }
+-        binding.bookPageCancelDownloadButton.isVisible = busy
+-        binding.bookPageCancelDownloadButton.setOnClickListener { viewModel.onCancelDownload() }
+-        binding.bookPageDeleteDownloadButton.isVisible = !busy && files.downloaded.isNotEmpty()
+-        binding.bookPageDeleteDownloadButton.setOnClickListener { deleteDownload(files.downloaded) }
++    /** Downloads the book; with more than one format on offer the reader picks from a list of them all. */
++    private fun download(anchor: View) {
++        val formats = currentFiles?.toDownload.orEmpty()
++        when (formats.size) {
++            0 -> Unit
++            1 -> viewModel.onDownload(formats.first())
++            else -> chooseFormat(anchor, formats) { viewModel.onDownload(it) }
++        }
++    }
++
++    private fun chooseFormat(
++        anchor: View,
++        formats: List<BookFileFormat>,
++        onChosen: (BookFileFormat) -> Unit,
++    ) {
++        val menu = PopupMenu(requireContext(), anchor)
++        formats.forEachIndexed { index, format -> menu.menu.add(0, index, index, getString(formatLabel(format))) }
++        menu.setOnMenuItemClickListener { item ->
++            onChosen(formats[item.itemId])
++            true
++        }
++        menu.show()
+     }
+ 
+     private fun openReader(format: BookFileFormat) {
+@@ -245,14 +284,6 @@ class BookPageFragment : Fragment() {
+         }
+     }
+ 
+-    private fun chooseFormatToDownload(formats: List<BookFileFormat>) {
+-        val labels = formats.map { getString(formatLabel(it)) }.toTypedArray()
+-        MaterialAlertDialogBuilder(requireContext())
+-            .setTitle(R.string.book_files_choose_title)
+-            .setItems(labels) { _, index -> viewModel.onDownload(formats[index]) }
+-            .show()
+-    }
+-
+     private fun deleteDownload(downloaded: List<BookFileFormat>) {
+         if (downloaded.size == 1) {
+             viewModel.onDeleteDownload(downloaded.first())
+@@ -293,6 +324,33 @@ class BookPageFragment : Fragment() {
+             ShelfState.FINISHED -> R.string.book_page_status_finished
+         }
+ 
++    @DrawableRes
++    private fun actionIcon(action: BookAction): Int =
++        when (action) {
++            BookAction.Read -> R.drawable.ic_action_read
++            BookAction.Download -> R.drawable.ic_action_download
++            BookAction.CancelDownload -> R.drawable.ic_action_cancel
++            BookAction.DeleteDownload -> R.drawable.ic_action_delete
++            BookAction.Bookmarks -> R.drawable.ic_action_bookmarks
++            is BookAction.Shelf ->
++                when (action.action) {
++                    ShelfAction.SAVE -> R.drawable.ic_action_save
++                    ShelfAction.MARK_FINISHED -> R.drawable.ic_action_finished
++                    ShelfAction.REMOVE -> R.drawable.ic_action_remove
++                }
++        }
++
++    @StringRes
++    private fun actionLabelFor(action: BookAction): Int =
++        when (action) {
++            BookAction.Read -> R.string.book_files_read
++            BookAction.Download -> R.string.book_action_download
++            BookAction.CancelDownload -> R.string.book_files_cancel
++            BookAction.DeleteDownload -> R.string.book_files_delete
++            BookAction.Bookmarks -> R.string.bookmarks_title
++            is BookAction.Shelf -> actionLabel(action.action)
++        }
++
+     @StringRes
+     private fun actionLabel(action: ShelfAction): Int =
+         when (action) {
+@@ -303,6 +361,7 @@ class BookPageFragment : Fragment() {
+ 
+     override fun onDestroyView() {
+         shownBookId = null
++        shownActions = null
+         super.onDestroyView()
+         _binding = null
+     }
+diff --git a/app/src/main/java/com/freelibrary/app/ui/reader/EpubReaderFragment.kt b/app/src/main/java/com/freelibrary/app/ui/reader/EpubReaderFragment.kt
+index db1a728..aedf9aa 100644
+--- a/app/src/main/java/com/freelibrary/app/ui/reader/EpubReaderFragment.kt
++++ b/app/src/main/java/com/freelibrary/app/ui/reader/EpubReaderFragment.kt
+@@ -1,6 +1,7 @@
+ package com.freelibrary.app.ui.reader
+ 
+ import android.annotation.SuppressLint
++import android.content.res.Resources
+ import android.os.Bundle
+ import android.view.LayoutInflater
+ import android.view.MotionEvent
+@@ -29,6 +30,7 @@ import com.freelibrary.app.data.repository.BookmarkRepository
+ import com.freelibrary.app.databinding.FragmentEpubReaderBinding
+ import com.freelibrary.app.domain.model.ReaderPosition
+ import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
++import com.freelibrary.app.ui.theme.AppScale
+ import com.google.android.material.color.MaterialColors
+ import com.google.android.material.dialog.MaterialAlertDialogBuilder
+ import com.google.android.material.snackbar.Snackbar
+@@ -213,6 +215,7 @@ class EpubReaderFragment : Fragment() {
+                 textPercent = textPercent,
+                 pageHeight = pageHeightInCssPixels(),
+                 rightToLeft = book.rightToLeft,
++                appScale = AppScale.current(requireContext()).scale,
+             )
+         server = EpubPageServer(book, style)
+         val margin = if (paged) resources.getDimensionPixelSize(R.dimen.reader_page_margin) else 0
+@@ -227,11 +230,15 @@ class EpubReaderFragment : Fragment() {
+             ?.setTitle(if (paged) R.string.reader_scroll_view else R.string.reader_page_view)
+     }
+ 
+-    /** The height of the web view in the pixels the page is laid out in, or 0 before it is laid out. */
++    /**
++     * The height of the web view in the pixels the page is laid out in, or 0 before it is laid out.
++     * The web view lays pages out at the phone's own screen density, not at the density the app's
++     * size setting uses for its own views, so the height is divided by the system density.
++     */
+     private fun pageHeightInCssPixels(): Int {
+         val height = binding.readerWebView.height
+         if (height <= 0) return 0
+-        return (height / resources.displayMetrics.density).toInt() - 1
++        return cssPageHeight(height, Resources.getSystem().displayMetrics.density)
+     }
+ 
+     /** Asks for a note and bookmarks the place the reader is at. */
+diff --git a/app/src/main/java/com/freelibrary/app/ui/reader/PageMath.kt b/app/src/main/java/com/freelibrary/app/ui/reader/PageMath.kt
+index 80c684f..b3ef6c2 100644
+--- a/app/src/main/java/com/freelibrary/app/ui/reader/PageMath.kt
++++ b/app/src/main/java/com/freelibrary/app/ui/reader/PageMath.kt
+@@ -89,3 +89,9 @@ internal object PageMath {
+         return atRightEdge != rightToLeft
+     }
+ }
++
++/** The page height in the units the web view lays a page out in: the view's pixels over the screen's density, less one so it never overflows. */
++internal fun cssPageHeight(
++    heightPixels: Int,
++    density: Float,
++): Int = if (heightPixels <= 0 || density <= 0f) 0 else (heightPixels / density).toInt() - 1
+diff --git a/app/src/main/res/drawable/bg_glass_icon_button.xml b/app/src/main/res/drawable/bg_glass_icon_button.xml
+new file mode 100644
+index 0000000..df88344
+--- /dev/null
++++ b/app/src/main/res/drawable/bg_glass_icon_button.xml
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<ripple xmlns:android="http://schemas.android.com/apk/res/android"
++    android:color="?attr/colorControlHighlight">
++    <item>
++        <shape android:shape="oval">
++            <gradient
++                android:angle="270"
++                android:endColor="@color/glass_fill_bottom"
++                android:startColor="@color/glass_fill_top" />
++            <stroke
++                android:width="1dp"
++                android:color="@color/glass_border" />
++        </shape>
++    </item>
++</ripple>
+diff --git a/app/src/main/res/drawable/ic_action_bookmarks.xml b/app/src/main/res/drawable/ic_action_bookmarks.xml
+new file mode 100644
+index 0000000..f4944ab
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_action_bookmarks.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M7,4H17V20L12,16.5L7,20Z"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++</vector>
+diff --git a/app/src/main/res/drawable/ic_action_cancel.xml b/app/src/main/res/drawable/ic_action_cancel.xml
+new file mode 100644
+index 0000000..1ac1947
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_action_cancel.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M6,6L18,18"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M18,6L6,18"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++</vector>
+diff --git a/app/src/main/res/drawable/ic_action_delete.xml b/app/src/main/res/drawable/ic_action_delete.xml
+new file mode 100644
+index 0000000..71eea6f
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_action_delete.xml
+@@ -0,0 +1,42 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M4,7H20"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M9,7V4H15V7"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M6,7L7,20H17L18,7"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M10,11V16"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M14,11V16"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++</vector>
+diff --git a/app/src/main/res/drawable/ic_action_download.xml b/app/src/main/res/drawable/ic_action_download.xml
+new file mode 100644
+index 0000000..d20abf4
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_action_download.xml
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M12,4V15"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M7.5,10.5L12,15L16.5,10.5"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M5,19H19"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++</vector>
+diff --git a/app/src/main/res/drawable/ic_action_finished.xml b/app/src/main/res/drawable/ic_action_finished.xml
+new file mode 100644
+index 0000000..fe5e0b7
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_action_finished.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M12,3a9,9 0 1,0 0,18a9,9 0 1,0 0,-18z"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M8,12.5L11,15.5L16,9.5"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++</vector>
+diff --git a/app/src/main/res/drawable/ic_action_read.xml b/app/src/main/res/drawable/ic_action_read.xml
+new file mode 100644
+index 0000000..f01d98b
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_action_read.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M12,6C10,4.7 7,4 3.5,4.2V18.2C7,18 10,18.7 12,20C14,18.7 17,18 20.5,18.2V4.2C17,4 14,4.7 12,6Z"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M12,6V20"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++</vector>
+diff --git a/app/src/main/res/drawable/ic_action_remove.xml b/app/src/main/res/drawable/ic_action_remove.xml
+new file mode 100644
+index 0000000..946da84
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_action_remove.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M12,3a9,9 0 1,0 0,18a9,9 0 1,0 0,-18z"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M8,12H16"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++</vector>
+diff --git a/app/src/main/res/drawable/ic_action_save.xml b/app/src/main/res/drawable/ic_action_save.xml
+new file mode 100644
+index 0000000..30d2a7e
+--- /dev/null
++++ b/app/src/main/res/drawable/ic_action_save.xml
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="utf-8"?>
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M7,4H17V20L12,16.5L7,20Z"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M12,8V13"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++    <path
++        android:fillColor="#00000000"
++        android:pathData="M9.5,10.5H14.5"
++        android:strokeColor="#FF000000"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round"
++        android:strokeWidth="2" />
++</vector>
+diff --git a/app/src/main/res/layout/fragment_book_page.xml b/app/src/main/res/layout/fragment_book_page.xml
+index deb29d4..e0b51dc 100644
+--- a/app/src/main/res/layout/fragment_book_page.xml
++++ b/app/src/main/res/layout/fragment_book_page.xml
+@@ -130,76 +130,23 @@
+                         android:layout_marginTop="@dimen/spacing_s"
+                         android:visibility="gone" />
+ 
+-                    <com.google.android.material.button.MaterialButton
+-                        android:id="@+id/bookPageReadButton"
+-                        android:layout_width="match_parent"
+-                        android:layout_height="wrap_content"
+-                        android:layout_marginTop="@dimen/spacing_s"
+-                        android:text="@string/book_files_read"
+-                        android:visibility="gone"
+-                        tools:visibility="visible" />
+-
+-                    <com.google.android.material.button.MaterialButton
+-                        android:id="@+id/bookPageDownloadButton"
+-                        style="@style/Widget.FreeLibrary.Button.Glass.Tonal"
+-                        android:layout_width="match_parent"
+-                        android:layout_height="wrap_content"
+-                        android:layout_marginTop="@dimen/spacing_s"
+-                        android:visibility="gone"
+-                        tools:text="Download EPUB"
+-                        tools:visibility="visible" />
+-
+-                    <com.google.android.material.button.MaterialButton
+-                        android:id="@+id/bookPageOtherFormatsButton"
+-                        style="@style/Widget.Material3.Button.TextButton"
+-                        android:layout_width="match_parent"
+-                        android:layout_height="wrap_content"
+-                        android:text="@string/book_files_other"
+-                        android:visibility="gone" />
+-
+-                    <com.google.android.material.button.MaterialButton
+-                        android:id="@+id/bookPageCancelDownloadButton"
+-                        style="@style/Widget.Material3.Button.TextButton"
+-                        android:layout_width="match_parent"
+-                        android:layout_height="wrap_content"
+-                        android:text="@string/book_files_cancel"
+-                        android:visibility="gone" />
+-
+-                    <com.google.android.material.button.MaterialButton
+-                        android:id="@+id/bookPageDeleteDownloadButton"
+-                        style="@style/Widget.Material3.Button.TextButton"
+-                        android:layout_width="match_parent"
+-                        android:layout_height="wrap_content"
+-                        android:text="@string/book_files_delete"
+-                        android:visibility="gone" />
+-
+                 </LinearLayout>
+ 
+-                <com.google.android.material.button.MaterialButton
+-                    android:id="@+id/bookPagePrimaryButton"
++                <!-- The actions under the cover and title: Read, Download, the shelf buttons, Bookmarks and Delete. -->
++                <HorizontalScrollView
+                     android:layout_width="match_parent"
+                     android:layout_height="wrap_content"
+                     android:layout_marginTop="@dimen/spacing_s"
+-                    android:visibility="gone"
+-                    tools:text="Save for later"
+-                    tools:visibility="visible" />
++                    android:overScrollMode="never"
++                    android:scrollbars="none">
+ 
+-                <com.google.android.material.button.MaterialButton
+-                    android:id="@+id/bookPageSecondaryButton"
+-                    style="@style/Widget.Material3.Button.TextButton"
+-                    android:layout_width="match_parent"
+-                    android:layout_height="wrap_content"
+-                    android:visibility="gone"
+-                    tools:text="Remove from my shelf"
+-                    tools:visibility="visible" />
++                    <LinearLayout
++                        android:id="@+id/bookPageActions"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:orientation="horizontal" />
+ 
+-                <com.google.android.material.button.MaterialButton
+-                    android:id="@+id/bookPageBookmarksButton"
+-                    style="@style/Widget.FreeLibrary.Button.Glass.Tonal"
+-                    android:layout_width="match_parent"
+-                    android:layout_height="wrap_content"
+-                    android:layout_marginTop="@dimen/spacing_s"
+-                    android:text="@string/bookmarks_title" />
++                </HorizontalScrollView>
+ 
+                 <TextView
+                     android:id="@+id/bookPageAboutHeading"
+@@ -219,8 +166,10 @@
+                     android:layout_marginTop="@dimen/spacing_s"
+                     android:textAppearance="?attr/textAppearanceBodyLarge"
+                     android:textColor="?attr/colorOnSurface"
++                    android:justificationMode="inter_word"
+                     android:textIsSelectable="true"
+                     android:visibility="gone"
++                    tools:targetApi="o"
+                     tools:text="@tools:sample/lorem/random"
+                     tools:visibility="visible" />
+ 
+diff --git a/app/src/main/res/layout/item_book_action.xml b/app/src/main/res/layout/item_book_action.xml
+new file mode 100644
+index 0000000..c8ccccc
+--- /dev/null
++++ b/app/src/main/res/layout/item_book_action.xml
+@@ -0,0 +1,33 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:layout_width="76dp"
++    android:layout_height="wrap_content"
++    android:clickable="true"
++    android:focusable="true"
++    android:gravity="center_horizontal"
++    android:orientation="vertical"
++    android:paddingTop="@dimen/spacing_xs"
++    android:paddingBottom="@dimen/spacing_xs">
++
++    <ImageView
++        android:id="@+id/bookActionIcon"
++        android:layout_width="48dp"
++        android:layout_height="48dp"
++        android:background="@drawable/bg_glass_icon_button"
++        android:importantForAccessibility="no"
++        android:padding="12dp"
++        app:tint="?attr/colorPrimary" />
++
++    <TextView
++        android:id="@+id/bookActionLabel"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_marginTop="@dimen/spacing_xs"
++        android:ellipsize="end"
++        android:gravity="center"
++        android:maxLines="2"
++        android:textAppearance="?attr/textAppearanceLabelSmall"
++        android:textColor="?attr/colorOnSurfaceVariant" />
++
++</LinearLayout>
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index bb88b95..f060696 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -162,10 +162,6 @@
+     <string name="book_files_waiting">Waiting for another download to finish…</string>
+     <string name="book_files_downloading">Downloading %1$s…</string>
+     <string name="book_files_downloading_percent">Downloading %1$s… %2$d%%</string>
+-    <string name="book_files_download">Download %1$s</string>
+-    <string name="book_files_retry">Try again</string>
+-    <string name="book_files_other">Other formats</string>
+-    <string name="book_files_choose_title">Download which format?</string>
+     <string name="book_files_cancel">Cancel download</string>
+     <string name="book_files_delete">Delete download</string>
+     <string name="book_files_delete_title">Delete which download?</string>
+@@ -177,6 +173,7 @@
+     <string name="download_error_too_large">This file is too large to download.</string>
+     <string name="download_error_storage">The file could not be saved. Check that the phone has free space.</string>
+     <string name="book_files_read">Read</string>
++    <string name="book_action_download">Download</string>
+     <string name="reader_opening">Opening the book</string>
+     <string name="reader_chapter_label">Chapter %1$d of %2$d</string>
+     <string name="reader_previous">Previous</string>
+diff --git a/app/src/test/java/com/freelibrary/app/data/reader/ReaderStyleTest.kt b/app/src/test/java/com/freelibrary/app/data/reader/ReaderStyleTest.kt
+index 8958b5d..75146ef 100644
+--- a/app/src/test/java/com/freelibrary/app/data/reader/ReaderStyleTest.kt
++++ b/app/src/test/java/com/freelibrary/app/data/reader/ReaderStyleTest.kt
+@@ -38,4 +38,20 @@ class ReaderStyleTest {
+     fun `in scroll view a right to left book flips the whole body`() {
+         assertTrue(style(paged = false, rightToLeft = true).css().contains("body { direction: rtl !important; }"))
+     }
++
++    @Test
++    fun `the app size scales the text size of the page`() {
++        val normal = style(paged = false, rightToLeft = false).copy(textPercent = 100, appScale = 1f).css()
++        val small = style(paged = false, rightToLeft = false).copy(textPercent = 100, appScale = 0.85f).css()
++
++        assertTrue(normal.contains("font-size: 100% !important"))
++        assertTrue(small.contains("font-size: 85% !important"))
++    }
++
++    @Test
++    fun `the app size is applied after the reader's own minimum and maximum`() {
++        val css = style(paged = true, rightToLeft = false).copy(textPercent = 70, appScale = 0.85f).css()
++
++        assertTrue(css.contains("font-size: 60% !important"))
++    }
+ }
+diff --git a/app/src/test/java/com/freelibrary/app/ui/bookpage/BookActionsTest.kt b/app/src/test/java/com/freelibrary/app/ui/bookpage/BookActionsTest.kt
+new file mode 100644
+index 0000000..78f3c80
+--- /dev/null
++++ b/app/src/test/java/com/freelibrary/app/ui/bookpage/BookActionsTest.kt
+@@ -0,0 +1,75 @@
++package com.freelibrary.app.ui.bookpage
++
++import com.freelibrary.app.data.download.BookFiles
++import com.freelibrary.app.data.download.DownloadProgress
++import com.freelibrary.app.data.download.Transfer
++import com.freelibrary.app.domain.model.BookFileFormat
++import org.junit.Assert.assertEquals
++import org.junit.Test
++
++class BookActionsTest {
++    private val controls = ShelfControls(primary = ShelfAction.SAVE, secondary = ShelfAction.MARK_FINISHED)
++
++    @Test
++    fun `a book with nothing downloaded offers download, the shelf buttons and bookmarks`() {
++        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), emptyList(), null)
++
++        assertEquals(
++            listOf(
++                BookAction.Download,
++                BookAction.Shelf(ShelfAction.SAVE),
++                BookAction.Shelf(ShelfAction.MARK_FINISHED),
++                BookAction.Bookmarks,
++            ),
++            bookActionsFor(files, controls),
++        )
++    }
++
++    @Test
++    fun `a downloaded book offers read first and delete last`() {
++        val files = BookFiles(listOf(BookFileFormat.EPUB), listOf(BookFileFormat.EPUB), null)
++
++        assertEquals(
++            listOf(
++                BookAction.Read,
++                BookAction.Shelf(ShelfAction.SAVE),
++                BookAction.Shelf(ShelfAction.MARK_FINISHED),
++                BookAction.Bookmarks,
++                BookAction.DeleteDownload,
++            ),
++            bookActionsFor(files, controls),
++        )
++    }
++
++    @Test
++    fun `download stays while another format is still missing`() {
++        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), listOf(BookFileFormat.EPUB), null)
++
++        assertEquals(listOf(BookAction.Read, BookAction.Download), bookActionsFor(files, null).take(2))
++    }
++
++    @Test
++    fun `a running download offers cancel instead of download, and no delete`() {
++        val transfer = Transfer.Running(BookFileFormat.PDF, DownloadProgress(10L, 100L))
++        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), listOf(BookFileFormat.EPUB), transfer)
++
++        val actions = bookActionsFor(files, null)
++
++        assertEquals(listOf(BookAction.Read, BookAction.CancelDownload, BookAction.Bookmarks), actions)
++    }
++
++    @Test
++    fun `a book with no openable file still has bookmarks and its shelf buttons`() {
++        val files = BookFiles(emptyList(), emptyList(), null)
++
++        assertEquals(
++            listOf(BookAction.Shelf(ShelfAction.SAVE), BookAction.Shelf(ShelfAction.MARK_FINISHED), BookAction.Bookmarks),
++            bookActionsFor(files, controls),
++        )
++    }
++
++    @Test
++    fun `before anything is loaded only bookmarks is offered`() {
++        assertEquals(listOf(BookAction.Bookmarks), bookActionsFor(null, null))
++    }
++}
+diff --git a/app/src/test/java/com/freelibrary/app/ui/reader/PageMathTest.kt b/app/src/test/java/com/freelibrary/app/ui/reader/PageMathTest.kt
+index 09d7cac..141e5af 100644
+--- a/app/src/test/java/com/freelibrary/app/ui/reader/PageMathTest.kt
++++ b/app/src/test/java/com/freelibrary/app/ui/reader/PageMathTest.kt
+@@ -99,4 +99,11 @@ class PageMathTest {
+         assertNull(PageMath.tapForward(750f, 1000))
+         assertEquals(true, PageMath.tapForward(751f, 1000))
+     }
++
++    @Test
++    fun `the css page height uses the screen density and leaves a pixel to spare`() {
++        assertEquals(799, cssPageHeight(heightPixels = 1600, density = 2f))
++        assertEquals(0, cssPageHeight(heightPixels = 0, density = 2f))
++        assertEquals(0, cssPageHeight(heightPixels = 1600, density = 0f))
++    }
+ }
