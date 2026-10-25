@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Glass: translucent fills with a light border and a bright top edge. No blur, so it costs nothing at draw time. -->
+    <color name="glass_fill_top">#24BFD8C2</color>
+    <color name="glass_fill_bottom">#142F6B4F</color>
+    <color name="glass_border">#4DBFD8C2</color>
+    <color name="glass_highlight">#33FFFFFF</color>
+    <color name="glass_button_fill">#1FBFD8C2</color>
+    <color name="glass_tonal_fill">#802F6B4F</color>
+    <color name="glass_pill_start">#992F6B4F</color>
+    <color name="glass_pill_end">#6612372A</color>
+    <color name="glass_bar_top">#1F2F6B4F</color>
+    <color name="glass_bar_bottom">#E6080813</color>
+    <color name="glass_checked_fill">#B32F6B4F</color>
+</resources>

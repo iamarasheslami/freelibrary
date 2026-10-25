@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Glass buttons: a translucent fill, a hairline border and a pill shape. -->
+    <style name="Widget.FreeLibrary.Button.Glass" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="backgroundTint">@color/glass_button_fill_selector</item>
+        <item name="strokeColor">@color/glass_border</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.FreeLibrary.Button.Glass.Tonal" parent="Widget.Material3.Button.TonalButton">
+        <item name="backgroundTint">@color/glass_tonal_fill</item>
+        <item name="strokeColor">@color/glass_border</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+</resources>
