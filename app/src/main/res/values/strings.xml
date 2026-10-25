@@ -100,6 +100,12 @@
     <string name="profile_counts">%1$s · %2$s</string>
     <string name="settings_profile">Profile</string>
     <string name="settings_profile_summary">Name, birthday and picture</string>
+    <string name="settings_appearance_summary">Theme and app size</string>
+    <string name="settings_sync_summary">Wi-Fi only and sync now</string>
+    <string name="settings_storage_summary">Cover cache</string>
+    <string name="settings_privacy_summary">Reading history</string>
+    <string name="settings_backup_row_summary">Export and import your data</string>
+    <string name="settings_about_summary">Version, licence and links</string>
     <string name="edit_profile_save">Save</string>
     <string name="edit_profile_name">Name</string>
     <string name="edit_profile_name_helper">Shown under your picture on your Profile page</string>
