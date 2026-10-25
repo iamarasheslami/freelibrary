@@ -1,0 +1,263 @@
+diff --git a/app/src/main/java/com/freelibrary/app/ui/home/HomeAdapter.kt b/app/src/main/java/com/freelibrary/app/ui/home/HomeAdapter.kt
+index bf9f06c..3704ba5 100644
+--- a/app/src/main/java/com/freelibrary/app/ui/home/HomeAdapter.kt
++++ b/app/src/main/java/com/freelibrary/app/ui/home/HomeAdapter.kt
+@@ -1,104 +1,56 @@
+ package com.freelibrary.app.ui.home
+ 
+-import android.view.LayoutInflater
+ import android.view.ViewGroup
+-import androidx.core.view.ViewCompat
+ import androidx.recyclerview.widget.DiffUtil
+ import androidx.recyclerview.widget.ListAdapter
+ import androidx.recyclerview.widget.RecyclerView
+ import coil.ImageLoader
+-import com.freelibrary.app.databinding.ItemHomeHeaderBinding
+ import com.freelibrary.app.domain.model.BookCard
+ import com.freelibrary.app.domain.model.HomeSection
+ import com.freelibrary.app.ui.booklist.BookSliderViewHolder
+ import com.freelibrary.app.ui.cover.CoverTypefaces
+ 
+-/** One row of the Home list: the scrolling title first, then one slider per section. */
+-sealed interface HomeRow {
+-    data object Header : HomeRow
+-
+-    data class Slider(
+-        val section: HomeSection,
+-    ) : HomeRow
+-}
+-
+-internal fun homeRows(sections: List<HomeSection>): List<HomeRow> = listOf(HomeRow.Header) + sections.map { HomeRow.Slider(it) }
+-
+-/** The title, then the sliders. Every slider shares one pool, so cards are reused across rows. */
++/** The Home list: one slider per section. Every slider shares one pool, so cards are reused across rows. */
+ class HomeAdapter(
+     private val typefaces: CoverTypefaces,
+     private val imageLoader: ImageLoader,
+     private val onBookClick: (BookCard) -> Unit,
+     private val onViewMore: (HomeSection) -> Unit,
+-) : ListAdapter<HomeRow, RecyclerView.ViewHolder>(DIFF) {
++) : ListAdapter<HomeSection, BookSliderViewHolder>(DIFF) {
+     private val viewPool = RecyclerView.RecycledViewPool()
+ 
+-    fun submitSections(sections: List<HomeSection>) = submitList(homeRows(sections))
+-
+-    override fun getItemViewType(position: Int): Int =
+-        when (getItem(position)) {
+-            HomeRow.Header -> TYPE_HEADER
+-            is HomeRow.Slider -> TYPE_SLIDER
+-        }
++    fun submitSections(sections: List<HomeSection>) = submitList(sections)
+ 
+     override fun onCreateViewHolder(
+         parent: ViewGroup,
+         viewType: Int,
+-    ): RecyclerView.ViewHolder =
+-        when (viewType) {
+-            TYPE_HEADER -> HeaderViewHolder.create(parent)
+-            else -> BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick)
+-        }
++    ): BookSliderViewHolder = BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick)
+ 
+     override fun onBindViewHolder(
+-        holder: RecyclerView.ViewHolder,
++        holder: BookSliderViewHolder,
+         position: Int,
+     ) {
+-        val row = getItem(position)
+-        if (holder is BookSliderViewHolder && row is HomeRow.Slider) {
+-            val section = row.section
+-            holder.bind(
+-                heading = holder.itemView.context.getString(section.titleRes),
+-                books = section.books,
+-                hasMore = section.hasMore,
+-                onViewMore = { onViewMore(section) },
+-            )
+-        }
+-    }
+-
+-    private class HeaderViewHolder(
+-        binding: ItemHomeHeaderBinding,
+-    ) : RecyclerView.ViewHolder(binding.root) {
+-        init {
+-            ViewCompat.setAccessibilityHeading(binding.homeLogo, true)
+-        }
+-
+-        companion object {
+-            fun create(parent: ViewGroup) =
+-                HeaderViewHolder(ItemHomeHeaderBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+-        }
++        val section = getItem(position)
++        holder.bind(
++            heading = holder.itemView.context.getString(section.titleRes),
++            books = section.books,
++            hasMore = section.hasMore,
++            onViewMore = { onViewMore(section) },
++        )
+     }
+ 
+     companion object {
+-        const val TYPE_HEADER = 0
+-        const val TYPE_SLIDER = 1
+-
+-        /** A slider is the same item while its section id is the same; a title never changes. */
++        /** A slider is the same item while its section id is the same, even when its books change. */
+         val DIFF =
+-            object : DiffUtil.ItemCallback<HomeRow>() {
++            object : DiffUtil.ItemCallback<HomeSection>() {
+                 override fun areItemsTheSame(
+-                    oldItem: HomeRow,
+-                    newItem: HomeRow,
+-                ): Boolean =
+-                    if (oldItem is HomeRow.Slider && newItem is HomeRow.Slider) {
+-                        oldItem.section.id == newItem.section.id
+-                    } else {
+-                        oldItem == newItem
+-                    }
++                    oldItem: HomeSection,
++                    newItem: HomeSection,
++                ): Boolean = oldItem.id == newItem.id
+ 
+                 override fun areContentsTheSame(
+-                    oldItem: HomeRow,
+-                    newItem: HomeRow,
++                    oldItem: HomeSection,
++                    newItem: HomeSection,
+                 ): Boolean = oldItem == newItem
+             }
+     }
+diff --git a/app/src/main/java/com/freelibrary/app/ui/home/HomeFragment.kt b/app/src/main/java/com/freelibrary/app/ui/home/HomeFragment.kt
+index 5949d74..94582a1 100644
+--- a/app/src/main/java/com/freelibrary/app/ui/home/HomeFragment.kt
++++ b/app/src/main/java/com/freelibrary/app/ui/home/HomeFragment.kt
+@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
+ import javax.inject.Inject
+ 
+ /**
+- * The home screen: a scrolling title followed by the reader's own sliders and the curated shelves.
++ * The home screen: the reader's own sliders followed by the curated shelves.
+  * Nothing is drawn until the first lists arrive. "View more" opens the full list; taps on a book
+  * do nothing yet.
+  *
+diff --git a/app/src/main/res/layout/fragment_home.xml b/app/src/main/res/layout/fragment_home.xml
+index 5312c80..8cc19b7 100644
+--- a/app/src/main/res/layout/fragment_home.xml
++++ b/app/src/main/res/layout/fragment_home.xml
+@@ -6,5 +6,6 @@
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     android:clipToPadding="false"
++    android:paddingTop="@dimen/spacing_s"
+     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+     tools:listitem="@layout/item_book_slider" />
+\ No newline at end of file
+diff --git a/app/src/main/res/layout/item_home_header.xml b/app/src/main/res/layout/item_home_header.xml
+deleted file mode 100644
+index 07dc2f2..0000000
+--- a/app/src/main/res/layout/item_home_header.xml
++++ /dev/null
+@@ -1,17 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:layout_width="match_parent"
+-    android:layout_height="wrap_content"
+-    android:paddingStart="@dimen/spacing_m"
+-    android:paddingTop="@dimen/spacing_m"
+-    android:paddingEnd="@dimen/spacing_m"
+-    android:paddingBottom="@dimen/spacing_s">
+-
+-    <ImageView
+-        android:id="@+id/homeLogo"
+-        android:layout_width="40dp"
+-        android:layout_height="40dp"
+-        android:contentDescription="@string/app_name"
+-        android:src="@drawable/ic_brand_mark" />
+-
+-</FrameLayout>
+diff --git a/app/src/test/java/com/freelibrary/app/ui/home/HomeAdapterTest.kt b/app/src/test/java/com/freelibrary/app/ui/home/HomeAdapterTest.kt
+index 920a948..e61df36 100644
+--- a/app/src/test/java/com/freelibrary/app/ui/home/HomeAdapterTest.kt
++++ b/app/src/test/java/com/freelibrary/app/ui/home/HomeAdapterTest.kt
+@@ -4,7 +4,6 @@ import android.content.Context
+ import android.graphics.Typeface
+ import android.view.ContextThemeWrapper
+ import android.widget.FrameLayout
+-import androidx.core.view.ViewCompat
+ import androidx.test.core.app.ApplicationProvider
+ import coil.ImageLoader
+ import com.freelibrary.app.R
+@@ -14,7 +13,6 @@ import com.freelibrary.app.domain.model.ViewMoreTarget
+ import com.freelibrary.app.ui.cover.CoverTypefaces
+ import com.freelibrary.app.ui.cover.createCoverImageLoader
+ import org.junit.After
+-import org.junit.Assert.assertEquals
+ import org.junit.Assert.assertFalse
+ import org.junit.Assert.assertNotNull
+ import org.junit.Assert.assertTrue
+@@ -53,25 +51,10 @@ class HomeAdapterTest {
+ 
+     private fun adapter() = HomeAdapter(CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT), imageLoader, {}, {})
+ 
+-    @Test
+-    fun `the title row comes first and every section follows it in order`() {
+-        val rows = homeRows(listOf(section("a", "One"), section("b", "Two")))
+-
+-        assertEquals(3, rows.size)
+-        assertEquals(HomeRow.Header, rows[0])
+-        assertEquals("a", (rows[1] as HomeRow.Slider).section.id)
+-        assertEquals("b", (rows[2] as HomeRow.Slider).section.id)
+-    }
+-
+-    @Test
+-    fun `with no sections only the title row remains`() {
+-        assertEquals(listOf(HomeRow.Header), homeRows(emptyList()))
+-    }
+-
+     @Test
+     fun `the same section is the same row even when its books change`() {
+-        val old = HomeRow.Slider(section("a", "One"))
+-        val new = HomeRow.Slider(section("a", "One", "Two"))
++        val old = section("a", "One")
++        val new = section("a", "One", "Two")
+ 
+         assertTrue(HomeAdapter.DIFF.areItemsTheSame(old, new))
+         assertFalse(HomeAdapter.DIFF.areContentsTheSame(old, new))
+@@ -79,33 +62,14 @@ class HomeAdapterTest {
+ 
+     @Test
+     fun `different sections are different rows`() {
+-        val a = HomeRow.Slider(section("a", "One"))
+-        val b = HomeRow.Slider(section("b", "One"))
+-
+-        assertFalse(HomeAdapter.DIFF.areItemsTheSame(a, b))
+-    }
+-
+-    @Test
+-    fun `the title row is never the same row as a slider`() {
+-        val slider = HomeRow.Slider(section("a", "One"))
+-
+-        assertFalse(HomeAdapter.DIFF.areItemsTheSame(HomeRow.Header, slider))
+-        assertTrue(HomeAdapter.DIFF.areItemsTheSame(HomeRow.Header, HomeRow.Header))
+-    }
+-
+-    @Test
+-    fun `the title row shows the logo, named for the app, as a heading`() {
+-        val holder = adapter().onCreateViewHolder(FrameLayout(context), HomeAdapter.TYPE_HEADER)
+-        val logo = holder.itemView.findViewById<android.widget.ImageView>(R.id.homeLogo)
+-
+-        assertNotNull(logo)
+-        assertEquals(context.getString(R.string.app_name), logo.contentDescription.toString())
+-        assertTrue(ViewCompat.isAccessibilityHeading(logo))
++        assertFalse(HomeAdapter.DIFF.areItemsTheSame(section("a", "One"), section("b", "One")))
+     }
+ 
+     @Test
+-    fun `a slider row is built for the slider type`() {
+-        val holder = adapter().onCreateViewHolder(FrameLayout(context), HomeAdapter.TYPE_SLIDER)
++    fun `the first row is a slider, with no title row above it`() {
++        val adapter = adapter()
++        adapter.submitSections(listOf(section("a", "One"), section("b", "Two")))
++        val holder = adapter.onCreateViewHolder(FrameLayout(context), 0)
+ 
+         assertNotNull(holder.itemView.findViewById(R.id.sliderBooks))
+     }
