@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
@@ -22,11 +24,11 @@ import com.freelibrary.app.data.download.DownloadProgress
 import com.freelibrary.app.data.download.Transfer
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.databinding.FragmentBookPageBinding
+import com.freelibrary.app.databinding.ItemBookActionBinding
 import com.freelibrary.app.domain.model.BookFileFormat
 import com.freelibrary.app.ui.cover.CoverTypefaces
 import com.freelibrary.app.ui.cover.loadCover
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -34,9 +36,9 @@ import java.util.Locale
 import javax.inject.Inject
 
 /**
- * A book's own page: cover, title, authors, language, where the book sits on the reader's shelves
- * with the buttons to change that, the book's files with the buttons to download, cancel and delete
- * them (with a Read button once an EPUB is downloaded), and the catalog summary.
+ * A book's own page: cover, title, authors, language, where the book sits on the reader's shelves,
+ * the state of its files, a row of icon buttons (Read, Download, the shelf buttons, Bookmarks, Delete)
+ * and the catalog summary. Tapping the cover of a downloaded book reads it.
  */
 @AndroidEntryPoint
 class BookPageFragment : Fragment() {
@@ -49,6 +51,11 @@ class BookPageFragment : Fragment() {
 
     /** The book whose fixed details (title, cover, summary) are already on screen. */
     private var shownBookId: Long? = null
+
+    /** What the action buttons are built from, and what is on screen now, so they are rebuilt only when they change. */
+    private var currentFiles: BookFiles? = null
+    private var currentControls: ShelfControls? = null
+    private var shownActions: List<BookAction>? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -68,7 +75,6 @@ class BookPageFragment : Fragment() {
         binding.bookPageToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         ViewCompat.setAccessibilityHeading(binding.bookPageTitle, true)
         ViewCompat.setAccessibilityHeading(binding.bookPageAboutHeading, true)
-        binding.bookPageBookmarksButton.setOnClickListener { openBookmarks() }
 
         val typefaces = CoverTypefaces.from(requireContext())
         viewLifecycleOwner.lifecycleScope.launch {
@@ -128,57 +134,90 @@ class BookPageFragment : Fragment() {
         val status = content.shelfState?.let(::statusLabel)
         binding.bookPageStatus.isVisible = status != null
         if (status != null) binding.bookPageStatus.setText(status)
-        bindAction(binding.bookPagePrimaryButton, content.controls.primary)
-        bindAction(binding.bookPageSecondaryButton, content.controls.secondary)
-    }
-
-    private fun bindAction(
-        button: MaterialButton,
-        action: ShelfAction?,
-    ) {
-        button.isVisible = action != null
-        if (action == null) return
-        button.setText(actionLabel(action))
-        button.setOnClickListener { viewModel.onShelfAction(action) }
+        currentControls = content.controls
+        showActions()
     }
 
     private fun showFiles(files: BookFiles?) {
+        currentFiles = files
         binding.bookPageFiles.isVisible = files != null
+        showActions()
         if (files == null) return
-        val transfer = files.transfer
-        val busy = files.busy
-
-        // The first downloaded format, in the order they are offered (EPUB, PDF, then text), is the one that opens.
-        val readable = BookFileFormat.entries.firstOrNull { it in files.downloaded }
-        binding.bookPageReadButton.isVisible = readable != null
-        binding.bookPageReadButton.setOnClickListener { readable?.let { openReader(it) } }
 
         val status = filesStatus(files)
         binding.bookPageFilesStatus.text = status
         binding.bookPageFilesStatus.isVisible = status.isNotEmpty()
-        showProgress(transfer)
+        showProgress(files.transfer)
 
-        val target =
-            (transfer as? Transfer.Failed)?.format?.takeIf { it in files.toDownload }
-                ?: files.toDownload.firstOrNull()
-        val download = binding.bookPageDownloadButton
-        download.isVisible = !busy && target != null
-        if (target != null) {
-            download.text =
-                if (transfer is Transfer.Failed) {
-                    getString(R.string.book_files_retry)
-                } else {
-                    getString(R.string.book_files_download, getString(formatLabel(target)))
-                }
-            download.setOnClickListener { viewModel.onDownload(target) }
+        // Tapping the cover of a downloaded book reads it, like the Read button.
+        val readable = files.downloaded
+        binding.bookPageCover.isClickable = readable.isNotEmpty()
+        binding.bookPageCover.setOnClickListener(if (readable.isEmpty()) null else View.OnClickListener { read(binding.bookPageCover) })
+    }
+
+    /** Builds the row of icon buttons again, but only when the set of buttons has changed. */
+    private fun showActions() {
+        val actions = bookActionsFor(currentFiles, currentControls)
+        if (actions == shownActions) return
+        shownActions = actions
+        val row = binding.bookPageActions
+        row.removeAllViews()
+        for (action in actions) {
+            val item = ItemBookActionBinding.inflate(layoutInflater, row, false)
+            item.bookActionIcon.setImageResource(actionIcon(action))
+            item.bookActionLabel.setText(actionLabelFor(action))
+            item.root.contentDescription = getString(actionLabelFor(action))
+            item.root.setOnClickListener { perform(action, item.root) }
+            row.addView(item.root)
         }
+    }
 
-        binding.bookPageOtherFormatsButton.isVisible = !busy && files.toDownload.size > 1
-        binding.bookPageOtherFormatsButton.setOnClickListener { chooseFormatToDownload(files.toDownload) }
-        binding.bookPageCancelDownloadButton.isVisible = busy
-        binding.bookPageCancelDownloadButton.setOnClickListener { viewModel.onCancelDownload() }
-        binding.bookPageDeleteDownloadButton.isVisible = !busy && files.downloaded.isNotEmpty()
-        binding.bookPageDeleteDownloadButton.setOnClickListener { deleteDownload(files.downloaded) }
+    private fun perform(
+        action: BookAction,
+        anchor: View,
+    ) {
+        when (action) {
+            BookAction.Read -> read(anchor)
+            BookAction.Download -> download(anchor)
+            BookAction.CancelDownload -> viewModel.onCancelDownload()
+            BookAction.DeleteDownload -> currentFiles?.let { deleteDownload(it.downloaded) }
+            BookAction.Bookmarks -> openBookmarks()
+            is BookAction.Shelf -> viewModel.onShelfAction(action.action)
+        }
+    }
+
+    /** Opens the downloaded book; with more than one downloaded format the reader picks from a list. */
+    private fun read(anchor: View) {
+        val downloaded = currentFiles?.downloaded.orEmpty()
+        when (downloaded.size) {
+            0 -> Unit
+            1 -> openReader(downloaded.first())
+            else -> chooseFormat(anchor, downloaded) { openReader(it) }
+        }
+    }
+
+    /** Downloads the book; with more than one format on offer the reader picks from a list of them all. */
+    private fun download(anchor: View) {
+        val formats = currentFiles?.toDownload.orEmpty()
+        when (formats.size) {
+            0 -> Unit
+            1 -> viewModel.onDownload(formats.first())
+            else -> chooseFormat(anchor, formats) { viewModel.onDownload(it) }
+        }
+    }
+
+    private fun chooseFormat(
+        anchor: View,
+        formats: List<BookFileFormat>,
+        onChosen: (BookFileFormat) -> Unit,
+    ) {
+        val menu = PopupMenu(requireContext(), anchor)
+        formats.forEachIndexed { index, format -> menu.menu.add(0, index, index, getString(formatLabel(format))) }
+        menu.setOnMenuItemClickListener { item ->
+            onChosen(formats[item.itemId])
+            true
+        }
+        menu.show()
     }
 
     private fun openReader(format: BookFileFormat) {
@@ -245,14 +284,6 @@ class BookPageFragment : Fragment() {
         }
     }
 
-    private fun chooseFormatToDownload(formats: List<BookFileFormat>) {
-        val labels = formats.map { getString(formatLabel(it)) }.toTypedArray()
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.book_files_choose_title)
-            .setItems(labels) { _, index -> viewModel.onDownload(formats[index]) }
-            .show()
-    }
-
     private fun deleteDownload(downloaded: List<BookFileFormat>) {
         if (downloaded.size == 1) {
             viewModel.onDeleteDownload(downloaded.first())
@@ -293,6 +324,33 @@ class BookPageFragment : Fragment() {
             ShelfState.FINISHED -> R.string.book_page_status_finished
         }
 
+    @DrawableRes
+    private fun actionIcon(action: BookAction): Int =
+        when (action) {
+            BookAction.Read -> R.drawable.ic_action_read
+            BookAction.Download -> R.drawable.ic_action_download
+            BookAction.CancelDownload -> R.drawable.ic_action_cancel
+            BookAction.DeleteDownload -> R.drawable.ic_action_delete
+            BookAction.Bookmarks -> R.drawable.ic_action_bookmarks
+            is BookAction.Shelf ->
+                when (action.action) {
+                    ShelfAction.SAVE -> R.drawable.ic_action_save
+                    ShelfAction.MARK_FINISHED -> R.drawable.ic_action_finished
+                    ShelfAction.REMOVE -> R.drawable.ic_action_remove
+                }
+        }
+
+    @StringRes
+    private fun actionLabelFor(action: BookAction): Int =
+        when (action) {
+            BookAction.Read -> R.string.book_files_read
+            BookAction.Download -> R.string.book_action_download
+            BookAction.CancelDownload -> R.string.book_files_cancel
+            BookAction.DeleteDownload -> R.string.book_files_delete
+            BookAction.Bookmarks -> R.string.bookmarks_title
+            is BookAction.Shelf -> actionLabel(action.action)
+        }
+
     @StringRes
     private fun actionLabel(action: ShelfAction): Int =
         when (action) {
@@ -303,6 +361,7 @@ class BookPageFragment : Fragment() {
 
     override fun onDestroyView() {
         shownBookId = null
+        shownActions = null
         super.onDestroyView()
         _binding = null
     }

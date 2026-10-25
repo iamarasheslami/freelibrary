@@ -130,76 +130,23 @@
                         android:layout_marginTop="@dimen/spacing_s"
                         android:visibility="gone" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageReadButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_s"
-                        android:text="@string/book_files_read"
-                        android:visibility="gone"
-                        tools:visibility="visible" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageDownloadButton"
-                        style="@style/Widget.FreeLibrary.Button.Glass.Tonal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_s"
-                        android:visibility="gone"
-                        tools:text="Download EPUB"
-                        tools:visibility="visible" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageOtherFormatsButton"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/book_files_other"
-                        android:visibility="gone" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageCancelDownloadButton"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/book_files_cancel"
-                        android:visibility="gone" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageDeleteDownloadButton"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/book_files_delete"
-                        android:visibility="gone" />
-
                 </LinearLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/bookPagePrimaryButton"
+                <!-- The actions under the cover and title: Read, Download, the shelf buttons, Bookmarks and Delete. -->
+                <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/spacing_s"
-                    android:visibility="gone"
-                    tools:text="Save for later"
-                    tools:visibility="visible" />
+                    android:overScrollMode="never"
+                    android:scrollbars="none">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/bookPageSecondaryButton"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    tools:text="Remove from my shelf"
-                    tools:visibility="visible" />
+                    <LinearLayout
+                        android:id="@+id/bookPageActions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/bookPageBookmarksButton"
-                    style="@style/Widget.FreeLibrary.Button.Glass.Tonal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_s"
-                    android:text="@string/bookmarks_title" />
+                </HorizontalScrollView>
 
                 <TextView
                     android:id="@+id/bookPageAboutHeading"
@@ -219,8 +166,10 @@
                     android:layout_marginTop="@dimen/spacing_s"
                     android:textAppearance="?attr/textAppearanceBodyLarge"
                     android:textColor="?attr/colorOnSurface"
+                    android:justificationMode="inter_word"
                     android:textIsSelectable="true"
                     android:visibility="gone"
+                    tools:targetApi="o"
                     tools:text="@tools:sample/lorem/random"
                     tools:visibility="visible" />
 

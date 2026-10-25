@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * The home screen: a scrolling title followed by the reader's own sliders and the curated shelves.
+ * The home screen: the reader's own sliders followed by the curated shelves.
  * Nothing is drawn until the first lists arrive. "View more" opens the full list; taps on a book
  * do nothing yet.
  *

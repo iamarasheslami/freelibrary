@@ -38,4 +38,20 @@ class ReaderStyleTest {
     fun `in scroll view a right to left book flips the whole body`() {
         assertTrue(style(paged = false, rightToLeft = true).css().contains("body { direction: rtl !important; }"))
     }
+
+    @Test
+    fun `the app size scales the text size of the page`() {
+        val normal = style(paged = false, rightToLeft = false).copy(textPercent = 100, appScale = 1f).css()
+        val small = style(paged = false, rightToLeft = false).copy(textPercent = 100, appScale = 0.85f).css()
+
+        assertTrue(normal.contains("font-size: 100% !important"))
+        assertTrue(small.contains("font-size: 85% !important"))
+    }
+
+    @Test
+    fun `the app size is applied after the reader's own minimum and maximum`() {
+        val css = style(paged = true, rightToLeft = false).copy(textPercent = 70, appScale = 0.85f).css()
+
+        assertTrue(css.contains("font-size: 60% !important"))
+    }
 }

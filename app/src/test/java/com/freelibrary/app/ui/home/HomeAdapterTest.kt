@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Typeface
 import android.view.ContextThemeWrapper
 import android.widget.FrameLayout
-import androidx.core.view.ViewCompat
 import androidx.test.core.app.ApplicationProvider
 import coil.ImageLoader
 import com.freelibrary.app.R
@@ -14,7 +13,6 @@ import com.freelibrary.app.domain.model.ViewMoreTarget
 import com.freelibrary.app.ui.cover.CoverTypefaces
 import com.freelibrary.app.ui.cover.createCoverImageLoader
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -54,24 +52,9 @@ class HomeAdapterTest {
     private fun adapter() = HomeAdapter(CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT), imageLoader, {}, {})
 
     @Test
-    fun `the title row comes first and every section follows it in order`() {
-        val rows = homeRows(listOf(section("a", "One"), section("b", "Two")))
-
-        assertEquals(3, rows.size)
-        assertEquals(HomeRow.Header, rows[0])
-        assertEquals("a", (rows[1] as HomeRow.Slider).section.id)
-        assertEquals("b", (rows[2] as HomeRow.Slider).section.id)
-    }
-
-    @Test
-    fun `with no sections only the title row remains`() {
-        assertEquals(listOf(HomeRow.Header), homeRows(emptyList()))
-    }
-
-    @Test
     fun `the same section is the same row even when its books change`() {
-        val old = HomeRow.Slider(section("a", "One"))
-        val new = HomeRow.Slider(section("a", "One", "Two"))
+        val old = section("a", "One")
+        val new = section("a", "One", "Two")
 
         assertTrue(HomeAdapter.DIFF.areItemsTheSame(old, new))
         assertFalse(HomeAdapter.DIFF.areContentsTheSame(old, new))
@@ -79,33 +62,14 @@ class HomeAdapterTest {
 
     @Test
     fun `different sections are different rows`() {
-        val a = HomeRow.Slider(section("a", "One"))
-        val b = HomeRow.Slider(section("b", "One"))
-
-        assertFalse(HomeAdapter.DIFF.areItemsTheSame(a, b))
+        assertFalse(HomeAdapter.DIFF.areItemsTheSame(section("a", "One"), section("b", "One")))
     }
 
     @Test
-    fun `the title row is never the same row as a slider`() {
-        val slider = HomeRow.Slider(section("a", "One"))
-
-        assertFalse(HomeAdapter.DIFF.areItemsTheSame(HomeRow.Header, slider))
-        assertTrue(HomeAdapter.DIFF.areItemsTheSame(HomeRow.Header, HomeRow.Header))
-    }
-
-    @Test
-    fun `the title row shows the logo, named for the app, as a heading`() {
-        val holder = adapter().onCreateViewHolder(FrameLayout(context), HomeAdapter.TYPE_HEADER)
-        val logo = holder.itemView.findViewById<android.widget.ImageView>(R.id.homeLogo)
-
-        assertNotNull(logo)
-        assertEquals(context.getString(R.string.app_name), logo.contentDescription.toString())
-        assertTrue(ViewCompat.isAccessibilityHeading(logo))
-    }
-
-    @Test
-    fun `a slider row is built for the slider type`() {
-        val holder = adapter().onCreateViewHolder(FrameLayout(context), HomeAdapter.TYPE_SLIDER)
+    fun `the first row is a slider, with no title row above it`() {
+        val adapter = adapter()
+        adapter.submitSections(listOf(section("a", "One"), section("b", "Two")))
+        val holder = adapter.onCreateViewHolder(FrameLayout(context), 0)
 
         assertNotNull(holder.itemView.findViewById(R.id.sliderBooks))
     }

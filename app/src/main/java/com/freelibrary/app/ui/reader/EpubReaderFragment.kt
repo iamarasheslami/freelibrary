@@ -1,6 +1,7 @@
 package com.freelibrary.app.ui.reader
 
 import android.annotation.SuppressLint
+import android.content.res.Resources
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -29,6 +30,7 @@ import com.freelibrary.app.data.repository.BookmarkRepository
 import com.freelibrary.app.databinding.FragmentEpubReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
+import com.freelibrary.app.ui.theme.AppScale
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -213,6 +215,7 @@ class EpubReaderFragment : Fragment() {
                 textPercent = textPercent,
                 pageHeight = pageHeightInCssPixels(),
                 rightToLeft = book.rightToLeft,
+                appScale = AppScale.current(requireContext()).scale,
             )
         server = EpubPageServer(book, style)
         val margin = if (paged) resources.getDimensionPixelSize(R.dimen.reader_page_margin) else 0
@@ -227,11 +230,15 @@ class EpubReaderFragment : Fragment() {
             ?.setTitle(if (paged) R.string.reader_scroll_view else R.string.reader_page_view)
     }
 
-    /** The height of the web view in the pixels the page is laid out in, or 0 before it is laid out. */
+    /**
+     * The height of the web view in the pixels the page is laid out in, or 0 before it is laid out.
+     * The web view lays pages out at the phone's own screen density, not at the density the app's
+     * size setting uses for its own views, so the height is divided by the system density.
+     */
     private fun pageHeightInCssPixels(): Int {
         val height = binding.readerWebView.height
         if (height <= 0) return 0
-        return (height / resources.displayMetrics.density).toInt() - 1
+        return cssPageHeight(height, Resources.getSystem().displayMetrics.density)
     }
 
     /** Asks for a note and bookmarks the place the reader is at. */
