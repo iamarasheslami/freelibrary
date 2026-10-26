@@ -15,17 +15,34 @@ class ProfileAdapterTest {
     private fun section(
         id: String,
         vararg books: BookCard,
-    ) = ProfileSection(id, 0, 0, books.toList(), false, ViewMoreTarget.WantToRead)
+    ) = ProfileSection(id, 0, books.toList(), false, ViewMoreTarget.WantToRead)
 
     @Test
     fun `the header comes first and the shelves follow in order`() {
-        val state = ProfileState(name = "Arash", sections = listOf(section("a"), section("b")))
+        val state = ProfileState(name = "Arash", sections = listOf(section("a", book(1)), section("b", book(2))))
 
         val rows = profileRows(state)
 
         assertEquals(3, rows.size)
         assertTrue(rows[0] is ProfileRow.Header)
         assertEquals(listOf("a", "b"), rows.drop(1).map { (it as ProfileRow.Slider).section.id })
+    }
+
+    @Test
+    fun `a shelf with no books is left out`() {
+        val state = ProfileState(sections = listOf(section("a"), section("b", book(1)), section("c")))
+
+        val rows = profileRows(state)
+
+        assertEquals(listOf("b"), rows.drop(1).map { (it as ProfileRow.Slider).section.id })
+    }
+
+    @Test
+    fun `with no books at all only the header is left`() {
+        val rows = profileRows(ProfileState(sections = listOf(section("a"), section("b"))))
+
+        assertEquals(1, rows.size)
+        assertTrue(rows[0] is ProfileRow.Header)
     }
 
     @Test

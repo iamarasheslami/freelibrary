@@ -29,9 +29,10 @@ sealed interface ProfileRow {
     ) : ProfileRow
 }
 
+/** The header, then a slider for each shelf that has books; a shelf with no books is not shown at all. */
 internal fun profileRows(state: ProfileState): List<ProfileRow> =
     listOf(ProfileRow.Header(state.name, state.avatarVersion, state.counts.bookmarks, state.counts.highlights)) +
-        state.sections.map { ProfileRow.Slider(it) }
+        state.sections.filter { it.books.isNotEmpty() }.map { ProfileRow.Slider(it) }
 
 /** The header, then the shelves. Every slider shares one pool, so cards are reused across rows. */
 class ProfileAdapter(
@@ -74,7 +75,6 @@ class ProfileAdapter(
                 books = section.books,
                 hasMore = section.hasMore,
                 onViewMore = { onViewMore(section) },
-                emptyMessage = context.getString(section.emptyRes),
             )
         }
     }
