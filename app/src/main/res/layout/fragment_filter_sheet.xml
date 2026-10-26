@@ -60,13 +60,39 @@
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant" />
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/filterLanguageChips"
+                <LinearLayout
+                    android:id="@+id/filterLanguageRow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/spacing_s"
-                    app:chipSpacingHorizontal="@dimen/spacing_s"
-                    app:chipSpacingVertical="0dp" />
+                    android:background="@drawable/bg_glass_card"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/spacing_m"
+                    android:paddingEnd="@dimen/spacing_m">
+
+                    <TextView
+                        android:id="@+id/filterLanguageValue"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:textAppearance="?attr/textAppearanceBodyLarge"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        android:rotation="90"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -108,13 +134,39 @@
                     android:text="@string/filter_genre"
                     android:textAppearance="?attr/textAppearanceTitleMedium" />
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/filterGenreChips"
+                <LinearLayout
+                    android:id="@+id/filterGenreRow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/spacing_s"
-                    app:chipSpacingHorizontal="@dimen/spacing_s"
-                    app:chipSpacingVertical="0dp" />
+                    android:background="@drawable/bg_glass_card"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/spacing_m"
+                    android:paddingEnd="@dimen/spacing_m">
+
+                    <TextView
+                        android:id="@+id/filterGenreValue"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:textAppearance="?attr/textAppearanceBodyLarge"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:importantForAccessibility="no"
+                        android:rotation="90"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
 
             </LinearLayout>
 

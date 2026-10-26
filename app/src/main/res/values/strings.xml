@@ -84,6 +84,17 @@
     <string name="filter_genre">Genre</string>
     <string name="filter_reset">Reset</string>
     <string name="filter_apply">Apply</string>
+    <string name="filter_any_language">Any language</string>
+    <string name="filter_any_genre">Any genre</string>
+    <string name="filter_loading">Loading…</string>
+    <string name="filter_picker_search">Search</string>
+    <string name="filter_picker_done">Done</string>
+    <string name="filter_picker_clear">Clear</string>
+    <string name="filter_picker_no_matches">Nothing matches.</string>
+    <plurals name="filter_genres_selected">
+        <item quantity="one">%d genre selected</item>
+        <item quantity="other">%d genres selected</item>
+    </plurals>
     <string name="filter_no_options">No filter options yet. They appear after the first catalog sync.</string>
     <string name="format_epub">EPUB</string>
     <string name="format_pdf">PDF</string>

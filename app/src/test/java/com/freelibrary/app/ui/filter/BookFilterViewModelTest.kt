@@ -125,4 +125,31 @@ class BookFilterViewModelTest {
 
             assertEquals(listOf(FilterOption("fr", 1)), options.languages)
         }
+
+    @Test
+    fun `the language and the genres can be cleared one kind at a time`() {
+        val viewModel = viewModel()
+        viewModel.chooseLanguage("fr")
+        viewModel.toggleGenre("Category: Fiction")
+        viewModel.toggleFormat("epub")
+
+        viewModel.clearLanguage()
+        assertEquals(null, viewModel.draft.value.language)
+        assertEquals(setOf("Category: Fiction"), viewModel.draft.value.genres)
+
+        viewModel.clearGenres()
+        assertEquals(emptySet<String>(), viewModel.draft.value.genres)
+        assertEquals(setOf("epub"), viewModel.draft.value.formats)
+    }
+
+    @Test
+    fun `the pickers follow the draft`() {
+        val viewModel = viewModel()
+
+        viewModel.chooseLanguage("fr")
+        viewModel.toggleGenre("Category: Poetry")
+
+        assertEquals(setOf("fr"), viewModel.selectedLanguages.value)
+        assertEquals(setOf("Category: Poetry"), viewModel.selectedGenres.value)
+    }
 }

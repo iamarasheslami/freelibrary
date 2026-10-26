@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -14,6 +15,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "CatalogSyncRunner"
+private const val FILTER_WARM_UP_DELAY_MS = 5_000L
 
 /**
  * Runs one catalog sync and tells the caches that depend on the catalog when it changed anything,
@@ -74,6 +76,7 @@ class CatalogSyncRunner
         private val syncRepository: CatalogSyncRepository,
         private val exploreRepository: ExploreRepository,
         private val searchRepository: SearchRepository,
+        private val filterOptionsRepository: BookFilterOptionsRepository,
         private val settingsRepository: SettingsRepository,
         private val networkState: NetworkState,
         private val timeProvider: TimeProvider,
@@ -95,6 +98,7 @@ class CatalogSyncRunner
                 onCatalogChanged = {
                     exploreRepository.invalidate()
                     searchRepository.invalidateVocabularies()
+                    filterOptionsRepository.invalidate()
                 },
                 onSynced = { settingsRepository.recordCatalogSync(timeProvider.nowMillis()) },
             )
@@ -108,6 +112,11 @@ class CatalogSyncRunner
             startGuard.runFirstTime {
                 scope.launch {
                     runIfAllowed(settingsRepository.wifiOnlySync.first(), networkState.isMetered()) { run() }
+                }
+                // Counts the filter choices in the background once Home has had time to load, so the filter sheet opens at once.
+                scope.launch {
+                    delay(FILTER_WARM_UP_DELAY_MS)
+                    filterOptionsRepository.options()
                 }
             }
     }
