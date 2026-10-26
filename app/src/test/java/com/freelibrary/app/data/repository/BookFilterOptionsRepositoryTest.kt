@@ -122,4 +122,17 @@ class BookFilterOptionsRepositoryTest {
 
             assertTrue(options.languages.isEmpty() && options.formats.isEmpty() && options.genres.isEmpty())
         }
+
+    @Test
+    fun `the options are counted once and kept until the catalog changes`() =
+        runTest {
+            addBook("1", "en")
+            assertEquals(listOf(FilterOption("en", 1)), repository.options().languages)
+
+            addBook("2", "fr")
+            assertEquals(listOf(FilterOption("en", 1)), repository.options().languages)
+
+            repository.invalidate()
+            assertEquals(listOf(FilterOption("en", 1), FilterOption("fr", 1)), repository.options().languages)
+        }
 }
