@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- Every connection must use HTTPS. -->
+    <base-config cleartextTrafficPermitted="false" />
+
     <!-- Project Gutenberg's certificate comes from SSL.com, whose root (SSL.com TLS RSA Root CA 2022)
          is missing from the trust store of older Android versions. That root is added for
          gutenberg.org only; every other site keeps using the phone's own trust store. -->
