@@ -99,4 +99,11 @@ class PageMathTest {
         assertNull(PageMath.tapForward(750f, 1000))
         assertEquals(true, PageMath.tapForward(751f, 1000))
     }
+
+    @Test
+    fun `the css page height uses the screen density and leaves a pixel to spare`() {
+        assertEquals(799, cssPageHeight(heightPixels = 1600, density = 2f))
+        assertEquals(0, cssPageHeight(heightPixels = 0, density = 2f))
+        assertEquals(0, cssPageHeight(heightPixels = 1600, density = 0f))
+    }
 }

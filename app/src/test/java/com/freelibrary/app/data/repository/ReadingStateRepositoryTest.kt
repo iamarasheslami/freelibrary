@@ -217,4 +217,65 @@ class ReadingStateRepositoryTest {
             assertNull(repository.observeStateOf(untouched).first())
             assertEquals(2, repository.observeCount(ShelfState.READING).first())
         }
+
+    @Test
+    fun `Save is a switch that also takes a saved book off the shelf`() =
+        runTest {
+            val id = addBook("1")
+
+            repository.toggleSaved(id)
+            assertEquals(ShelfState.WANT_TO_READ, stateOf(id)?.state)
+
+            repository.toggleSaved(id)
+            assertNull(stateOf(id))
+        }
+
+    @Test
+    fun `Save leaves a finished book alone`() =
+        runTest {
+            val id = addBook("1")
+            repository.markFinished(id)
+
+            repository.toggleSaved(id)
+
+            assertEquals(ShelfState.FINISHED, stateOf(id)?.state)
+        }
+
+    @Test
+    fun `Finished is a switch that takes the book off the shelf again`() =
+        runTest {
+            val id = addBook("1")
+
+            repository.toggleFinished(id)
+            assertEquals(ShelfState.FINISHED, stateOf(id)?.state)
+
+            repository.toggleFinished(id)
+            assertNull(stateOf(id))
+        }
+
+    @Test
+    fun `starting over forgets the position and leaves Currently Reading`() =
+        runTest {
+            val id = addBook("1")
+            repository.onBookOpened(id)
+            database.readingProgressDao().upsert(ReadingProgress(id, "chapter 3", 5L))
+
+            repository.restart(id)
+
+            assertNull(stateOf(id))
+            assertNull(database.readingProgressDao().getForBook(id))
+        }
+
+    @Test
+    fun `starting over does nothing for a book that is not being read`() =
+        runTest {
+            val id = addBook("1")
+            repository.saveForLater(id)
+            database.readingProgressDao().upsert(ReadingProgress(id, "chapter 3", 5L))
+
+            repository.restart(id)
+
+            assertEquals(ShelfState.WANT_TO_READ, stateOf(id)?.state)
+            assertEquals("chapter 3", database.readingProgressDao().getForBook(id)?.lastPosition)
+        }
 }

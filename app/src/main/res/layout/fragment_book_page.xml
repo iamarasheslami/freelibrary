@@ -93,17 +93,6 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <TextView
-                    android:id="@+id/bookPageStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_m"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurface"
-                    android:visibility="gone"
-                    tools:text="Currently reading"
-                    tools:visibility="visible" />
-
                 <LinearLayout
                     android:id="@+id/bookPageFiles"
                     android:layout_width="match_parent"
@@ -130,76 +119,14 @@
                         android:layout_marginTop="@dimen/spacing_s"
                         android:visibility="gone" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageReadButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_s"
-                        android:text="@string/book_files_read"
-                        android:visibility="gone"
-                        tools:visibility="visible" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageDownloadButton"
-                        style="@style/Widget.FreeLibrary.Button.Glass.Tonal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_s"
-                        android:visibility="gone"
-                        tools:text="Download EPUB"
-                        tools:visibility="visible" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageOtherFormatsButton"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/book_files_other"
-                        android:visibility="gone" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageCancelDownloadButton"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/book_files_cancel"
-                        android:visibility="gone" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/bookPageDeleteDownloadButton"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/book_files_delete"
-                        android:visibility="gone" />
-
                 </LinearLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/bookPagePrimaryButton"
+                <!-- The actions under the cover and title: always all there, wrapping onto centred rows. -->
+                <com.freelibrary.app.ui.widget.CenteredFlowLayout
+                    android:id="@+id/bookPageActions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_s"
-                    android:visibility="gone"
-                    tools:text="Save for later"
-                    tools:visibility="visible" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/bookPageSecondaryButton"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    tools:text="Remove from my shelf"
-                    tools:visibility="visible" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/bookPageBookmarksButton"
-                    style="@style/Widget.FreeLibrary.Button.Glass.Tonal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_s"
-                    android:text="@string/bookmarks_title" />
+                    android:layout_marginTop="@dimen/spacing_s" />
 
                 <TextView
                     android:id="@+id/bookPageAboutHeading"
@@ -219,8 +146,12 @@
                     android:layout_marginTop="@dimen/spacing_s"
                     android:textAppearance="?attr/textAppearanceBodyLarge"
                     android:textColor="?attr/colorOnSurface"
-                    android:textIsSelectable="true"
+                    android:breakStrategy="simple"
+                    android:hyphenationFrequency="none"
+                    android:justificationMode="inter_word"
+                    android:letterSpacing="0"
                     android:visibility="gone"
+                    tools:targetApi="o"
                     tools:text="@tools:sample/lorem/random"
                     tools:visibility="visible" />
 

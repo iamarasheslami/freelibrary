@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.Locale
+import kotlin.math.roundToInt
 
 /**
  * How the reader paints a page: the colours of the app's current theme and the text size. With
@@ -19,6 +20,11 @@ data class ReaderStyle(
     val paged: Boolean = false,
     val pageHeight: Int = 0,
     val rightToLeft: Boolean = false,
+    /**
+     * The app's size setting as a factor (0.85 for Small). The web view draws at the phone's own
+     * density and ignores the app's, so the text size has to follow the setting through this.
+     */
+    val appScale: Float = 1f,
 ) {
     private val pageBoxHeight: String get() = if (pageHeight > 0) "${pageHeight}px" else "100vh"
 
@@ -27,7 +33,7 @@ data class ReaderStyle(
         val text = hex(textColor)
         val background = hex(backgroundColor)
         val link = hex(linkColor)
-        val percent = textPercent.coerceIn(MIN_TEXT_PERCENT, MAX_TEXT_PERCENT)
+        val percent = (textPercent.coerceIn(MIN_TEXT_PERCENT, MAX_TEXT_PERCENT) * appScale).roundToInt()
         val sheet = if (paged) pagedCss(text, background, link, percent) else scrollCss(text, background, link, percent)
         return if (rightToLeft) sheet + "\n" + rightToLeftCss() else sheet
     }

@@ -27,7 +27,7 @@ const val ARG_BOOK_ID = "bookId"
 
 private const val NO_BOOK = -1L
 
-/** What a book's page shows: nothing yet, the book with its shelf buttons, or a notice that it is gone. */
+/** What a book's page shows: nothing yet, the book with its shelf state, or a notice that it is gone. */
 sealed interface BookPageUiState {
     data object Loading : BookPageUiState
 
@@ -36,7 +36,6 @@ sealed interface BookPageUiState {
     data class Content(
         val details: BookDetails,
         val shelfState: ShelfState?,
-        val controls: ShelfControls,
     ) : BookPageUiState
 }
 
@@ -60,7 +59,7 @@ class BookPageViewModel
                         flowOf(BookPageUiState.NotFound)
                     } else {
                         readingStateRepository.observeStateOf(bookId).map { state ->
-                            BookPageUiState.Content(details, state, shelfControlsFor(state))
+                            BookPageUiState.Content(details, state)
                         }
                     }
                 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BookPageUiState.Loading)
@@ -79,13 +78,16 @@ class BookPageViewModel
             viewModelScope.launch { downloads.delete(bookId, format) }
         }
 
-        fun onShelfAction(action: ShelfAction) {
-            viewModelScope.launch {
-                when (action) {
-                    ShelfAction.SAVE -> readingStateRepository.saveForLater(bookId)
-                    ShelfAction.MARK_FINISHED -> readingStateRepository.markFinished(bookId)
-                    ShelfAction.REMOVE -> readingStateRepository.removeFromShelf(bookId)
-                }
-            }
+        fun onToggleSaved() {
+            viewModelScope.launch { readingStateRepository.toggleSaved(bookId) }
+        }
+
+        fun onToggleFinished() {
+            viewModelScope.launch { readingStateRepository.toggleFinished(bookId) }
+        }
+
+        /** Back to the beginning: forgets the reading position and leaves Currently Reading. */
+        fun onRestart() {
+            viewModelScope.launch { readingStateRepository.restart(bookId) }
         }
     }

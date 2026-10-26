@@ -89,3 +89,9 @@ internal object PageMath {
         return atRightEdge != rightToLeft
     }
 }
+
+/** The page height in the units the web view lays a page out in: the view's pixels over the screen's density, less one so it never overflows. */
+internal fun cssPageHeight(
+    heightPixels: Int,
+    density: Float,
+): Int = if (heightPixels <= 0 || density <= 0f) 0 else (heightPixels / density).toInt() - 1
