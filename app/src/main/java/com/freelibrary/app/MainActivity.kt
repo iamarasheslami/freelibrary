@@ -116,6 +116,8 @@ class MainActivity : AppCompatActivity() {
         navController: NavController,
         tab: MainTab,
     ) {
+        // Leaving Search for another tab closes it, so its text and results are gone when the reader comes back.
+        navController.popBackStack(R.id.searchFragment, true)
         if (navController.currentDestination?.id == tab.destinationId) return
         navController.navigate(
             tab.destinationId,
