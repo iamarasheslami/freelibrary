@@ -93,17 +93,6 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <TextView
-                    android:id="@+id/bookPageStatus"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_m"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurface"
-                    android:visibility="gone"
-                    tools:text="Currently reading"
-                    tools:visibility="visible" />
-
                 <LinearLayout
                     android:id="@+id/bookPageFiles"
                     android:layout_width="match_parent"
@@ -132,21 +121,12 @@
 
                 </LinearLayout>
 
-                <!-- The actions under the cover and title: Read, Download, the shelf buttons, Bookmarks and Delete. -->
-                <HorizontalScrollView
+                <!-- The actions under the cover and title: always all there, wrapping onto centred rows. -->
+                <com.freelibrary.app.ui.widget.CenteredFlowLayout
+                    android:id="@+id/bookPageActions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_s"
-                    android:overScrollMode="never"
-                    android:scrollbars="none">
-
-                    <LinearLayout
-                        android:id="@+id/bookPageActions"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal" />
-
-                </HorizontalScrollView>
+                    android:layout_marginTop="@dimen/spacing_s" />
 
                 <TextView
                     android:id="@+id/bookPageAboutHeading"
@@ -166,8 +146,10 @@
                     android:layout_marginTop="@dimen/spacing_s"
                     android:textAppearance="?attr/textAppearanceBodyLarge"
                     android:textColor="?attr/colorOnSurface"
+                    android:breakStrategy="simple"
+                    android:hyphenationFrequency="none"
                     android:justificationMode="inter_word"
-                    android:textIsSelectable="true"
+                    android:letterSpacing="0"
                     android:visibility="gone"
                     tools:targetApi="o"
                     tools:text="@tools:sample/lorem/random"

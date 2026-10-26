@@ -128,13 +128,12 @@ class BookPageViewModelTest {
     }
 
     @Test
-    fun `a book on no shelf offers Save`() =
+    fun `a book on no shelf has no shelf state`() =
         runTest {
             val content = viewModel().content()
 
             assertEquals("Pride and Prejudice", content.details.title)
             assertNull(content.shelfState)
-            assertEquals(shelfControlsFor(null), content.controls)
         }
 
     @Test
@@ -154,38 +153,40 @@ class BookPageViewModelTest {
         }
 
     @Test
-    fun `Save puts the book on the Want to Read shelf and the buttons follow`() =
+    fun `Save puts the book on the Want to Read shelf and a second tap takes it off`() =
         runTest {
             val viewModel = viewModel()
             viewModel.content()
 
-            viewModel.onShelfAction(ShelfAction.SAVE)
+            viewModel.onToggleSaved()
+            viewModel.uiState.first { it is BookPageUiState.Content && it.shelfState == ShelfState.WANT_TO_READ }
 
-            val content =
-                viewModel.uiState.first { it is BookPageUiState.Content && it.shelfState == ShelfState.WANT_TO_READ }
-            assertEquals(shelfControlsFor(ShelfState.WANT_TO_READ), (content as BookPageUiState.Content).controls)
+            viewModel.onToggleSaved()
+            viewModel.uiState.first { it is BookPageUiState.Content && it.shelfState == null }
         }
 
     @Test
-    fun `Mark as finished moves a book being read to Finished`() =
+    fun `Finished moves a book being read to Finished and a second tap takes it off`() =
         runTest {
             readingState.setState(bookId, ShelfState.READING)
             val viewModel = viewModel()
             viewModel.content()
 
-            viewModel.onShelfAction(ShelfAction.MARK_FINISHED)
-
+            viewModel.onToggleFinished()
             viewModel.uiState.first { it is BookPageUiState.Content && it.shelfState == ShelfState.FINISHED }
+
+            viewModel.onToggleFinished()
+            viewModel.uiState.first { it is BookPageUiState.Content && it.shelfState == null }
         }
 
     @Test
-    fun `Remove takes the book off its shelf`() =
+    fun `Start over takes a book being read off Currently Reading`() =
         runTest {
-            readingState.setState(bookId, ShelfState.WANT_TO_READ)
+            readingState.setState(bookId, ShelfState.READING)
             val viewModel = viewModel()
             viewModel.content()
 
-            viewModel.onShelfAction(ShelfAction.REMOVE)
+            viewModel.onRestart()
 
             viewModel.uiState.first { it is BookPageUiState.Content && it.shelfState == null }
         }

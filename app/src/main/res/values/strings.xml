@@ -131,12 +131,6 @@
     </plurals>
     <string name="book_page_about">About this book</string>
     <string name="book_page_not_found">This book is not in the catalog any more.</string>
-    <string name="book_page_status_want_to_read">On your Want to Read list</string>
-    <string name="book_page_status_reading">Currently reading</string>
-    <string name="book_page_status_finished">Finished</string>
-    <string name="shelf_action_save">Save for later</string>
-    <string name="shelf_action_mark_finished">Mark as finished</string>
-    <string name="shelf_action_remove">Remove from my shelf</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_summary">Save your shelves, reading progress, bookmarks, highlights, settings and downloaded books to a file, or restore them from one. Nothing leaves your phone unless you move the file yourself.</string>
     <string name="settings_backup_export">Export</string>
@@ -158,7 +152,6 @@
     <string name="backup_error_failed">Something went wrong and the backup was not completed.</string>
     <string name="backup_error_empty">This backup holds nothing to restore.</string>
     <string name="book_files_none">This book has no file the app can open.</string>
-    <string name="book_files_downloaded">Downloaded: %1$s</string>
     <string name="book_files_waiting">Waiting for another download to finish…</string>
     <string name="book_files_downloading">Downloading %1$s…</string>
     <string name="book_files_downloading_percent">Downloading %1$s… %2$d%%</string>
@@ -173,6 +166,14 @@
     <string name="download_error_too_large">This file is too large to download.</string>
     <string name="download_error_storage">The file could not be saved. Check that the phone has free space.</string>
     <string name="book_files_read">Read</string>
+    <string name="book_action_save">Save</string>
+    <string name="book_action_saved">Saved</string>
+    <string name="book_action_finished">Finished</string>
+    <string name="book_action_restart">Start over</string>
+    <string name="book_action_delete">Delete</string>
+    <string name="book_restart_title">Start this book over?</string>
+    <string name="book_restart_message">Your reading position will be lost and the book leaves Currently Reading. Bookmarks stay.</string>
+    <string name="book_format_downloaded">%1$s  ✓</string>
     <string name="book_action_download">Download</string>
     <string name="reader_opening">Opening the book</string>
     <string name="reader_chapter_label">Chapter %1$d of %2$d</string>

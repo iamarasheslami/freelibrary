@@ -19,8 +19,8 @@ import javax.inject.Singleton
  *   already Already Read;
  * - Save moves a book that is on no shelf, or only being looked at (Currently Reading), to Want
  *   to Read, and does nothing for a book that is already wanted or already read;
- * - the reader can set any state manually, and remove a book from its shelf.
- * Removing a book never touches its saved reading position, and downloading or deleting a
+ * - the reader can set any state manually, switch Save and Finished on and off, and remove a book
+ *   from its shelf. Removing a book never touches its saved reading position (only starting over does), and downloading or deleting a
  * downloaded file never changes the shelf. Each rule runs as one transaction.
  */
 @Singleton
@@ -60,6 +60,41 @@ class ReadingStateRepository
                 when (bookShelfStateDao.getForBook(bookId)?.state) {
                     null, ShelfState.READING -> write(bookId, ShelfState.WANT_TO_READ)
                     ShelfState.WANT_TO_READ, ShelfState.FINISHED -> Unit
+                }
+            }
+        }
+
+        /** The Save button is a switch: saves a book, or takes a saved one off the Want to Read shelf. A finished book is left alone. */
+        suspend fun toggleSaved(bookId: Long) {
+            database.withTransaction {
+                when (bookShelfStateDao.getForBook(bookId)?.state) {
+                    ShelfState.WANT_TO_READ -> bookShelfStateDao.delete(bookId)
+                    null, ShelfState.READING -> write(bookId, ShelfState.WANT_TO_READ)
+                    ShelfState.FINISHED -> Unit
+                }
+            }
+        }
+
+        /** The Finished button is a switch: marks a book finished, or takes a finished one off its shelf. */
+        suspend fun toggleFinished(bookId: Long) {
+            database.withTransaction {
+                if (bookShelfStateDao.getForBook(bookId)?.state == ShelfState.FINISHED) {
+                    bookShelfStateDao.delete(bookId)
+                } else {
+                    write(bookId, ShelfState.FINISHED)
+                }
+            }
+        }
+
+        /**
+         * Start over: a book being read goes back to its beginning, losing its saved reading position,
+         * and leaves Currently Reading. Any other book is left as it is. Bookmarks and highlights stay.
+         */
+        suspend fun restart(bookId: Long) {
+            database.withTransaction {
+                if (bookShelfStateDao.getForBook(bookId)?.state == ShelfState.READING) {
+                    database.readingProgressDao().delete(bookId)
+                    bookShelfStateDao.delete(bookId)
                 }
             }
         }

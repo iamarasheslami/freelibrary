@@ -3,73 +3,89 @@ package com.freelibrary.app.ui.bookpage
 import com.freelibrary.app.data.download.BookFiles
 import com.freelibrary.app.data.download.DownloadProgress
 import com.freelibrary.app.data.download.Transfer
+import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.domain.model.BookFileFormat
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class BookActionsTest {
-    private val controls = ShelfControls(primary = ShelfAction.SAVE, secondary = ShelfAction.MARK_FINISHED)
+    private fun List<BookActionState>.of(action: BookAction) = first { it.action == action }
 
     @Test
-    fun `a book with nothing downloaded offers download, the shelf buttons and bookmarks`() {
-        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), emptyList(), null)
-
-        assertEquals(
+    fun `the same buttons are always there, in the same order`() {
+        val everyAction =
             listOf(
-                BookAction.Download,
-                BookAction.Shelf(ShelfAction.SAVE),
-                BookAction.Shelf(ShelfAction.MARK_FINISHED),
-                BookAction.Bookmarks,
-            ),
-            bookActionsFor(files, controls),
-        )
-    }
+                BookAction.READ,
+                BookAction.DOWNLOAD,
+                BookAction.SAVE,
+                BookAction.FINISHED,
+                BookAction.RESTART,
+                BookAction.BOOKMARKS,
+                BookAction.DELETE_DOWNLOAD,
+            )
 
-    @Test
-    fun `a downloaded book offers read first and delete last`() {
+        assertEquals(everyAction, bookActionsFor(null, null).map { it.action })
         val files = BookFiles(listOf(BookFileFormat.EPUB), listOf(BookFileFormat.EPUB), null)
-
-        assertEquals(
-            listOf(
-                BookAction.Read,
-                BookAction.Shelf(ShelfAction.SAVE),
-                BookAction.Shelf(ShelfAction.MARK_FINISHED),
-                BookAction.Bookmarks,
-                BookAction.DeleteDownload,
-            ),
-            bookActionsFor(files, controls),
-        )
+        assertEquals(everyAction, bookActionsFor(files, ShelfState.READING).map { it.action })
     }
 
     @Test
-    fun `download stays while another format is still missing`() {
-        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), listOf(BookFileFormat.EPUB), null)
-
-        assertEquals(listOf(BookAction.Read, BookAction.Download), bookActionsFor(files, null).take(2))
-    }
-
-    @Test
-    fun `a running download offers cancel instead of download, and no delete`() {
-        val transfer = Transfer.Running(BookFileFormat.PDF, DownloadProgress(10L, 100L))
-        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), listOf(BookFileFormat.EPUB), transfer)
-
+    fun `a book with nothing downloaded can be downloaded but not read or deleted`() {
+        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), emptyList(), null)
         val actions = bookActionsFor(files, null)
 
-        assertEquals(listOf(BookAction.Read, BookAction.CancelDownload, BookAction.Bookmarks), actions)
+        assertEquals(false, actions.of(BookAction.READ).enabled)
+        assertEquals(true, actions.of(BookAction.DOWNLOAD).enabled)
+        assertEquals(false, actions.of(BookAction.DELETE_DOWNLOAD).enabled)
     }
 
     @Test
-    fun `a book with no openable file still has bookmarks and its shelf buttons`() {
-        val files = BookFiles(emptyList(), emptyList(), null)
+    fun `a book with every format downloaded can be read and deleted but not downloaded again`() {
+        val both = listOf(BookFileFormat.EPUB, BookFileFormat.PDF)
+        val actions = bookActionsFor(BookFiles(both, both, null), null)
 
-        assertEquals(
-            listOf(BookAction.Shelf(ShelfAction.SAVE), BookAction.Shelf(ShelfAction.MARK_FINISHED), BookAction.Bookmarks),
-            bookActionsFor(files, controls),
-        )
+        assertEquals(true, actions.of(BookAction.READ).enabled)
+        assertEquals(false, actions.of(BookAction.DOWNLOAD).enabled)
+        assertEquals(true, actions.of(BookAction.DELETE_DOWNLOAD).enabled)
     }
 
     @Test
-    fun `before anything is loaded only bookmarks is offered`() {
-        assertEquals(listOf(BookAction.Bookmarks), bookActionsFor(null, null))
+    fun `a book with one of two formats downloaded can still be downloaded`() {
+        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), listOf(BookFileFormat.EPUB), null)
+
+        assertEquals(true, bookActionsFor(files, null).of(BookAction.DOWNLOAD).enabled)
+    }
+
+    @Test
+    fun `while a download runs Download becomes Cancel and Delete is off`() {
+        val running = Transfer.Running(BookFileFormat.EPUB, DownloadProgress(10L, 100L))
+        val files = BookFiles(listOf(BookFileFormat.EPUB, BookFileFormat.PDF), listOf(BookFileFormat.PDF), running)
+        val actions = bookActionsFor(files, null)
+
+        assertEquals(BookAction.CANCEL_DOWNLOAD, actions[1].action)
+        assertEquals(true, actions[1].enabled)
+        assertEquals(false, actions.of(BookAction.DELETE_DOWNLOAD).enabled)
+    }
+
+    @Test
+    fun `Save is highlighted for a wanted book and off for a finished one`() {
+        assertEquals(false, bookActionsFor(null, null).of(BookAction.SAVE).selected)
+        assertEquals(true, bookActionsFor(null, ShelfState.WANT_TO_READ).of(BookAction.SAVE).selected)
+        assertEquals(false, bookActionsFor(null, ShelfState.READING).of(BookAction.SAVE).selected)
+        assertEquals(false, bookActionsFor(null, ShelfState.FINISHED).of(BookAction.SAVE).enabled)
+    }
+
+    @Test
+    fun `Finished is highlighted only for a finished book`() {
+        assertEquals(true, bookActionsFor(null, ShelfState.FINISHED).of(BookAction.FINISHED).selected)
+        assertEquals(false, bookActionsFor(null, ShelfState.READING).of(BookAction.FINISHED).selected)
+    }
+
+    @Test
+    fun `Start over works only while the book is being read`() {
+        for (state in listOf(null, ShelfState.WANT_TO_READ, ShelfState.FINISHED)) {
+            assertEquals(false, bookActionsFor(null, state).of(BookAction.RESTART).enabled)
+        }
+        assertEquals(true, bookActionsFor(null, ShelfState.READING).of(BookAction.RESTART).enabled)
     }
 }

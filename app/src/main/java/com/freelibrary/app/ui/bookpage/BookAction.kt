@@ -1,46 +1,70 @@
 package com.freelibrary.app.ui.bookpage
 
 import com.freelibrary.app.data.download.BookFiles
+import com.freelibrary.app.data.local.entity.ShelfState
 
 /** One icon button under a book's cover and title. */
-sealed interface BookAction {
+enum class BookAction {
     /** Opens the book; with several downloaded formats the reader picks one from a list. */
-    data object Read : BookAction
+    READ,
 
     /** Downloads the book; the reader picks the format from a list of everything offered. */
-    data object Download : BookAction
+    DOWNLOAD,
 
-    data object CancelDownload : BookAction
+    /** Takes the place of [DOWNLOAD] while a download is waiting or running. */
+    CANCEL_DOWNLOAD,
 
-    data object DeleteDownload : BookAction
+    /** A switch: puts the book on the Want to Read shelf, or takes it off. */
+    SAVE,
 
-    data object Bookmarks : BookAction
+    /** A switch: marks the book finished, or takes that back. */
+    FINISHED,
 
-    data class Shelf(
-        val action: ShelfAction,
-    ) : BookAction
+    /** Back to the beginning: forgets the reading position and leaves Currently Reading. */
+    RESTART,
+
+    BOOKMARKS,
+
+    DELETE_DOWNLOAD,
 }
 
 /**
- * The buttons a book's page shows, in order: Read, then Download (or Cancel while a download is
- * waiting or running), then the shelf buttons, Bookmarks, and Delete download last. [files] is null
- * until the book's files are known, and [controls] until the book is loaded.
+ * A button as the page draws it: [enabled] false means it is shown dimmed and cannot be tapped, and
+ * [selected] true means it is highlighted because its state is on.
+ */
+data class BookActionState(
+    val action: BookAction,
+    val enabled: Boolean,
+    val selected: Boolean = false,
+)
+
+/**
+ * The buttons a book's page always shows, in this order: Read, Download (Cancel while a download is
+ * waiting or running), Save, Finished, Start over, Bookmarks and Delete download. They never come and
+ * go; they are only enabled or not, highlighted or not. [files] is null until the book's files are
+ * known, [shelfState] is null for a book on no shelf.
  */
 fun bookActionsFor(
     files: BookFiles?,
-    controls: ShelfControls?,
-): List<BookAction> =
-    buildList {
-        if (files != null) {
-            if (files.downloaded.isNotEmpty()) add(BookAction.Read)
-            if (files.busy) {
-                add(BookAction.CancelDownload)
-            } else if (files.toDownload.isNotEmpty()) {
-                add(BookAction.Download)
-            }
-        }
-        controls?.primary?.let { add(BookAction.Shelf(it)) }
-        controls?.secondary?.let { add(BookAction.Shelf(it)) }
-        add(BookAction.Bookmarks)
-        if (files != null && !files.busy && files.downloaded.isNotEmpty()) add(BookAction.DeleteDownload)
-    }
+    shelfState: ShelfState?,
+): List<BookActionState> {
+    val downloaded = files?.downloaded.orEmpty()
+    val busy = files?.busy == true
+    return listOf(
+        BookActionState(BookAction.READ, enabled = downloaded.isNotEmpty()),
+        if (busy) {
+            BookActionState(BookAction.CANCEL_DOWNLOAD, enabled = true)
+        } else {
+            BookActionState(BookAction.DOWNLOAD, enabled = files?.toDownload?.isNotEmpty() == true)
+        },
+        BookActionState(
+            BookAction.SAVE,
+            enabled = shelfState != ShelfState.FINISHED,
+            selected = shelfState == ShelfState.WANT_TO_READ,
+        ),
+        BookActionState(BookAction.FINISHED, enabled = true, selected = shelfState == ShelfState.FINISHED),
+        BookActionState(BookAction.RESTART, enabled = shelfState == ShelfState.READING),
+        BookActionState(BookAction.BOOKMARKS, enabled = true),
+        BookActionState(BookAction.DELETE_DOWNLOAD, enabled = !busy && downloaded.isNotEmpty()),
+    )
+}
