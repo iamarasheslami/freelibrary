@@ -1,0 +1,19 @@
+FreeLibrary is a fast, private reader for public-domain books. Browse a built-in catalog of about 78,000 titles, download the ones you want and read them offline.
+
+<b>Features</b>
+<ul>
+<li>Search the full catalog by title, author, language and genre</li>
+<li>Download books in the formats you prefer and read them in the built-in reader</li>
+<li>Shelves for saved, currently-reading and finished books, with reading progress and bookmarks</li>
+<li>Light, dark and system themes</li>
+<li>Back up and restore your library to a file you control</li>
+</ul>
+
+<b>Private by design</b>
+<ul>
+<li>No accounts, no ads, no analytics, no tracking</li>
+<li>Only two permissions: internet and network state</li>
+<li>Your shelves and progress never leave your device</li>
+</ul>
+
+FreeLibrary is free software released under the GNU GPLv3.
