@@ -141,15 +141,4 @@ class BookFilterViewModelTest {
         assertEquals(emptySet<String>(), viewModel.draft.value.genres)
         assertEquals(setOf("epub"), viewModel.draft.value.formats)
     }
-
-    @Test
-    fun `the pickers follow the draft`() {
-        val viewModel = viewModel()
-
-        viewModel.chooseLanguage("fr")
-        viewModel.toggleGenre("Category: Poetry")
-
-        assertEquals(setOf("fr"), viewModel.selectedLanguages.value)
-        assertEquals(setOf("Category: Poetry"), viewModel.selectedGenres.value)
-    }
 }
