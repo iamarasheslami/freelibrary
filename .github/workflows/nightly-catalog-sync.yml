@@ -5,6 +5,11 @@ on:
     - cron: "0 3 * * *"
   workflow_dispatch:
 
+# The workflow's own token only reads this repository; the push to the data repository
+# uses the CATALOG_DATA_PAT secret.
+permissions:
+  contents: read
+
 # Only one sync may run at a time: two overlapping runs would both push to the data
 # repository and the second push would be rejected. A queued run waits for the running one.
 concurrency:
@@ -16,17 +21,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout freelibrary
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Checkout freelibrary-catalog-data
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: iamarasheslami/freelibrary-catalog-data
           path: catalog-data
           token: ${{ secrets.CATALOG_DATA_PAT }}
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "21"
