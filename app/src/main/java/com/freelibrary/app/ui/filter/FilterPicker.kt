@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.freelibrary.app.R
 import com.freelibrary.app.databinding.DialogFilterPickerBinding
 import com.freelibrary.app.databinding.ItemFilterPickerOptionBinding
+import com.freelibrary.app.domain.model.BookFilter
 import com.freelibrary.app.domain.model.FilterOption
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CoroutineScope
@@ -59,9 +60,11 @@ internal class FilterPicker(
     private val onToggle: (String) -> Unit,
     private val onClear: () -> Unit,
 ) {
+    /** Shows the picker. [draft] is the filter being edited and [selectedOf] reads this picker's choices out of it. */
     fun show(
         scope: CoroutineScope,
-        selected: StateFlow<Set<String>>,
+        draft: StateFlow<BookFilter>,
+        selectedOf: (BookFilter) -> Set<String>,
     ) {
         val binding = DialogFilterPickerBinding.inflate(LayoutInflater.from(context))
         var query = ""
@@ -73,7 +76,7 @@ internal class FilterPicker(
             }
 
         fun refresh() {
-            val rows = filterPickerRows(options, query, label, selected.value)
+            val rows = filterPickerRows(options, query, label, selectedOf(draft.value))
             adapter.submitList(rows)
             binding.filterPickerNoMatches.isVisible = rows.isEmpty()
         }
@@ -82,7 +85,7 @@ internal class FilterPicker(
             query = it?.toString().orEmpty()
             refresh()
         }
-        val job = scope.launch { selected.collect { refresh() } }
+        val job = scope.launch { draft.collect { refresh() } }
 
         dialog =
             MaterialAlertDialogBuilder(context)

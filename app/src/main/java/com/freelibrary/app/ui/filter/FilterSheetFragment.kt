@@ -125,7 +125,7 @@ class FilterSheetFragment : BottomSheetDialogFragment() {
             multiple = false,
             onToggle = viewModel::chooseLanguage,
             onClear = viewModel::clearLanguage,
-        ).show(viewLifecycleOwner.lifecycleScope, viewModel.selectedLanguages)
+        ).show(viewLifecycleOwner.lifecycleScope, viewModel.draft) { setOfNotNull(it.language) }
     }
 
     private fun pickGenres(options: BookFilterOptions) {
@@ -137,7 +137,7 @@ class FilterSheetFragment : BottomSheetDialogFragment() {
             multiple = true,
             onToggle = viewModel::toggleGenre,
             onClear = viewModel::clearGenres,
-        ).show(viewLifecycleOwner.lifecycleScope, viewModel.selectedGenres)
+        ).show(viewLifecycleOwner.lifecycleScope, viewModel.draft) { it.genres }
     }
 
     private fun formatLabel(option: FilterOption): String =
