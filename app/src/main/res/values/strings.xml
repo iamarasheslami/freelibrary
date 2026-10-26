@@ -94,9 +94,6 @@
     <string name="profile_title">Profile</string>
     <string name="profile_picture_description">Profile picture</string>
     <string name="profile_finished">Finished</string>
-    <string name="profile_empty_reading">Books you start reading will appear here.</string>
-    <string name="profile_empty_want_to_read">Books you save for later will appear here.</string>
-    <string name="profile_empty_finished">Books you finish will appear here.</string>
     <string name="profile_counts">%1$s · %2$s</string>
     <string name="settings_profile">Profile</string>
     <string name="settings_profile_summary">Name, birthday and picture</string>

@@ -10,7 +10,7 @@ import kotlin.math.max
 /**
  * Lays its children out left to right and wraps to a new row when the next child does not fit.
  * Every row is centered, so a short last row sits in the middle instead of at the start. It never
- * scrolls: the rows simply make the view taller.
+ * scrolls: the rows simply make the view taller. A child's margins are the space kept around it.
  */
 class CenteredFlowLayout
     @JvmOverloads
@@ -34,14 +34,14 @@ class CenteredFlowLayout
                 val child = getChildAt(index)
                 if (child.isGone) continue
                 child.measure(childSpecWidth, childSpecHeight)
-                if (rowWidth > 0 && rowWidth + child.measuredWidth > available) {
+                if (rowWidth > 0 && rowWidth + widthOf(child) > available) {
                     height += rowHeight
                     widest = max(widest, rowWidth)
                     rowWidth = 0
                     rowHeight = 0
                 }
-                rowWidth += child.measuredWidth
-                rowHeight = max(rowHeight, child.measuredHeight)
+                rowWidth += widthOf(child)
+                rowHeight = max(rowHeight, heightOf(child))
             }
             height += rowHeight
             widest = max(widest, rowWidth)
@@ -63,17 +63,38 @@ class CenteredFlowLayout
             var y = paddingTop
             while (index < childCount) {
                 val row = rowStartingAt(index, available)
-                val rowWidth = row.sumOf { it.measuredWidth }
+                val rowWidth = row.sumOf { widthOf(it) }
                 var x = paddingLeft + (available - rowWidth) / 2
-                val rowHeight = row.maxOf { it.measuredHeight }
+                val rowHeight = row.maxOf { heightOf(it) }
                 for (child in row) {
-                    child.layout(x, y, x + child.measuredWidth, y + child.measuredHeight)
-                    x += child.measuredWidth
+                    val margins = child.layoutParams as MarginLayoutParams
+                    val left = x + margins.leftMargin
+                    val top = y + margins.topMargin
+                    child.layout(left, top, left + child.measuredWidth, top + child.measuredHeight)
+                    x += widthOf(child)
                 }
                 y += rowHeight
                 index = indexAfter(row, index)
             }
         }
+
+        private fun widthOf(child: View): Int {
+            val margins = child.layoutParams as MarginLayoutParams
+            return child.measuredWidth + margins.leftMargin + margins.rightMargin
+        }
+
+        private fun heightOf(child: View): Int {
+            val margins = child.layoutParams as MarginLayoutParams
+            return child.measuredHeight + margins.topMargin + margins.bottomMargin
+        }
+
+        override fun generateDefaultLayoutParams(): LayoutParams = MarginLayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+
+        override fun generateLayoutParams(attrs: AttributeSet?): LayoutParams = MarginLayoutParams(context, attrs)
+
+        override fun generateLayoutParams(layoutParams: LayoutParams): LayoutParams = MarginLayoutParams(layoutParams)
+
+        override fun checkLayoutParams(layoutParams: LayoutParams?): Boolean = layoutParams is MarginLayoutParams
 
         /** The visible children that share one row, starting at child [start]. */
         private fun rowStartingAt(
@@ -87,9 +108,9 @@ class CenteredFlowLayout
                 if (child.isGone) {
                     continue
                 }
-                if (row.isNotEmpty() && width + child.measuredWidth > available) break
+                if (row.isNotEmpty() && width + widthOf(child) > available) break
                 row += child
-                width += child.measuredWidth
+                width += widthOf(child)
             }
             return row
         }

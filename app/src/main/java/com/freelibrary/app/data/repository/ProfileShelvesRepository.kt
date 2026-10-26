@@ -32,18 +32,16 @@ class ProfileShelvesRepository
                     section(
                         "continue-reading",
                         R.string.home_continue_reading,
-                        R.string.profile_empty_reading,
                         reading,
                         ViewMoreTarget.ContinueReading,
                     ),
                     section(
                         "want-to-read",
                         R.string.home_want_to_read,
-                        R.string.profile_empty_want_to_read,
                         wantToRead,
                         ViewMoreTarget.WantToRead,
                     ),
-                    section("finished", R.string.profile_finished, R.string.profile_empty_finished, finished, ViewMoreTarget.Finished),
+                    section("finished", R.string.profile_finished, finished, ViewMoreTarget.Finished),
                 )
             }.distinctUntilChanged()
 
@@ -56,8 +54,7 @@ class ProfileShelvesRepository
         private fun section(
             id: String,
             titleRes: Int,
-            emptyRes: Int,
             slider: BookSlider,
             viewMore: ViewMoreTarget,
-        ) = ProfileSection(id, titleRes, emptyRes, slider.books, slider.hasMore, viewMore)
+        ) = ProfileSection(id, titleRes, slider.books, slider.hasMore, viewMore)
     }
