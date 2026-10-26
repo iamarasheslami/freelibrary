@@ -66,6 +66,18 @@ To re-apply the ruleset after editing the file:
 gh api --method PUT repos/<owner>/<repo>/rulesets/<ruleset-id> --input .github/rulesets/main.json
 ```
 
+## Release builds
+
+CI builds the release variant unsigned, to prove that shrinking and obfuscation work. A signed
+release is built on the maintainer's machine:
+
+1. Create a signing key once and keep it outside the repository, with a backup. A lost key means
+   the app can no longer be updated for existing users.
+   `keytool -genkeypair -v -keystore <path>/freelibrary-release.jks -alias freelibrary -keyalg RSA -keysize 4096 -validity 9125`
+2. Create `keystore.properties` in the repository root with `storeFile`, `storePassword`, `keyAlias`
+   and `keyPassword`. `storeFile` is an absolute path. The file and `*.jks` are ignored by git.
+3. Run `./gradlew assembleRelease`. The signed APK is written to `app/build/outputs/apk/release/`.
+
 ## Dependency updates
 
 Dependabot opens one grouped pull request per week for Gradle dependencies and one for GitHub
