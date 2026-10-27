@@ -78,6 +78,8 @@ release is built on the maintainer's machine:
    and `keyPassword`. `storeFile` is an absolute path. The file and `*.jks` are ignored by git.
 3. Run `./gradlew assembleRelease`. The signed APK is written to `app/build/outputs/apk/release/`.
 
+The full procedure for publishing a version is in [RELEASING.md](RELEASING.md).
+
 ## Dependency updates
 
 Dependabot opens one grouped pull request per week for Gradle dependencies and one for GitHub

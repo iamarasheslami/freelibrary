@@ -1,0 +1,46 @@
+# Changelog
+
+All notable changes to FreeLibrary are listed here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
+[Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+
+- Home shows an explanation with a Try again button when the bundled catalog cannot be opened,
+  for example because the phone has no room to copy it on the first start.
+- Privacy policy (`PRIVACY.md`), security policy (`SECURITY.md`) and store listing text.
+
+### Changed
+
+- On Android 15 and newer the app keeps its content clear of the side bars, the display cutout and
+  the keyboard.
+- Release builds can be signed from a local `keystore.properties` file.
+
+### Security
+
+- Cleartext traffic is disabled for all hosts. GitHub Actions are pinned to commit SHAs and the
+  repository is analysed with CodeQL.
+
+## [0.1.0] - not yet released
+
+First public version.
+
+### Added
+
+- A catalog of more than 78,000 public-domain books that ships inside the app and is kept current
+  by a background sync.
+- Home, Explore and Search with title and author search, typo tolerance, curated shelves, and
+  language, format and genre filters.
+- Book page with Read, Download, Save, Finished, Start over, Bookmarks and Delete actions.
+- EPUB reader (page view or scrolling, right-to-left books, contents list, text size), PDF reader
+  (zoom, dark-theme aware) and plain-text reader. Reading positions are saved automatically.
+- Shelves (Continue Reading, Want to Read, Finished), bookmarks with notes, and a profile.
+- Downloads with Project Gutenberg mirror fallback.
+- Backup and restore of shelves, bookmarks, settings and downloaded books.
+- Light and dark themes and a Small, Medium and Large interface size.
+- No accounts, advertising, analytics or tracking.
+
+[Unreleased]: https://github.com/iamarasheslami/freelibrary/compare/main...HEAD
+[0.1.0]: https://github.com/iamarasheslami/freelibrary/releases
