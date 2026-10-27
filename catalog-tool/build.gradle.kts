@@ -1,17 +1,17 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm")
+    alias(libs.plugins.kotlin.jvm)
     application
-    id("org.jlleitschuh.gradle.ktlint")
-    id("org.jetbrains.kotlin.plugin.serialization")
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {
     implementation(project(":shared"))
-    implementation("org.apache.commons:commons-compress:1.28.0")
-    implementation("org.xerial:sqlite-jdbc:3.53.4.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.1")
-    testImplementation("junit:junit:4.13.2")
+    implementation(libs.commons.compress)
+    implementation(libs.sqlite.jdbc)
+    implementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.junit)
 }
 
 application {

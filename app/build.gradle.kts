@@ -3,20 +3,20 @@ import java.security.MessageDigest
 import java.util.Properties
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.dagger.hilt.android")
-    id("org.jlleitschuh.gradle.ktlint")
-    id("androidx.navigation.safeargs.kotlin")
-    id("com.google.devtools.ksp")
-    id("org.jetbrains.kotlin.plugin.serialization")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ktlint)
+    alias(libs.plugins.navigation.safeargs)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
     kotlin("kapt")
 }
 
 configurations.all {
     resolutionStrategy {
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0")
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.0")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:${libs.versions.kotlinxSerialization.get()}")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:${libs.versions.kotlinxSerialization.get()}")
     }
 }
 
@@ -109,50 +109,50 @@ dependencies {
     implementation(project(":shared"))
 
     // Core / UI
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.14.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
 
     // Navigation Component
-    implementation("androidx.navigation:navigation-fragment-ktx:2.9.8")
-    implementation("androidx.navigation:navigation-ui-ktx:2.9.8")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.58")
-    kapt("com.google.dagger:hilt-compiler:2.58")
-    kapt("androidx.hilt:hilt-compiler:1.3.0")
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    kapt(libs.androidx.hilt.compiler)
 
     // Room
-    implementation("androidx.room:room-runtime:2.8.5")
-    implementation("androidx.room:room-ktx:2.8.5")
-    ksp("androidx.room:room-compiler:2.8.5")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Settings storage (Preferences DataStore)
-    implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation(libs.androidx.datastore.preferences)
 
     // Paged book lists (the "View more" pages)
-    implementation("androidx.room:room-paging:2.8.5")
-    implementation("androidx.paging:paging-common:3.3.6")
-    implementation("androidx.paging:paging-runtime:3.3.6")
+    implementation(libs.androidx.room.paging)
+    implementation(libs.androidx.paging.common)
+    implementation(libs.androidx.paging.runtime)
 
     // Cover images (Coil 2.x: Views-friendly, capped memory and disk caches)
-    implementation("io.coil-kt:coil:2.7.0")
+    implementation(libs.coil)
     // Networking
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
 
     // Testing (local unit tests)
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("androidx.paging:paging-testing:3.3.6")
-    testImplementation("org.robolectric:robolectric:4.17")
-    testImplementation("androidx.test:core:1.7.0")
-    testImplementation("androidx.room:room-testing:2.8.5")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.1")
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.paging.testing)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.okhttp.mockwebserver)
 }
 tasks.register("fetchCatalogDatabase") {
     group = "freelibrary"

@@ -1,10 +1,10 @@
 plugins {
-    id("com.android.application") version "8.13.2" apply false
-    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
-    id("org.jetbrains.kotlin.jvm") version "2.1.0" apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0" apply false
-    id("com.google.dagger.hilt.android") version "2.58" apply false
-    id("org.jlleitschuh.gradle.ktlint") version "12.3.0" apply false
-    id("androidx.navigation.safeargs.kotlin") version "2.9.8" apply false
-    id("com.google.devtools.ksp") version "2.1.0-1.0.29" apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.hilt) apply false
+    alias(libs.plugins.ktlint) apply false
+    alias(libs.plugins.navigation.safeargs) apply false
+    alias(libs.plugins.ksp) apply false
 }
