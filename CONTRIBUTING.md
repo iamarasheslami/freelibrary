@@ -89,6 +89,9 @@ Kotlin and KSP, Hilt, AndroidX minor versions, Gradle wrapper minor versions) ar
 excluded: the project stays on one tested toolchain, and those upgrades are done by hand as a
 single change.
 
+Every dependency and plugin version is declared once, in `gradle/libs.versions.toml`; the build
+files refer to it as `libs.<name>`. Change a version there, never in a build file.
+
 ## Code of conduct
 
 Be respectful and constructive. This project serves people in difficult circumstances;
