@@ -37,7 +37,8 @@ contacts only these hosts:
 | Host | Purpose |
 | --- | --- |
 | `raw.githubusercontent.com` | Catalog updates (public data repository) |
-| `gutenberg.org` and its published mirrors | Books and covers |
+| `gutenberg.org` | Books and covers |
+| `gutenberg.pglaf.org`, `aleph.gutenberg.org`, `www.mirrorservice.org`, `mirrors.xmission.com` | Project Gutenberg mirrors, used only when a download from `gutenberg.org` fails |
 
 All traffic uses HTTPS; cleartext traffic is disabled. The app collects no personal data, sends no
 telemetry and has no crash reporting service. The reading state it keeps (shelves, positions,
