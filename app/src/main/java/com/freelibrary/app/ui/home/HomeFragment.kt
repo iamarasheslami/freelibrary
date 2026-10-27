@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -64,12 +65,17 @@ class HomeFragment : Fragment() {
             )
         binding.homeList.adapter = adapter
         binding.homeList.applySystemBarInsetsAsPadding()
+        binding.homeFailed.applySystemBarInsetsAsPadding()
+        binding.homeRetry.setOnClickListener { viewModel.retry() }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
+                    val failed = state == HomeUiState.Failed
+                    binding.homeFailed.isVisible = failed
+                    binding.homeList.isVisible = !failed
                     when (state) {
-                        HomeUiState.Loading -> Unit
+                        HomeUiState.Loading, HomeUiState.Failed -> Unit
                         is HomeUiState.Content -> {
                             adapter.submitSections(state.sections)
                             // Tells the system the first screen is ready to use, so start-up time can be measured to this point.
