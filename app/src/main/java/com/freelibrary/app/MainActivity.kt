@@ -2,6 +2,7 @@ package com.freelibrary.app
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -14,6 +15,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.navOptions
 import com.freelibrary.app.data.repository.CatalogSyncRunner
 import com.freelibrary.app.databinding.ActivityMainBinding
+import com.freelibrary.app.ui.insets.shellInsets
 import com.freelibrary.app.ui.insets.withoutBottomSystemBar
 import com.freelibrary.app.ui.shell.BottomBar
 import com.freelibrary.app.ui.shell.MainTab
@@ -103,11 +105,28 @@ class MainActivity : AppCompatActivity() {
             ViewCompat.requestApplyInsets(binding.root)
         }
         // The bar pads for the navigation bar itself, so while it shows the screens above it must not.
+        // From Android 15 the system draws the app edge to edge and no longer resizes it for the keyboard,
+        // so the content is also kept clear of the side bars and lifted above the keyboard (see shellInsets).
         val barPadding = binding.bottomBar.paddingBottom
+        val edgeToEdge = Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.bottomBar.updatePadding(bottom = barPadding + bars.bottom)
-            if (binding.bottomBar.isVisible) insets.withoutBottomSystemBar() else insets
+            val sides = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val shell =
+                shellInsets(
+                    edgeToEdge = edgeToEdge,
+                    sideLeft = sides.left,
+                    sideRight = sides.right,
+                    navigationBottom = bars.bottom,
+                    imeBottom = ime.bottom,
+                    bottomBarShown = binding.bottomBar.isVisible,
+                )
+            if (edgeToEdge) {
+                binding.appContent.updatePadding(left = shell.left, right = shell.right, bottom = shell.contentBottom)
+            }
+            binding.bottomBar.updatePadding(bottom = barPadding + shell.barBottom)
+            if (shell.consumeBottomSystemBar) insets.withoutBottomSystemBar() else insets
         }
     }
 
