@@ -4,6 +4,8 @@
     <string name="home_continue_reading">Continue Reading</string>
     <string name="home_want_to_read">Want to Read</string>
     <string name="home_recently_added">Recently Added</string>
+    <string name="home_failed_message">The catalog could not be opened. This usually means the phone is almost out of storage. Free some space (the catalog needs about 200 MB) and try again.</string>
+    <string name="home_failed_retry">Try again</string>
     <string name="shelf_best_books_ever">Best Books Ever</string>
     <string name="shelf_harvard_classics">Harvard Classics</string>
     <string name="shelf_nobel_literature">Nobel Prizes in Literature</string>
