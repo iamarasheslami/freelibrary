@@ -5,7 +5,9 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.freelibrary.app.data.local.dao.BookListDao
 import com.freelibrary.app.domain.model.BookFilter
+import com.freelibrary.app.domain.model.BookSlider
 import com.freelibrary.app.domain.model.CatalogDefaults
+import com.freelibrary.app.domain.model.ExploreRow
 import com.freelibrary.app.domain.model.ExploreSection
 import com.freelibrary.app.domain.model.ExploreSections
 import com.freelibrary.app.domain.model.ShelfBookCount
@@ -16,7 +18,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val SECTIONS_PER_PAGE = 10
-private const val LOAD_MORE_WHEN_SECTIONS_LEFT = 2
+private const val LOAD_MORE_WHEN_SECTIONS_LEFT = 5
 
 /**
  * The Explore page: every catalog shelf as a slider, curated collections first. The ordered
@@ -38,8 +40,23 @@ class ExploreRepository
                 cached?.takeIf { it.first == filter }?.second ?: loadSections(filter).also { cached = filter to it }
             }
 
-        /** The Explore page: ten sections at first, ten more each time the reader nears the end. */
-        fun sectionPages(filter: BookFilter = BookFilter()): Flow<PagingData<ExploreSection>> =
+        /** The Explore sections alone, ten at first and ten more each time the reader nears the end. */
+        fun sectionPages(filter: BookFilter = BookFilter()): Flow<PagingData<ExploreSection>> = pages(filter) { it }
+
+        /**
+         * The Explore page: the same pages, each section with its first books from [loadSlider]. The
+         * shelves of one page are read at the same time, and the next page starts while a few sections
+         * are still ahead of the reader, so the end of the list is rarely reached before it is ready.
+         */
+        fun rowPages(
+            filter: BookFilter = BookFilter(),
+            loadSlider: suspend (ExploreSection) -> BookSlider,
+        ): Flow<PagingData<ExploreRow>> = pages(filter) { page -> loadInParallel(page) { ExploreRow(it, loadSlider(it)) } }
+
+        private fun <T : Any> pages(
+            filter: BookFilter,
+            transform: suspend (List<ExploreSection>) -> List<T>,
+        ): Flow<PagingData<T>> =
             Pager(
                 config =
                     PagingConfig(
@@ -48,7 +65,7 @@ class ExploreRepository
                         prefetchDistance = LOAD_MORE_WHEN_SECTIONS_LEFT,
                         enablePlaceholders = false,
                     ),
-                pagingSourceFactory = { ExploreSectionPagingSource { sections(filter) } },
+                pagingSourceFactory = { ExploreSectionPagingSource({ sections(filter) }, transform) },
             ).flow
 
         /** Forget the cached section list, so the shelf sizes are counted again on the next load. */

@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.navOptions
+import com.freelibrary.app.data.repository.BookFilterHolder
 import com.freelibrary.app.data.repository.CatalogSyncRunner
 import com.freelibrary.app.databinding.ActivityMainBinding
 import com.freelibrary.app.ui.insets.shellInsets
@@ -22,6 +23,7 @@ import com.freelibrary.app.ui.shell.MainTab
 import com.freelibrary.app.ui.shell.SplashOverlay
 import com.freelibrary.app.ui.shell.StartupGate
 import com.freelibrary.app.ui.shell.mainTabFor
+import com.freelibrary.app.ui.shell.shouldResetFilter
 import com.freelibrary.app.ui.theme.AppScale
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
@@ -44,6 +46,12 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var startupGate: StartupGate
+
+    @Inject
+    lateinit var filterHolder: BookFilterHolder
+
+    /** The last tab page that was showing; screens opened from a tab do not change it. */
+    private var lastTab: MainTab? = null
 
     private lateinit var binding: ActivityMainBinding
 
@@ -101,7 +109,12 @@ class MainActivity : AppCompatActivity() {
                     ),
             ) { tab -> openTab(navController, tab) }
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            bottomBar.show(mainTabFor(destination.id))
+            val tab = mainTabFor(destination.id)
+            if (tab != null) {
+                if (shouldResetFilter(lastTab, tab)) filterHolder.reset()
+                lastTab = tab
+            }
+            bottomBar.show(tab)
             ViewCompat.requestApplyInsets(binding.root)
         }
         // The bar pads for the navigation bar itself, so while it shows the screens above it must not.

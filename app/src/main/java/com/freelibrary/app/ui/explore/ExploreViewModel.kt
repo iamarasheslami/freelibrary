@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.map
 import com.freelibrary.app.data.repository.BookFilterHolder
 import com.freelibrary.app.data.repository.BookListRepository
 import com.freelibrary.app.data.repository.ExploreRepository
@@ -16,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
@@ -40,12 +38,8 @@ class ExploreViewModel
         val rows: Flow<PagingData<ExploreRow>> =
             filterHolder.filter
                 .flatMapLatest { filter ->
-                    exploreRepository
-                        .sectionPages(filter)
-                        .map { data ->
-                            data.map { section ->
-                                ExploreRow(section, bookListRepository.observeShelfSlider(section.bookshelfName, filter).first())
-                            }
-                        }
+                    exploreRepository.rowPages(filter) { section ->
+                        bookListRepository.observeShelfSlider(section.bookshelfName, filter).first()
+                    }
                 }.cachedIn(viewModelScope)
     }

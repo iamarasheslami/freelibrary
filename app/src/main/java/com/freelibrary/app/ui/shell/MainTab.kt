@@ -16,3 +16,9 @@ enum class MainTab(
 fun mainTabFor(
     @IdRes destinationId: Int?,
 ): MainTab? = MainTab.entries.firstOrNull { it.destinationId == destinationId }
+
+/** The filter chosen in Explore is dropped when the reader moves from the Explore page to another tab. */
+fun shouldResetFilter(
+    previousTab: MainTab?,
+    newTab: MainTab?,
+): Boolean = previousTab == MainTab.EXPLORE && newTab != null && newTab != MainTab.EXPLORE

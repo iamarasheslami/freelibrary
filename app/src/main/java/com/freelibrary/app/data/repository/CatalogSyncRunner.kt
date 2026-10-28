@@ -111,11 +111,16 @@ class CatalogSyncRunner
         fun startOnce() =
             startGuard.runFirstTime {
                 scope.launch {
-                    runIfAllowed(settingsRepository.wifiOnlySync.first(), networkState.isMetered()) { run() }
+                    runIfAllowed(settingsRepository.wifiOnlySync.first(), networkState.isMetered()) {
+                        // A sync that changed the catalog emptied the Explore list, so it is counted again at once.
+                        if (run()?.let { it.added + it.updated > 0 } == true) exploreRepository.sections()
+                    }
                 }
-                // Counts the filter choices in the background once Home has had time to load, so the filter sheet opens at once.
+                // Counts the Explore shelves and the filter choices in the background once Home has had time to load,
+                // so Explore and the filter sheet open at once. Each result is kept, so opening them later costs nothing.
                 scope.launch {
                     delay(FILTER_WARM_UP_DELAY_MS)
+                    exploreRepository.sections()
                     filterOptionsRepository.options()
                 }
             }
