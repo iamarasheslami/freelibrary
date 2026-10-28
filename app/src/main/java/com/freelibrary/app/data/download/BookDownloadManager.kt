@@ -97,17 +97,25 @@ class BookDownloadManager
             }
         }
 
-        /** Starts downloading [format] of [bookId]. Ignored while a download of that book is waiting or running. */
+        /**
+         * Starts downloading [format] of [bookId]. Ignored while a download of that book is waiting or running.
+         * Whether one is is read from the published transfer state, the same state the reader sees, so a retry
+         * is accepted from the moment a failure is shown and never refused because the failed job is still
+         * finishing up.
+         */
         fun start(
             bookId: Long,
             format: BookFileFormat,
         ) {
-            val job = scope.launch(start = CoroutineStart.LAZY) { run(bookId, format) }
-            if (jobs.putIfAbsent(bookId, job) != null) {
-                job.cancel()
-                return
+            var accepted = false
+            transfers.update { current ->
+                val busy = current[bookId].let { it is Transfer.Waiting || it is Transfer.Running }
+                accepted = !busy
+                if (busy) current else current + (bookId to Transfer.Waiting(format))
             }
-            transfers.update { it + (bookId to Transfer.Waiting(format)) }
+            if (!accepted) return
+            val job = scope.launch(start = CoroutineStart.LAZY) { run(bookId, format) }
+            jobs[bookId] = job
             job.invokeOnCompletion { jobs.remove(bookId, job) }
             job.start()
         }

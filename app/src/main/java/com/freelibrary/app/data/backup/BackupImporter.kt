@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 import javax.inject.Inject
@@ -58,6 +59,9 @@ data class ImportSummary(
 private const val MAX_JSON_BYTES = 32 * 1024 * 1024
 private const val COPY_BUFFER_BYTES = 8 * 1024
 private const val MAX_EXTENSION_LENGTH = 10
+
+/** The largest book file a backup may restore; the same limit as a download, so a crafted backup cannot fill the phone. */
+private const val MAX_BOOK_FILE_BYTES = 300L * 1024 * 1024
 
 /**
  * Reads a backup zip and merges it into this phone, never replacing something newer. The zip is
@@ -271,7 +275,11 @@ class BackupImporter
             val target = File(directory, name)
             val partial = File(directory, "$name.part")
             try {
-                partial.outputStream().use { zip.copyTo(it) }
+                val complete = partial.outputStream().use { copyAtMost(zip, it, MAX_BOOK_FILE_BYTES) }
+                if (!complete) {
+                    tally.filesSkipped++
+                    return
+                }
                 target.delete()
                 if (!partial.renameTo(target)) throw IOException("The book file could not be saved")
             } finally {
@@ -287,3 +295,24 @@ class BackupImporter
         private fun safeExtension(format: String): String =
             format.lowercase().filter { it in 'a'..'z' || it in '0'..'9' }.take(MAX_EXTENSION_LENGTH).ifEmpty { "bin" }
     }
+
+/**
+ * Copies [input] to [output] but gives up once more than [limit] bytes have been read, so a file of any
+ * size can be refused without being written out. Returns false in that case; the output then holds
+ * only the first [limit] bytes at most and must be discarded.
+ */
+internal fun copyAtMost(
+    input: InputStream,
+    output: OutputStream,
+    limit: Long,
+): Boolean {
+    val buffer = ByteArray(COPY_BUFFER_BYTES)
+    var total = 0L
+    while (true) {
+        val read = input.read(buffer)
+        if (read < 0) return true
+        total += read
+        if (total > limit) return false
+        output.write(buffer, 0, read)
+    }
+}

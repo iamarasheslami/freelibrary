@@ -124,8 +124,17 @@ class CatalogSyncRepository
                 val needsSync = local == null || local.lastModified != entry.lastModified
                 if (!needsSync) continue
 
+                if (!CatalogSource.isValidExternalId(entry.externalId)) {
+                    failed++
+                    if (failureSamples.size < MAX_FAILURE_SAMPLES) failureSamples.add("${entry.externalId}: not a valid book id")
+                    continue
+                }
+
                 try {
                     val bookExport = api.getBook(source.bookPath(entry.externalId))
+                    check(bookExport.externalId == entry.externalId) {
+                        "the file holds book ${bookExport.externalId}, not ${entry.externalId}"
+                    }
                     val wasNew = upsertBook(sourceId, bookExport)
                     if (wasNew) added++ else updated++
                 } catch (e: Exception) {

@@ -245,6 +245,55 @@ class CatalogSyncRepositoryTest {
             assertEquals(1, result.failureSamples.size)
         }
 
+    @Test
+    fun `a manifest entry with an unsafe id is counted as a failure and never requested`() =
+        runTest {
+            val manifest =
+                """
+                { "generatedAt": "2026-09-19", "baselineVersion": "2026-09-19",
+                  "books": [ { "externalId": "../secret", "lastModified": "2026-09-19" },
+                             { "externalId": "158", "lastModified": "2026-09-19" } ] }
+                """.trimIndent()
+            val requested = mutableListOf<String>()
+            val dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        requested += request.path.orEmpty()
+                        return when (request.path) {
+                            "/manifest.json" -> MockResponse().setBody(manifest).setHeader("Content-Type", "application/json")
+                            "/books/158.json" ->
+                                MockResponse().setBody(bookJson("158", "Emma", "2026-09-19"))
+                                    .setHeader("Content-Type", "application/json")
+                            else -> MockResponse().setResponseCode(404)
+                        }
+                    }
+                }
+            repository = buildRepository(dispatcher)
+
+            val result = repository.sync()
+
+            assertEquals(1, result.added)
+            assertEquals(1, result.failed)
+            assertEquals(listOf("/manifest.json", "/books/158.json"), requested)
+        }
+
+    @Test
+    fun `a book file that holds a different book than the manifest names is rejected`() =
+        runTest {
+            val dispatcher =
+                serving(
+                    manifest = { manifestFor("1342", "2026-09-19") },
+                    book = { bookJson("158", "Emma", "2026-09-19") },
+                )
+            repository = buildRepository(dispatcher)
+
+            val result = repository.sync()
+
+            assertEquals(0, result.added)
+            assertEquals(1, result.failed)
+            assertEquals(0, database.bookDao().count())
+        }
+
     private fun manifestFor(
         externalId: String,
         lastModified: String,

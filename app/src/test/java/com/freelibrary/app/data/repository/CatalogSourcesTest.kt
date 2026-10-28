@@ -27,6 +27,17 @@ class CatalogSourcesTest {
     }
 
     @Test
+    fun `a book id that could change the address is refused`() {
+        for (id in listOf("", "../secret", "1/2", "1.5", "https://example.org/x", "a b", "1342\n", "x".repeat(41))) {
+            assertEquals("\"$id\"", false, CatalogSource.isValidExternalId(id))
+            assertThrows(IllegalArgumentException::class.java) { CatalogSource.GUTENBERG.bookPath(id) }
+        }
+        for (id in listOf("1342", "60401", "a-b_C9")) {
+            assertEquals(true, CatalogSource.isValidExternalId(id))
+        }
+    }
+
+    @Test
     fun `the app starts with Project Gutenberg as its only source`() {
         assertEquals(listOf(CatalogSource.GUTENBERG), CatalogSources().all)
     }

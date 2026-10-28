@@ -35,3 +35,12 @@ tasks.register<JavaExec>("nightlySync") {
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass.set("com.freelibrary.catalogtool.NightlySyncKt")
 }
+
+tasks.register<JavaExec>("validateExport") {
+    group = "application"
+    description = "Checks an export folder before it is published (arguments in -PexportArgs, paths from the repository root)."
+    classpath = sourceSets.main.get().runtimeClasspath
+    workingDir = rootProject.projectDir
+    mainClass.set("com.freelibrary.catalogtool.ValidateExportKt")
+    args = (project.findProperty("exportArgs") as String?)?.split(" ")?.filter { it.isNotBlank() } ?: emptyList()
+}

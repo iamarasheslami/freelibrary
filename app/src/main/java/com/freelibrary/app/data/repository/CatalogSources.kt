@@ -23,9 +23,20 @@ data class CatalogSource(
     val manifestPath: String get() = "${folder}manifest.json"
 
     /** Where the file of the book numbered [externalId] is, relative to the root of the repository. */
-    fun bookPath(externalId: String): String = "${folder}books/$externalId.json"
+    fun bookPath(externalId: String): String {
+        require(isValidExternalId(externalId)) { "Not a valid book id: \"$externalId\"" }
+        return "${folder}books/$externalId.json"
+    }
 
     companion object {
+        private val VALID_EXTERNAL_ID = Regex("[A-Za-z0-9_-]{1,40}")
+
+        /**
+         * Whether [id] can safely be part of a file address. The ids come from a manifest fetched over the
+         * network, so anything that could change the address (a dot, a slash, a colon) is refused.
+         */
+        fun isValidExternalId(id: String): Boolean = VALID_EXTERNAL_ID.matches(id)
+
         val GUTENBERG =
             CatalogSource(
                 name = "Project Gutenberg",
