@@ -2,7 +2,9 @@ package com.freelibrary.app.ui.shell
 
 import com.freelibrary.app.R
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MainTabTest {
@@ -29,5 +31,20 @@ class MainTabTest {
     @Test
     fun `no page at all has no tab`() {
         assertNull(mainTabFor(null))
+    }
+
+    @Test
+    fun `the filter is dropped when the reader leaves Explore for another tab`() {
+        assertTrue(shouldResetFilter(MainTab.EXPLORE, MainTab.HOME))
+        assertTrue(shouldResetFilter(MainTab.EXPLORE, MainTab.PROFILE))
+    }
+
+    @Test
+    fun `the filter stays when the reader stays in Explore or comes to it`() {
+        assertFalse(shouldResetFilter(MainTab.EXPLORE, MainTab.EXPLORE))
+        assertFalse(shouldResetFilter(MainTab.HOME, MainTab.EXPLORE))
+        assertFalse(shouldResetFilter(MainTab.PROFILE, MainTab.HOME))
+        assertFalse(shouldResetFilter(null, MainTab.HOME))
+        assertFalse(shouldResetFilter(MainTab.EXPLORE, null))
     }
 }

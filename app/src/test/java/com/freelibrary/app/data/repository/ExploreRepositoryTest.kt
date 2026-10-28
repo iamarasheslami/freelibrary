@@ -91,7 +91,7 @@ class ExploreRepositoryTest {
         }
 
     @Test
-    fun `the page loads ten sections first and more as the reader scrolls`() =
+    fun `the page loads ten sections first, then two pages at most before scrolling, and more as the reader scrolls`() =
         runTest {
             val english = books(10)
             (1..35).forEach { shelf("Shelf %02d".format(it), english) }
@@ -99,7 +99,9 @@ class ExploreRepositoryTest {
             val firstPage = repository.sectionPages().asSnapshot()
             val scrolled = repository.sectionPages().asSnapshot { scrollTo(index = 25) }
 
-            assertEquals((1..10).map { "shelf:Shelf %02d".format(it) }, firstPage.map { it.id })
+            // The next page starts while five sections are still ahead, so the first look may already hold two pages.
+            assertEquals((1..10).map { "shelf:Shelf %02d".format(it) }, firstPage.take(10).map { it.id })
+            assertTrue("loaded ${firstPage.size} sections before any scrolling", firstPage.size <= 20)
             assertTrue("loaded only ${scrolled.size} sections", scrolled.size > 25)
             assertEquals(
                 (1..scrolled.size).map { "shelf:Shelf %02d".format(it) },

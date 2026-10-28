@@ -31,6 +31,10 @@ All notable changes to FreeLibrary are listed here. The format follows
 ### Fixed
 
 - Retrying a failed download the moment its failure was shown could be ignored.
+- The filter chosen in Explore stayed on after visiting another tab. It is now dropped when the reader leaves Explore.
+- Explore opens faster: its shelves are counted in the background shortly after the app starts, the shelves of
+  one page are read at the same time, and the next page starts loading earlier. A failing shelf query shows as a
+  load error instead of crashing the page.
 
 ## [0.1.0] - not yet released
 
