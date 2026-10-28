@@ -22,6 +22,15 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 - Cleartext traffic is disabled for all hosts. GitHub Actions are pinned to commit SHAs and the
   repository is analysed with CodeQL.
+- A backup can no longer restore a book file larger than a download may be (300 MB).
+- The catalog sync refuses book ids that could change a file address, checks that each book file is the
+  book the manifest names, gives every call time limits, and refuses answers larger than 64 MB.
+- The nightly catalog workflow validates the export (manifest, files, dates, nothing missing) and stops
+  before publishing anything inconsistent.
+
+### Fixed
+
+- Retrying a failed download the moment its failure was shown could be ignored.
 
 ## [0.1.0] - not yet released
 

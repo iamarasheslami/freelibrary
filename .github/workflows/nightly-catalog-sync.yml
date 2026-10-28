@@ -52,6 +52,11 @@ jobs:
       - name: Run nightly sync
         run: ./gradlew :catalog-tool:nightlySync
 
+      # The app trusts these files, so nothing is published unless they are consistent, no book has gone
+      # missing compared with what is published now, and no date has gone backwards.
+      - name: Validate the updated export data
+        run: ./gradlew :catalog-tool:validateExport -PexportArgs="catalog-tool/data/export --previous catalog-data"
+
       - name: Copy updated export data back into the catalog-data checkout
         run: |
           cp catalog-tool/data/export/manifest.json catalog-data/manifest.json

@@ -137,6 +137,23 @@ class BookDownloadManagerTest {
         }
 
     @Test
+    fun `a retry made the moment a failure is shown is always accepted`() =
+        runBlocking<Unit> {
+            repeat(25) {
+                server.enqueue(MockResponse().setResponseCode(404))
+                manager.start(bookId, BookFileFormat.EPUB)
+                awaitFiles { it.transfer is Transfer.Failed }
+
+                respondWithEpub()
+                manager.start(bookId, BookFileFormat.EPUB)
+                awaitFiles { BookFileFormat.EPUB in it.downloaded && it.transfer == null }
+
+                manager.delete(bookId, BookFileFormat.EPUB)
+                awaitFiles { it.downloaded.isEmpty() }
+            }
+        }
+
+    @Test
     fun `a format the catalog does not list fails as not found`() =
         runBlocking<Unit> {
             database.bookFormatDao().deleteForBook(bookId)
