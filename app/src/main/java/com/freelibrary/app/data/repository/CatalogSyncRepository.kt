@@ -1,5 +1,7 @@
 package com.freelibrary.app.data.repository
 
+import androidx.room.withTransaction
+import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.dao.AuthorDao
 import com.freelibrary.app.data.local.dao.BookAuthorDao
 import com.freelibrary.app.data.local.dao.BookBookshelfDao
@@ -54,6 +56,10 @@ data class SyncResult(
  * missing or whose lastModified has changed - never the whole catalog,
  * regardless of how long since the last successful sync.
  *
+ * Each book is saved in one transaction: a book is never seen, or left behind after a crash or a full
+ * disk, with its old shelves and formats removed and the new ones not yet in. A reader of the catalog
+ * (the Home sliders, for example) also sees one change per book and not one per statement.
+ *
  * Updates to existing books happen strictly in place (see [BookDao.update]):
  * the internal book id is never changed, protecting any reading_progress,
  * bookmarks, highlights, or downloaded_books tied to that book. Only the
@@ -69,6 +75,7 @@ data class SyncResult(
 class CatalogSyncRepository
     @Inject
     constructor(
+        private val database: FreeLibraryDatabase,
         private val api: CatalogSyncApi,
         private val sourceDao: SourceDao,
         private val bookDao: BookDao,
@@ -135,7 +142,7 @@ class CatalogSyncRepository
                     check(bookExport.externalId == entry.externalId) {
                         "the file holds book ${bookExport.externalId}, not ${entry.externalId}"
                     }
-                    val wasNew = upsertBook(sourceId, bookExport)
+                    val wasNew = database.withTransaction { upsertBook(sourceId, bookExport) }
                     if (wasNew) added++ else updated++
                 } catch (e: Exception) {
                     failed++

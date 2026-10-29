@@ -3,7 +3,11 @@ package com.freelibrary.app.data.repository
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
+import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.entity.Book
+import com.freelibrary.app.data.local.entity.BookBookshelf
+import com.freelibrary.app.data.local.entity.BookFormat
+import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.remote.createCatalogSyncApi
@@ -79,10 +83,12 @@ class CatalogSyncRepositoryTest {
     private fun buildRepository(
         dispatcher: Dispatcher,
         sources: CatalogSources = CatalogSources(),
+        bookFormatDao: BookFormatDao = database.bookFormatDao(),
     ): CatalogSyncRepository {
         server.dispatcher = dispatcher
         val api = createCatalogSyncApi(baseUrl = server.url("/").toString())
         return CatalogSyncRepository(
+            database = database,
             api = api,
             sourceDao = database.sourceDao(),
             bookDao = database.bookDao(),
@@ -92,7 +98,7 @@ class CatalogSyncRepositoryTest {
             bookSubjectDao = database.bookSubjectDao(),
             bookshelfDao = database.bookshelfDao(),
             bookBookshelfDao = database.bookBookshelfDao(),
-            bookFormatDao = database.bookFormatDao(),
+            bookFormatDao = bookFormatDao,
             bookFtsDao = database.bookFtsDao(),
             bookSummaryDao = database.bookSummaryDao(),
             sources = sources,
@@ -457,5 +463,56 @@ class CatalogSyncRepositoryTest {
             assertEquals(1, result.added)
             assertEquals(1, result.failed)
             assertEquals(listOf("OAPEN Library: Failed to fetch sync manifest"), result.failureSamples)
+        }
+
+    @Test
+    fun `a book that fails half way through its update keeps its old data and its old date`() =
+        runTest {
+            val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
+            val existingId =
+                database.bookDao().insert(
+                    Book(
+                        sourceId = sourceId,
+                        externalId = "1342",
+                        title = "Pride and Prejudice (old title)",
+                        issuedDate = null,
+                        primaryLanguage = "en",
+                        locc = null,
+                        lastModified = "2026-09-01",
+                    ),
+                )
+            val shelfId = database.bookshelfDao().insert(Bookshelf(name = "Old Shelf"))
+            database.bookBookshelfDao().insert(BookBookshelf(bookId = existingId, bookshelfId = shelfId))
+            database.bookFormatDao().insert(
+                BookFormat(bookId = existingId, formatType = "epub", downloadUrl = "https://example.org/old.epub"),
+            )
+            val failingFormats =
+                object : BookFormatDao by database.bookFormatDao() {
+                    override suspend fun insert(bookFormat: BookFormat): Long = error("the disk is full")
+                }
+            val manifest =
+                """{ "generatedAt": "2026-09-19", "baselineVersion": "2026-09-19",
+                     "books": [ { "externalId": "1342", "lastModified": "2026-09-19" } ] }"""
+            val dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse =
+                        when (request.path) {
+                            "/manifest.json" -> MockResponse().setBody(manifest).setHeader("Content-Type", "application/json")
+                            "/books/1342.json" ->
+                                MockResponse().setBody(bookJson("1342", "Pride and Prejudice (corrected)", "2026-09-19"))
+                                    .setHeader("Content-Type", "application/json")
+                            else -> MockResponse().setResponseCode(404)
+                        }
+                }
+            repository = buildRepository(dispatcher, bookFormatDao = failingFormats)
+
+            val result = repository.sync()
+
+            assertEquals(1, result.failed)
+            val book = database.bookDao().getById(existingId)
+            assertEquals("Pride and Prejudice (old title)", book?.title)
+            assertEquals("2026-09-01", book?.lastModified)
+            assertEquals(listOf("Old Shelf"), database.bookBookshelfDao().getBookshelvesForBook(existingId).map { it.name })
+            assertEquals(listOf("epub"), database.bookFormatDao().getFormatsForBook(existingId).map { it.formatType })
         }
 }

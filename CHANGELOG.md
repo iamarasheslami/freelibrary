@@ -35,6 +35,9 @@ All notable changes to FreeLibrary are listed here. The format follows
   reached, so they show on networks that block the official site. The app checks once at start (and every ten minutes
   after that) whether gutenberg.org answers, so a blocked site does not hold the covers back. The generated cover is still
   shown when neither answers.
+- A book updated by the catalog sync was saved in many separate steps. If the app was stopped half way, the book could
+  stay without its shelves, authors or formats and was never fetched again, and while a sync ran the Home sliders
+  changed (and reloaded their covers) after every step. Each book is now saved in one transaction.
 - The nightly catalog update gave a new date to every book Gutenberg's feed merely touched, so each night the apps
   downloaded and rewrote dozens of unchanged books and Sync now reported them as updates. A book that is the same in
   everything but the date now keeps its file and its date.
