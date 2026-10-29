@@ -31,6 +31,10 @@ All notable changes to FreeLibrary are listed here. The format follows
 ### Fixed
 
 - Retrying a failed download the moment its failure was shown could be ignored.
+- Book covers are loaded from the Project Gutenberg mirror `gutenberg.pglaf.org` when `gutenberg.org` cannot be
+  reached, so they show on networks that block the official site. The app checks once at start (and every ten minutes
+  after that) whether gutenberg.org answers, so a blocked site does not hold the covers back. The generated cover is still
+  shown when neither answers.
 - The filter chosen in Explore stayed on after visiting another tab. It is now dropped when the reader leaves Explore.
 - Explore opens faster: its shelves are counted in the background shortly after the app starts, the shelves of
   one page are read at the same time, and the next page starts loading earlier. A failing shelf query shows as a
