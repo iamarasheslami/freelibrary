@@ -1,9 +1,23 @@
 package com.freelibrary.catalogtool
 
+import com.freelibrary.shared.BookExport
 import com.freelibrary.shared.Manifest
 import com.freelibrary.shared.ManifestEntry
 import java.nio.file.Path
 import java.time.LocalDate
+
+/**
+ * What the nightly sync should write for a book, or null when there is nothing to write.
+ *
+ * Gutenberg's feed also lists books whose catalog entry was only touched, so a book can come back with
+ * every field the same as the file already written. Writing it again with today's date would make every
+ * app download and rewrite a book that did not change, and report it as an update. [fresh] already
+ * carries today's date; when it is [previous] in everything else, the old file and its date stay.
+ */
+internal fun changedExport(
+    fresh: BookExport,
+    previous: BookExport?,
+): BookExport? = if (previous != null && previous == fresh.copy(lastModified = previous.lastModified)) null else fresh
 
 private const val TODAY_RSS_URL = "https://www.gutenberg.org/cache/epub/feeds/today.rss"
 
@@ -40,6 +54,7 @@ fun main() {
     val baselineVersion = existingManifest?.baselineVersion ?: today
 
     var updatedCount = 0
+    var unchangedCount = 0
     var skippedCount = 0
     var failedCount = 0
     val failureSamples = mutableListOf<String>()
@@ -54,7 +69,13 @@ fun main() {
                 continue
             }
 
-            writeBookExport(exportBooksDir, book.toExport(lastModified = today))
+            val changed = changedExport(book.toExport(lastModified = today), readBookExport(exportBooksDir, externalId))
+            if (changed == null) {
+                unchangedCount++
+                continue
+            }
+
+            writeBookExport(exportBooksDir, changed)
             manifestEntries[externalId] = ManifestEntry(externalId = externalId, lastModified = today)
             updatedCount++
         } catch (e: Exception) {
@@ -70,7 +91,7 @@ fun main() {
         Manifest(generatedAt = today, baselineVersion = baselineVersion, books = manifestEntries.values.toList()),
     )
 
-    println("Done. Updated: $updatedCount, skipped: $skippedCount, failed: $failedCount")
+    println("Done. Updated: $updatedCount, unchanged: $unchangedCount, skipped: $skippedCount, failed: $failedCount")
     if (failureSamples.isNotEmpty()) {
         println("Sample failures:")
         failureSamples.forEach { println("  $it") }

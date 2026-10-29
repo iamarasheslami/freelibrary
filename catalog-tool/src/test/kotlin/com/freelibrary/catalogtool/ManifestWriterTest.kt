@@ -139,4 +139,25 @@ class ManifestWriterTest {
         assertNull(decoded.summary)
         assertNull(decoded.coverUrl)
     }
+
+    @Test
+    fun `readBookExport returns the book that was written`() {
+        val tempDir = Files.createTempDirectory("book-export-read-test")
+        writeBookExport(tempDir, sampleBookExport())
+
+        assertEquals(sampleBookExport(), readBookExport(tempDir, "1342"))
+    }
+
+    @Test
+    fun `readBookExport returns null when there is no file`() {
+        assertNull(readBookExport(Files.createTempDirectory("book-export-missing-test"), "1342"))
+    }
+
+    @Test
+    fun `readBookExport returns null when the file cannot be read`() {
+        val tempDir = Files.createTempDirectory("book-export-broken-test")
+        Files.writeString(tempDir.resolve("1342.json"), "{ not json")
+
+        assertNull(readBookExport(tempDir, "1342"))
+    }
 }

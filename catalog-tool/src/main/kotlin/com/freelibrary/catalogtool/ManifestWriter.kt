@@ -54,3 +54,20 @@ fun readManifest(outputDir: Path): Manifest? {
     if (!Files.exists(filePath)) return null
     return jsonFormat.decodeFromString<Manifest>(Files.readString(filePath))
 }
+
+/**
+ * Reads the book file already written for [externalId], or null if there is none or it cannot be
+ * read. The nightly sync compares a fresh book with it, so an unreadable file is simply replaced.
+ */
+fun readBookExport(
+    booksDir: Path,
+    externalId: String,
+): BookExport? {
+    val filePath = booksDir.resolve("$externalId.json")
+    if (!Files.exists(filePath)) return null
+    return try {
+        jsonFormat.decodeFromString<BookExport>(Files.readString(filePath))
+    } catch (e: Exception) {
+        null
+    }
+}

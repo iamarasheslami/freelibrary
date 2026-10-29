@@ -35,6 +35,9 @@ All notable changes to FreeLibrary are listed here. The format follows
   reached, so they show on networks that block the official site. The app checks once at start (and every ten minutes
   after that) whether gutenberg.org answers, so a blocked site does not hold the covers back. The generated cover is still
   shown when neither answers.
+- The nightly catalog update gave a new date to every book Gutenberg's feed merely touched, so each night the apps
+  downloaded and rewrote dozens of unchanged books and Sync now reported them as updates. A book that is the same in
+  everything but the date now keeps its file and its date.
 - The filter chosen in Explore stayed on after visiting another tab. It is now dropped when the reader leaves Explore.
 - Explore opens faster: its shelves are counted in the background shortly after the app starts, the shelves of
   one page are read at the same time, and the next page starts loading earlier. A failing shelf query shows as a
