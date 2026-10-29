@@ -22,6 +22,14 @@
         <item name="android:fontFamily">@font/literata_medium</item>
     </style>
 
+    <!-- The heading above a slider: a display serif in its own green, so it stands out from the book titles. -->
+    <style name="TextAppearance.FreeLibrary.SliderHeading" parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">@font/fraunces_display</item>
+        <item name="android:fontFamily">@font/fraunces_display</item>
+        <item name="android:textSize">26sp</item>
+        <item name="android:textColor">@color/slider_heading</item>
+    </style>
+
     <!-- The title under a book cover: the same serif, at the small title size. -->
     <style name="TextAppearance.FreeLibrary.BookTitle" parent="TextAppearance.Material3.TitleSmall">
         <item name="fontFamily">@font/literata_medium</item>

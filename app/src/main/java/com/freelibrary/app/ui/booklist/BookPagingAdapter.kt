@@ -15,7 +15,7 @@ class BookPagingAdapter(
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
-    ): BookCardViewHolder = BookCardViewHolder.create(parent, typefaces, imageLoader, onBookClick)
+    ): BookCardViewHolder = BookCardViewHolder.create(parent, typefaces, imageLoader, onBookClick = onBookClick)
 
     override fun onBindViewHolder(
         holder: BookCardViewHolder,

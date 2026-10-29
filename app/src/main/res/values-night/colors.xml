@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Slider headings: a deeper sage than the body text (md_on_surface), so they stand apart without clashing. -->
+    <color name="slider_heading">#7FAF8F</color>
     <color name="md_primary">#BFD8C2</color>
     <color name="md_on_primary">#0D2A20</color>
     <color name="md_primary_container">#2F6B4F</color>

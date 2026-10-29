@@ -83,6 +83,32 @@ class BookCardAdapterTest {
     }
 
     @Test
+    fun `a slider card leaves the author out`() {
+        val holder =
+            BookCardAdapter(CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT), imageLoader, large = false) {}
+                .onCreateViewHolder(FrameLayout(context), 0)
+
+        holder.bind(book(author = "Austen, Jane"))
+
+        assertEquals(View.GONE, holder.text(R.id.bookAuthor).visibility)
+    }
+
+    @Test
+    fun `a large slider uses its own view type and wider cards`() {
+        val typefaces = CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT)
+        val normal = BookCardAdapter(typefaces, imageLoader, large = false) {}
+        val large = BookCardAdapter(typefaces, imageLoader, large = true) {}
+        normal.submitList(listOf(book()))
+        large.submitList(listOf(book()))
+
+        val normalWidth = normal.onCreateViewHolder(FrameLayout(context), 0).itemView.layoutParams.width
+        val largeWidth = large.onCreateViewHolder(FrameLayout(context), 1).itemView.layoutParams.width
+
+        assertTrue(largeWidth > normalWidth)
+        assertTrue(normal.getItemViewType(0) != large.getItemViewType(0))
+    }
+
+    @Test
     fun `tapping the card reports the book it shows now, not an earlier one`() {
         val holder = holder()
         val first = book(bookId = 1, title = "First")

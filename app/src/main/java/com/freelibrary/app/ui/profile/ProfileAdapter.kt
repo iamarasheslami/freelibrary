@@ -57,7 +57,7 @@ class ProfileAdapter(
     ): RecyclerView.ViewHolder =
         when (viewType) {
             TYPE_HEADER -> HeaderViewHolder.create(parent, imageLoader, avatarStore, onAvatarClick)
-            else -> BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick)
+            else -> BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick = onBookClick)
         }
 
     override fun onBindViewHolder(

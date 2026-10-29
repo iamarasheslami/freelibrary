@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.ImageLoader
 import com.freelibrary.app.domain.model.BookCard
 import com.freelibrary.app.domain.model.HomeSection
+import com.freelibrary.app.domain.model.HomeSections
 import com.freelibrary.app.ui.booklist.BookSliderViewHolder
 import com.freelibrary.app.ui.cover.CoverTypefaces
 
@@ -24,7 +25,19 @@ class HomeAdapter(
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
-    ): BookSliderViewHolder = BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick)
+    ): BookSliderViewHolder =
+        BookSliderViewHolder.create(
+            parent,
+            typefaces,
+            imageLoader,
+            viewPool,
+            large = viewType == CONTINUE_READING_VIEW_TYPE,
+            onBookClick = onBookClick,
+        )
+
+    /** Continue Reading is the book the reader came for, so its slider has bigger covers. */
+    override fun getItemViewType(position: Int): Int =
+        if (getItem(position).id == HomeSections.CONTINUE_READING_ID) CONTINUE_READING_VIEW_TYPE else 0
 
     override fun onBindViewHolder(
         holder: BookSliderViewHolder,
@@ -40,6 +53,8 @@ class HomeAdapter(
     }
 
     companion object {
+        private const val CONTINUE_READING_VIEW_TYPE = 1
+
         /** A slider is the same item while its section id is the same, even when its books change. */
         val DIFF =
             object : DiffUtil.ItemCallback<HomeSection>() {

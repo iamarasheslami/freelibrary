@@ -89,7 +89,7 @@ class BookSliderViewHolderTest {
 
         holder.bind("Harvard Classics", slider(shown = 10, total = 51)) {}
 
-        assertEquals("View more in Harvard Classics", holder.view(R.id.sliderViewMore).contentDescription.toString())
+        assertEquals("View all in Harvard Classics", holder.view(R.id.sliderViewMore).contentDescription.toString())
     }
 
     @Test

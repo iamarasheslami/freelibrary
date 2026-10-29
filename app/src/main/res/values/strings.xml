@@ -22,8 +22,8 @@
     <string name="shelf_world_war_i">World War I</string>
     <string name="shelf_us_civil_war">US Civil War</string>
     <string name="shelf_christmas">Christmas</string>
-    <string name="view_more">View more</string>
-    <string name="view_more_in">View more in %1$s</string>
+    <string name="view_more">View all</string>
+    <string name="view_more_in">View all in %1$s</string>
     <string name="back">Back</string>
     <string name="explore_title">Explore</string>
     <string name="explore_empty">No shelves to show yet. They appear after the first catalog sync.</string>

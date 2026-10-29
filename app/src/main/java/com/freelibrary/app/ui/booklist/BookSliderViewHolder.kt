@@ -13,7 +13,7 @@ import com.freelibrary.app.domain.model.BookSlider
 import com.freelibrary.app.ui.cover.CoverTypefaces
 
 /**
- * One slider on the Home screen: a heading, a "View more" button and a horizontal row of book
+ * One slider on the Home screen: a heading, a "View all" button and a horizontal row of book
  * cards. [viewPool] is shared by every slider on the screen, so cards scrolled out of one row
  * are reused in the others instead of being created again.
  */
@@ -22,9 +22,10 @@ class BookSliderViewHolder(
     typefaces: CoverTypefaces,
     imageLoader: ImageLoader,
     viewPool: RecyclerView.RecycledViewPool,
+    large: Boolean,
     onBookClick: (BookCard) -> Unit,
 ) : RecyclerView.ViewHolder(binding.root) {
-    private val bookAdapter = BookCardAdapter(typefaces, imageLoader, onBookClick)
+    private val bookAdapter = BookCardAdapter(typefaces, imageLoader, large, onBookClick)
 
     init {
         ViewCompat.setAccessibilityHeading(binding.sliderHeading, true)
@@ -35,7 +36,7 @@ class BookSliderViewHolder(
         }
     }
 
-    /** "View more" is offered only when the shelf holds more books than the slider shows. */
+    /** "View all" is offered only when the shelf holds more books than the slider shows. */
     fun bind(
         heading: String,
         slider: BookSlider,
@@ -61,6 +62,7 @@ class BookSliderViewHolder(
             typefaces: CoverTypefaces,
             imageLoader: ImageLoader,
             viewPool: RecyclerView.RecycledViewPool,
+            large: Boolean = false,
             onBookClick: (BookCard) -> Unit,
         ): BookSliderViewHolder =
             BookSliderViewHolder(
@@ -68,6 +70,7 @@ class BookSliderViewHolder(
                 typefaces,
                 imageLoader,
                 viewPool,
+                large,
                 onBookClick,
             )
     }
