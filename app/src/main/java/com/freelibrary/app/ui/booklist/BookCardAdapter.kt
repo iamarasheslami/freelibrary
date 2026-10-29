@@ -7,16 +7,31 @@ import coil.ImageLoader
 import com.freelibrary.app.domain.model.BookCard
 import com.freelibrary.app.ui.cover.CoverTypefaces
 
-/** The books of one slider. The paged "View more" lists reuse [BookCardViewHolder] and [DIFF]. */
+/**
+ * The books of one slider, without the author line. A [large] slider shows bigger cards. The paged
+ * "View all" lists reuse [BookCardViewHolder] and [DIFF].
+ */
 class BookCardAdapter(
     private val typefaces: CoverTypefaces,
     private val imageLoader: ImageLoader,
+    private val large: Boolean,
     private val onBookClick: (BookCard) -> Unit,
 ) : ListAdapter<BookCard, BookCardViewHolder>(DIFF) {
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
-    ): BookCardViewHolder = BookCardViewHolder.create(parent, typefaces, imageLoader, onBookClick)
+    ): BookCardViewHolder =
+        BookCardViewHolder.create(
+            parent,
+            typefaces,
+            imageLoader,
+            showAuthor = false,
+            large = large,
+            onBookClick = onBookClick,
+        )
+
+    /** Large and normal cards have different sizes, so a shared pool must not hand one to the other. */
+    override fun getItemViewType(position: Int): Int = if (large) 1 else 0
 
     override fun onBindViewHolder(
         holder: BookCardViewHolder,

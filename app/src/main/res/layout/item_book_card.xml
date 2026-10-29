@@ -25,7 +25,7 @@
         app:strokeWidth="@dimen/book_cover_outline_width"
         tools:src="@tools:sample/backgrounds/scenic" />
 
-    <!-- Two lines are always reserved, so the authors line up across a row of cards. -->
+    <!-- Two lines are always reserved, so the cards of a row are all the same height. -->
     <TextView
         android:id="@+id/bookTitle"
         android:layout_width="0dp"

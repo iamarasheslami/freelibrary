@@ -3,7 +3,7 @@ package com.freelibrary.app.domain.model
 import androidx.annotation.StringRes
 import com.freelibrary.app.R
 
-/** Where a slider's "View more" leads. */
+/** Where a slider's "View all" leads. */
 sealed interface ViewMoreTarget {
     data object ContinueReading : ViewMoreTarget
 
@@ -32,6 +32,8 @@ data class HomeSection(
 
 /** Builds the home screen's list of sliders in their agreed order. */
 object HomeSections {
+    const val CONTINUE_READING_ID = "continue-reading"
+
     /**
      * Continue Reading, Want to Read and Recently Added come first, then the curated [shelves] in
      * their own order. A slider with no books is left out, so a reader with nothing saved yet sees
@@ -45,7 +47,7 @@ object HomeSections {
     ): List<HomeSection> =
         listOfNotNull(
             section(
-                "continue-reading",
+                CONTINUE_READING_ID,
                 R.string.home_continue_reading,
                 continueReading.books,
                 continueReading.hasMore,

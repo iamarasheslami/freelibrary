@@ -26,7 +26,7 @@ class ExploreAdapter(
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int,
-    ): BookSliderViewHolder = BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick)
+    ): BookSliderViewHolder = BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick = onBookClick)
 
     override fun onBindViewHolder(
         holder: BookSliderViewHolder,

@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <!-- The heading is on the left and "View more" on the right, so it can be reached without scrolling the list. -->
+    <!-- The heading is on the left and "View all" on the right, so it can be reached without scrolling the list. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -22,8 +22,7 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:maxLines="2"
-            android:textAppearance="@style/TextAppearance.FreeLibrary.TitleLarge"
-            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="@style/TextAppearance.FreeLibrary.SliderHeading"
             tools:text="Harvard Classics" />
 
         <com.google.android.material.button.MaterialButton

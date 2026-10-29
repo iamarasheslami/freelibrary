@@ -14,6 +14,8 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Changed
 
+- Slider headings use a larger display serif in the accent colour, slider cards no longer show the
+  author, "View more" is now "View all", and the Continue Reading slider has bigger covers.
 - On Android 15 and newer the app keeps its content clear of the side bars, the display cutout and
   the keyboard.
 - Release builds can be signed from a local `keystore.properties` file.

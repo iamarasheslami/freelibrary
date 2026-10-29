@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Slider headings: the deep emerald on the light theme. -->
+    <color name="slider_heading">#0D4C3C</color>
     <color name="md_primary">#0D4C3C</color>
     <color name="md_on_primary">#F4F1EB</color>
     <color name="md_primary_container">#BFD7A6</color>
