@@ -24,7 +24,7 @@ The app requests the INTERNET and ACCESS_NETWORK_STATE permissions and connects 
 | --- | --- |
 | `raw.githubusercontent.com` | Catalog updates (public JSON files from the project's data repository) |
 | `gutenberg.org` | Book files and covers you choose to open or download |
-| `gutenberg.pglaf.org`, `aleph.gutenberg.org`, `www.mirrorservice.org`, `mirrors.xmission.com` | Project Gutenberg mirrors, tried in this order only if a download from `gutenberg.org` fails |
+| `gutenberg.pglaf.org`, `aleph.gutenberg.org`, `www.mirrorservice.org`, `mirrors.xmission.com` | Project Gutenberg mirrors, tried in this order only if a download from `gutenberg.org` fails; `gutenberg.pglaf.org` is also asked for a book's cover picture when `gutenberg.org` cannot be reached |
 
 Every request is made over HTTPS. Requests carry a User-Agent of the form `FreeLibrary/<version> (+https://github.com/iamarasheslami/freelibrary)` and your IP address is visible to these hosts as with any web request; they are operated by third parties under their own privacy policies (GitHub and Project Gutenberg). No identifier, account or device information is added by the app.
 
