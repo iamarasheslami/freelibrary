@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
@@ -164,10 +165,12 @@ class BookPageFragment : Fragment() {
             val label = getString(actionLabel(state))
             item.bookActionIcon.setImageResource(actionIcon(state.action))
             item.bookActionIcon.isSelected = state.selected
-            item.bookActionLabel.text = label
             item.root.contentDescription = label
+            TooltipCompat.setTooltipText(item.root, label)
             item.root.isSelected = state.selected
-            item.root.isEnabled = state.enabled
+            // The button stays enabled for the system, so a long press still shows its name; a tap does
+            // nothing while it is unavailable, and screen readers are told so.
+            if (!state.enabled) ViewCompat.setStateDescription(item.root, getString(R.string.book_action_unavailable))
             item.root.alpha = if (state.enabled) 1f else DISABLED_ALPHA
             item.root.setOnClickListener { if (state.enabled) perform(state.action, item.root) }
             row.addView(item.root)

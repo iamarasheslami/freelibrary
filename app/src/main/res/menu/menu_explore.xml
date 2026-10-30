@@ -8,4 +8,11 @@
         android:title="@string/search_title"
         app:showAsAction="always" />
 
+    <!-- Right of the search button. -->
+    <item
+        android:id="@+id/action_filter"
+        android:icon="@drawable/ic_filter"
+        android:title="@string/filter_title"
+        app:showAsAction="always" />
+
 </menu>

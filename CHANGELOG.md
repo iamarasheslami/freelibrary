@@ -14,6 +14,10 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Changed
 
+- The Explore tab has an icon like the other tabs, and the filter button sits to the right of the
+  search button. Explore shows a "Loading new categories" line with a spinner under the last
+  slider while it loads more. The Book page buttons have no captions, so all of them fit one row;
+  press and hold one to see its name.
 - Slider headings use a larger display serif in the accent colour, slider cards no longer show the
   author, "View more" is now "View all", and the Continue Reading slider has bigger covers.
 - On Android 15 and newer the app keeps its content clear of the side bars, the display cutout and
