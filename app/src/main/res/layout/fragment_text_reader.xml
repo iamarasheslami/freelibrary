@@ -12,8 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:navigationContentDescription="@string/back"
-        app:navigationIcon="?attr/homeAsUpIndicator"
-        app:titleTextAppearance="?attr/textAppearanceTitleMedium" />
+        app:navigationIcon="?attr/homeAsUpIndicator" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -49,41 +48,41 @@
 
     </FrameLayout>
 
+    <!-- Left: where in the book; right: the page. Both sit in the bar that a tap on the page shows or hides. -->
     <LinearLayout
         android:id="@+id/textPartBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
         android:gravity="center_vertical"
+        android:minHeight="40dp"
         android:orientation="horizontal"
-        android:paddingStart="@dimen/spacing_s"
-        android:paddingEnd="@dimen/spacing_s"
-        android:visibility="gone"
+        android:paddingStart="@dimen/spacing_m"
+        android:paddingTop="@dimen/spacing_s"
+        android:paddingEnd="@dimen/spacing_m"
+        android:paddingBottom="@dimen/spacing_s"
         tools:visibility="visible">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/textPreviousButton"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/reader_previous" />
 
         <TextView
             android:id="@+id/textPartLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textAppearance="?attr/textAppearanceLabelLarge"
             android:textColor="?attr/colorOnSurfaceVariant"
-            tools:text="Part 3 of 31 · page 5 of 22" />
+            tools:text="Chapter 3 of 12" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/textNextButton"
-            style="@style/Widget.Material3.Button.TextButton"
+        <TextView
+            android:id="@+id/textPageLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/reader_next" />
+            android:layout_marginStart="@dimen/spacing_s"
+            android:maxLines="1"
+            android:textAppearance="?attr/textAppearanceLabelLarge"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            tools:text="Page 5 of 9" />
 
     </LinearLayout>
 

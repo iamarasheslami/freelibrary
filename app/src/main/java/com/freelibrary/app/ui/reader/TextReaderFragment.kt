@@ -51,6 +51,7 @@ class TextReaderFragment : Fragment() {
     private var paged = true
     private var textPercent = ReaderStyle.DEFAULT_TEXT_PERCENT
     private var currentPart = 0
+    private var chrome: ReaderChrome? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -67,6 +68,7 @@ class TextReaderFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         binding.textReaderRoot.applySystemBarInsetsAsPadding()
+        chrome = ReaderChrome(listOf(binding.textReaderToolbar, binding.textPartBar), ReaderChrome.screenReaderOn(requireContext()))
         binding.textReaderToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.textReaderToolbar.inflateMenu(R.menu.menu_text_reader)
         binding.textReaderToolbar.setOnMenuItemClickListener { item ->
@@ -75,15 +77,20 @@ class TextReaderFragment : Fragment() {
                     R.id.action_toggle_paging -> viewModel.setPaged(!paged)
                     R.id.action_add_bookmark -> addBookmark()
                     R.id.action_bookmarks -> openBookmarkList()
-                    R.id.action_larger_text -> viewModel.changeTextSize(larger = true)
-                    R.id.action_smaller_text -> viewModel.changeTextSize(larger = false)
+                    R.id.action_text_size ->
+                        showTextSizeControl(
+                            binding.textReaderToolbar,
+                            current = { viewModel.textPercent.value },
+                            onLarger = { viewModel.changeTextSize(larger = true) },
+                            onSmaller = { viewModel.changeTextSize(larger = false) },
+                            onSet = viewModel::setTextSize,
+                        )
                 }
             }
             true
         }
-        binding.textPreviousButton.setOnClickListener { showPart(currentPart - 1, 0, report = true) }
-        binding.textNextButton.setOnClickListener { showPart(currentPart + 1, 0, report = true) }
         binding.textPage.onTurnPage = ::turnPage
+        binding.textPage.onTap = { chrome?.toggle() }
         binding.textPage.onMoved = ::onMoved
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -102,6 +109,7 @@ class TextReaderFragment : Fragment() {
                 binding.textLoading.isVisible = false
                 binding.textMessage.setText(failureMessage(state.reason))
                 binding.textMessage.isVisible = true
+                chrome?.show()
             }
             is TextReaderUiState.Ready ->
                 if (!started) {
@@ -116,10 +124,8 @@ class TextReaderFragment : Fragment() {
         paged = viewModel.paged.value
         textPercent = viewModel.textPercent.value
         updateMenu()
-        binding.textReaderToolbar.title = ready.title.orEmpty()
         binding.textLoading.isVisible = false
         binding.textPage.visibility = View.VISIBLE
-        binding.textPartBar.isVisible = true
         val start = viewModel.position
         showPart(start.part, start.permille, report = false)
     }
@@ -132,8 +138,10 @@ class TextReaderFragment : Fragment() {
         TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, TEXT_BASE_SP * textPercent / 100f, resources.displayMetrics)
 
     private fun updateMenu() {
-        binding.textReaderToolbar.menu.findItem(R.id.action_toggle_paging)
-            ?.setTitle(if (paged) R.string.reader_scroll_view else R.string.reader_page_view)
+        binding.textReaderToolbar.menu.findItem(R.id.action_toggle_paging)?.apply {
+            setTitle(if (paged) R.string.reader_scroll_view else R.string.reader_page_view)
+            setIcon(if (paged) R.drawable.ic_view_scroll else R.drawable.ic_view_page)
+        }
     }
 
     private fun onTextPercentChanged(newValue: Int) {
@@ -194,18 +202,14 @@ class TextReaderFragment : Fragment() {
     private fun updatePartBar() {
         val page = _binding?.textPage ?: return
         val partCount = book?.parts?.size ?: return
-        binding.textPartLabel.text =
-            if (paged) {
-                getString(R.string.text_page_label, currentPart + 1, partCount, page.currentPage() + 1, page.pageCount())
-            } else {
-                getString(R.string.text_part_label, currentPart + 1, partCount)
-            }
-        binding.textPreviousButton.isEnabled = currentPart > 0
-        binding.textNextButton.isEnabled = currentPart < partCount - 1
+        binding.textPartLabel.text = getString(R.string.text_part_label, currentPart + 1, partCount)
+        binding.textPageLabel.text =
+            if (paged) getString(R.string.reader_page_number, page.currentPage() + 1, page.pageCount()) else ""
     }
 
     private fun offerToFinish() {
         val bar = _binding?.textPartBar ?: return
+        chrome?.show()
         Snackbar.make(binding.textReaderRoot, R.string.reader_end_reached, Snackbar.LENGTH_INDEFINITE)
             .setDuration(TEXT_END_PROMPT_MS)
             .setAnchorView(bar)
@@ -229,9 +233,11 @@ class TextReaderFragment : Fragment() {
 
     override fun onDestroyView() {
         started = false
+        chrome = null
         book = null
         _binding?.textPage?.let {
             it.onTurnPage = null
+            it.onTap = null
             it.onMoved = null
         }
         super.onDestroyView()

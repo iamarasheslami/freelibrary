@@ -14,6 +14,11 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Changed
 
+- The readers show only the book at first. A tap on the middle of the page shows the top and bottom
+  bars and the next tap hides them; with a screen reader on, the bars stay. The top bar has small
+  icons instead of the three-dot menu and no book name. The bottom bar shows the chapter (or part)
+  on the left and the page on the right, without Previous and Next buttons.
+- The Book page buttons have a wider gap between them and line up with the page's side padding.
 - The Explore tab has an icon like the other tabs, and the filter button sits to the right of the
   search button. Explore shows a "Loading new categories" line with a spinner under the last
   slider while it loads more. The Book page buttons have no captions, so all of them fit one row;

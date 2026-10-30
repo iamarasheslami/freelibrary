@@ -121,14 +121,12 @@
 
                 </LinearLayout>
 
-                <!-- The actions under the cover and title: always all there, in one row on a normal phone and wrapping onto centred rows on a narrow one. The negative side margins (-10dp, so 7 x 48dp fits 360dp) give the row the page padding back. -->
+                <!-- The actions under the cover and title: always all there, in one row where they fit (7 x 54dp) and wrapping onto centred rows where they do not. -->
                 <com.freelibrary.app.ui.widget.CenteredFlowLayout
                     android:id="@+id/bookPageActions"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="-10dp"
-                    android:layout_marginTop="@dimen/spacing_s"
-                    android:layout_marginEnd="-10dp" />
+                    android:layout_marginTop="@dimen/spacing_s" />
 
                 <TextView
                     android:id="@+id/bookPageAboutHeading"

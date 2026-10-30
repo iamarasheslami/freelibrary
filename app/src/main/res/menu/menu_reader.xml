@@ -4,32 +4,32 @@
 
     <item
         android:id="@+id/action_contents"
+        android:icon="@drawable/ic_contents"
         android:title="@string/reader_contents"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_add_bookmark"
+        android:icon="@drawable/ic_bookmark_add"
         android:title="@string/bookmark_add_title"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_bookmarks"
+        android:icon="@drawable/ic_bookmarks"
         android:title="@string/bookmarks_title"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
 
     <item
-        android:id="@+id/action_larger_text"
-        android:title="@string/reader_larger_text"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_smaller_text"
-        android:title="@string/reader_smaller_text"
-        app:showAsAction="never" />
+        android:id="@+id/action_text_size"
+        android:icon="@drawable/ic_text_size"
+        android:title="@string/reader_text_size"
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_toggle_paging"
+        android:icon="@drawable/ic_view_scroll"
         android:title="@string/reader_scroll_view"
-        app:showAsAction="never" />
+        app:showAsAction="always" />
 
 </menu>

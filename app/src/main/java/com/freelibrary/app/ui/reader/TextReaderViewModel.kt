@@ -164,9 +164,11 @@ class TextReaderViewModel
         }
 
         /** The reader asked for larger ([larger] true) or smaller text; the size stays within its limits and is kept. */
-        fun changeTextSize(larger: Boolean) {
-            val step = if (larger) TEXT_STEP_PERCENT else -TEXT_STEP_PERCENT
-            val size = (_textPercent.value + step).coerceIn(ReaderStyle.MIN_TEXT_PERCENT, ReaderStyle.MAX_TEXT_PERCENT)
+        fun changeTextSize(larger: Boolean) = setTextSize(_textPercent.value + if (larger) TEXT_STEP_PERCENT else -TEXT_STEP_PERCENT)
+
+        /** The reader picked [percent] on the text size bar; the size stays within its limits and is kept. */
+        fun setTextSize(percent: Int) {
+            val size = percent.coerceIn(ReaderStyle.MIN_TEXT_PERCENT, ReaderStyle.MAX_TEXT_PERCENT)
             if (size == _textPercent.value) return
             _textPercent.value = size
             viewModelScope.launch { settingsRepository.setReaderTextPercent(size) }

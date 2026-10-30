@@ -75,6 +75,7 @@ class EpubReaderFragment : Fragment() {
     private var currentChapter = 0
     private var currentPagePath: String? = null
     private var pendingPermille = 0
+    private var chrome: ReaderChrome? = null
 
     /** True once the page showing has loaded and been put back where the reader was. */
     private var pageReady = false
@@ -94,6 +95,7 @@ class EpubReaderFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         binding.readerRoot.applySystemBarInsetsAsPadding()
+        chrome = ReaderChrome(listOf(binding.readerToolbar, binding.readerChapterBar), ReaderChrome.screenReaderOn(requireContext()))
         binding.readerToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.readerToolbar.inflateMenu(R.menu.menu_reader)
         binding.readerToolbar.setOnMenuItemClickListener { item ->
@@ -103,14 +105,18 @@ class EpubReaderFragment : Fragment() {
                     R.id.action_contents -> showContents()
                     R.id.action_add_bookmark -> addBookmark()
                     R.id.action_bookmarks -> openBookmarkList()
-                    R.id.action_larger_text -> viewModel.changeTextSize(larger = true)
-                    R.id.action_smaller_text -> viewModel.changeTextSize(larger = false)
+                    R.id.action_text_size ->
+                        showTextSizeControl(
+                            binding.readerToolbar,
+                            current = { viewModel.textPercent.value },
+                            onLarger = { viewModel.changeTextSize(larger = true) },
+                            onSmaller = { viewModel.changeTextSize(larger = false) },
+                            onSet = viewModel::setTextSize,
+                        )
                 }
             }
             true
         }
-        binding.readerPreviousButton.setOnClickListener { showChapter(currentChapter - 1, 0, report = true) }
-        binding.readerNextButton.setOnClickListener { showChapter(currentChapter + 1, 0, report = true) }
         setUpWebView()
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -152,6 +158,7 @@ class EpubReaderFragment : Fragment() {
             }
         web.setOnScrollChangeListener { _, _, _, _, _ -> onScrolled() }
         web.onTurnPage = ::turnPage
+        web.onTap = { chrome?.toggle() }
         // The page margin in page view is padding around the web view; touches there still turn pages.
         binding.readerPageHost.setOnTouchListener { _, event -> forwardToWebView(event) }
     }
@@ -173,6 +180,7 @@ class EpubReaderFragment : Fragment() {
                 binding.readerLoading.isVisible = false
                 binding.readerMessage.setText(failureMessage(state.reason))
                 binding.readerMessage.isVisible = true
+                chrome?.show()
             }
             is EpubReaderUiState.Ready ->
                 if (server == null) {
@@ -189,10 +197,8 @@ class EpubReaderFragment : Fragment() {
         paged = viewModel.paged.value
         textPercent = viewModel.textPercent.value
         applyMode()
-        binding.readerToolbar.title = ready.title.orEmpty()
         binding.readerLoading.isVisible = false
         binding.readerWebView.isVisible = true
-        binding.readerChapterBar.isVisible = true
         val start = viewModel.position
         showChapter(start.chapter, start.permille, report = false)
     }
@@ -226,8 +232,10 @@ class EpubReaderFragment : Fragment() {
         binding.readerWebView.rightToLeft = book.rightToLeft
         binding.readerWebView.isVerticalScrollBarEnabled = !paged
         binding.readerWebView.isHorizontalScrollBarEnabled = false
-        binding.readerToolbar.menu.findItem(R.id.action_toggle_paging)
-            ?.setTitle(if (paged) R.string.reader_scroll_view else R.string.reader_page_view)
+        binding.readerToolbar.menu.findItem(R.id.action_toggle_paging)?.apply {
+            setTitle(if (paged) R.string.reader_scroll_view else R.string.reader_page_view)
+            setIcon(if (paged) R.drawable.ic_view_scroll else R.drawable.ic_view_page)
+        }
     }
 
     /**
@@ -321,14 +329,9 @@ class EpubReaderFragment : Fragment() {
 
     private fun updateChapterBar() {
         val web = _binding?.readerWebView ?: return
-        binding.readerChapterLabel.text =
-            if (paged && pageReady) {
-                getString(R.string.reader_page_label, currentChapter + 1, chapters.size, web.currentPage() + 1, web.pageCount())
-            } else {
-                getString(R.string.reader_chapter_label, currentChapter + 1, chapters.size)
-            }
-        binding.readerPreviousButton.isEnabled = currentChapter > 0
-        binding.readerNextButton.isEnabled = currentChapter < chapters.lastIndex
+        binding.readerChapterLabel.text = getString(R.string.reader_chapter_label, currentChapter + 1, chapters.size)
+        binding.readerPageLabel.text =
+            if (paged && pageReady) getString(R.string.reader_page_number, web.currentPage() + 1, web.pageCount()) else ""
     }
 
     /** Called on a web view thread: the book's file for [url], or an empty not-found answer. */
@@ -388,6 +391,7 @@ class EpubReaderFragment : Fragment() {
 
     private fun offerToFinish() {
         val bar = _binding?.readerChapterBar ?: return
+        chrome?.show()
         Snackbar.make(binding.readerRoot, R.string.reader_end_reached, Snackbar.LENGTH_INDEFINITE)
             .setDuration(END_PROMPT_MS)
             .setAnchorView(bar)
@@ -411,6 +415,7 @@ class EpubReaderFragment : Fragment() {
 
     override fun onDestroyView() {
         server = null
+        chrome = null
         book = null
         baseStyle = null
         contentsDialog?.dismiss()
@@ -419,6 +424,7 @@ class EpubReaderFragment : Fragment() {
         pageReady = false
         _binding?.readerWebView?.let { web ->
             web.onTurnPage = null
+            web.onTap = null
             web.stopLoading()
             web.webViewClient = WebViewClient()
             (web.parent as? ViewGroup)?.removeView(web)

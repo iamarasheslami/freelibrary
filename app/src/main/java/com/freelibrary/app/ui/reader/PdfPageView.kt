@@ -34,6 +34,9 @@ class PdfPageView
         /** Asked for the next (true) or the previous (false) page. */
         var onTurnPage: ((forward: Boolean) -> Unit)? = null
 
+        /** Called for a tap that is not at an edge of a page: the reader shows or hides its bars. */
+        var onTap: (() -> Unit)? = null
+
         /** Called with the zoom once a pinch or a double tap is over. */
         var onZoomSettled: ((zoom: Float) -> Unit)? = null
 
@@ -97,8 +100,8 @@ class PdfPageView
                     }
 
                     override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                        if (isZoomed()) return false
-                        PageMath.tapForward(e.x, width)?.let { onTurnPage?.invoke(it) }
+                        val edge = if (isZoomed()) null else PageMath.tapForward(e.x, width)
+                        if (edge != null) onTurnPage?.invoke(edge) else onTap?.invoke()
                         return true
                     }
                 },

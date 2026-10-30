@@ -196,6 +196,24 @@ class EpubReaderViewModelTest {
         }
 
     @Test
+    fun `a size picked on the text size bar is kept within the limits`() =
+        runBlocking<Unit> {
+            downloadEpub()
+            val first = viewModel()
+            first.settled()
+
+            first.setTextSize(150)
+            assertEquals(150, first.textPercent.value)
+            first.setTextSize(10)
+            assertEquals(ReaderStyle.MIN_TEXT_PERCENT, first.textPercent.value)
+            first.setTextSize(999)
+            assertEquals(ReaderStyle.MAX_TEXT_PERCENT, first.textPercent.value)
+
+            val kept = eventually { settings.readerTextPercent.first().takeIf { it == ReaderStyle.MAX_TEXT_PERCENT } }
+            assertEquals(ReaderStyle.MAX_TEXT_PERCENT, kept)
+        }
+
+    @Test
     fun `the book is shown page by page until the reader chooses scrolling, and the choice is kept`() =
         runBlocking<Unit> {
             downloadEpub()

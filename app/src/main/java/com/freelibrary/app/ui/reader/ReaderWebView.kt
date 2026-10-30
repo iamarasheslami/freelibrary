@@ -36,6 +36,9 @@ class ReaderWebView
         /** Asked for the next (true) or the previous (false) page, by a swipe or a tap at an edge. */
         var onTurnPage: ((forward: Boolean) -> Unit)? = null
 
+        /** Called for a tap that is not at an edge of a page: the reader shows or hides its bars. */
+        var onTap: (() -> Unit)? = null
+
         private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
         private val swipeThreshold = SWIPE_DP * resources.displayMetrics.density
         private var downX = 0f
@@ -133,7 +136,16 @@ class ReaderWebView
          */
         @SuppressLint("ClickableViewAccessibility")
         override fun onTouchEvent(event: MotionEvent): Boolean {
-            if (!paged) return super.onTouchEvent(event)
+            if (!paged) {
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        downX = event.x
+                        downY = event.y
+                    }
+                    MotionEvent.ACTION_UP -> if (isTap(event)) onTap?.invoke()
+                }
+                return super.onTouchEvent(event)
+            }
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     downX = event.x
@@ -165,6 +177,7 @@ class ReaderWebView
                         onTurnPage?.invoke(edge)
                         return true
                     }
+                    if (isTap(event)) onTap?.invoke()
                 }
                 MotionEvent.ACTION_CANCEL -> swiping = false
             }
