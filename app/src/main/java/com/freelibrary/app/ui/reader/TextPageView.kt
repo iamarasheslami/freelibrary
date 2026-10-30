@@ -10,6 +10,7 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.StaticLayout
 import android.text.TextPaint
+import android.text.style.BackgroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.util.AttributeSet
 import android.view.GestureDetector
@@ -23,6 +24,7 @@ import kotlin.math.abs
 private const val LINE_SPACING = 1.35f
 private const val PARAGRAPH_GAP = 0.45f
 private const val SWIPE_DP = 48f
+private const val SIDEWAYS_RATIO = 2
 private const val PAGE_PADDING_DP = 16f
 private const val MAX_PERMILLE = 1000
 
@@ -64,6 +66,9 @@ class TextPageView
         private var pageStarts = intArrayOf(0)
         private var page = 0
         private var wanted = 0
+
+        /** A character to show when the next layout is built, instead of the place [wanted] says; used once. */
+        private var wantedOffset: Int? = null
         private var quiet = false
         private var downX = 0f
         private var downY = 0f
@@ -76,9 +81,12 @@ class TextPageView
             textColor: Int,
             backgroundColor: Int,
             permille: Int,
+            highlight: IntRange? = null,
+            highlightColor: Int = 0,
         ) {
             this.paged = paged
-            content = withParagraphGaps(plain)
+            content = withParagraphGaps(plain, highlight, highlightColor)
+            wantedOffset = highlight?.first
             paint.textSize = textSizePx
             paint.color = textColor
             setBackgroundColor(backgroundColor)
@@ -114,8 +122,16 @@ class TextPageView
             return true
         }
 
-        private fun withParagraphGaps(plain: String): CharSequence {
+        private fun withParagraphGaps(
+            plain: String,
+            highlight: IntRange?,
+            highlightColor: Int,
+        ): CharSequence {
             val spanned = SpannableString(plain)
+            if (highlight != null && highlight.first in 0 until plain.length) {
+                val end = (highlight.last + 1).coerceAtMost(plain.length)
+                spanned.setSpan(BackgroundColorSpan(highlightColor), highlight.first, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
             var at = plain.indexOf("\n\n")
             while (at >= 0) {
                 spanned.setSpan(RelativeSizeSpan(PARAGRAPH_GAP), at + 1, at + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -160,7 +176,9 @@ class TextPageView
 
         private fun goTo(permille: Int) {
             val l = layout ?: return
-            val line = l.getLineForOffset(TextPaging.offsetOf(permille, content.length))
+            val offset = wantedOffset ?: TextPaging.offsetOf(permille, content.length)
+            wantedOffset = null
+            val line = l.getLineForOffset(offset)
             if (paged) {
                 page = TextPaging.pageOfLine(pageStarts, line)
             } else {
@@ -224,7 +242,24 @@ class TextPageView
         }
 
         @SuppressLint("ClickableViewAccessibility")
-        override fun onTouchEvent(event: MotionEvent): Boolean = if (paged) pagedTouch(event) else scrollDetector.onTouchEvent(event)
+        override fun onTouchEvent(event: MotionEvent): Boolean = if (paged) pagedTouch(event) else scrollTouch(event)
+
+        /** Scroll view: the text scrolls up and down, and a swipe to the side asks for the next or the previous part. */
+        private fun scrollTouch(event: MotionEvent): Boolean {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downX = event.x
+                    downY = event.y
+                }
+                MotionEvent.ACTION_UP -> {
+                    val dx = event.x - downX
+                    if (abs(dx) > abs(event.y - downY) * SIDEWAYS_RATIO) {
+                        PageMath.swipeForward(dx, swipeThreshold)?.let { onTurnPage?.invoke(it) }
+                    }
+                }
+            }
+            return scrollDetector.onTouchEvent(event)
+        }
 
         private fun pagedTouch(event: MotionEvent): Boolean {
             when (event.actionMasked) {

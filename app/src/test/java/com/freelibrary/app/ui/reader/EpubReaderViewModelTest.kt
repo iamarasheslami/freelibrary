@@ -224,7 +224,7 @@ class EpubReaderViewModelTest {
             first.setPaged(false)
 
             assertFalse(first.paged.value)
-            eventually { settings.readerPaged.first().takeIf { !it } }
+            eventually { settings.readerPaged(bookId).first().takeIf { !it } }
             val second = viewModel()
             second.settled()
             assertFalse(second.paged.value)

@@ -273,7 +273,7 @@ class TextReaderViewModelTest {
             first.setPaged(false)
             assertFalse(first.paged.value)
 
-            eventually { settings.readerPaged.first().takeIf { !it } }
+            eventually { settings.readerPaged(bookId).first().takeIf { !it } }
             eventually { settings.readerTextPercent.first().takeIf { it == ReaderStyle.MIN_TEXT_PERCENT } }
             val second = viewModel()
             second.settled()

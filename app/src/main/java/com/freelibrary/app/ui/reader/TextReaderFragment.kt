@@ -6,6 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SearchView
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -15,7 +17,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.freelibrary.app.R
+import com.freelibrary.app.data.reader.BookSearch
 import com.freelibrary.app.data.reader.ReaderStyle
+import com.freelibrary.app.data.reader.SearchHit
 import com.freelibrary.app.data.reader.TextBook
 import com.freelibrary.app.data.repository.BookmarkRepository
 import com.freelibrary.app.databinding.FragmentTextReaderBinding
@@ -24,7 +28,11 @@ import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val TEXT_END_PROMPT_MS = 10_000
@@ -52,6 +60,8 @@ class TextReaderFragment : Fragment() {
     private var textPercent = ReaderStyle.DEFAULT_TEXT_PERCENT
     private var currentPart = 0
     private var chrome: ReaderChrome? = null
+    private var searchJob: Job? = null
+    private var searchDialog: AlertDialog? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -71,6 +81,7 @@ class TextReaderFragment : Fragment() {
         chrome = ReaderChrome(listOf(binding.textReaderToolbar, binding.textPartBar), ReaderChrome.screenReaderOn(requireContext()))
         binding.textReaderToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.textReaderToolbar.inflateMenu(R.menu.menu_text_reader)
+        (binding.textReaderToolbar.menu.findItem(R.id.action_search)?.actionView as? SearchView)?.onBookSearch(::searchBook)
         binding.textReaderToolbar.setOnMenuItemClickListener { item ->
             if (started) {
                 when (item.itemId) {
@@ -132,6 +143,8 @@ class TextReaderFragment : Fragment() {
 
     private fun textColor(): Int = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface)
 
+    private fun highlightColor(): Int = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryContainer)
+
     private fun backgroundColor(): Int = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSurface)
 
     private fun textSizePx(): Float =
@@ -165,13 +178,44 @@ class TextReaderFragment : Fragment() {
         part: Int,
         permille: Int,
         report: Boolean,
+        highlight: IntRange? = null,
     ) {
         val book = book ?: return
         if (part !in book.parts.indices) return
         currentPart = part
-        if (report) viewModel.onPositionChanged(part, permille)
-        binding.textPage.show(book.plain(part), paged, textSizePx(), textColor(), backgroundColor(), permille)
+        val plain = book.plain(part)
+        val place = if (highlight != null) TextPaging.permilleOf(highlight.first, plain.length) else permille
+        if (report) viewModel.onPositionChanged(part, place)
+        binding.textPage.show(plain, paged, textSizePx(), textColor(), backgroundColor(), place, highlight, highlightColor())
         updatePartBar()
+    }
+
+    /** Looks for [query] in every part, off the main thread, and lists the places found. */
+    private fun searchBook(query: String) {
+        val book = book ?: return
+        searchJob?.cancel()
+        searchJob =
+            viewLifecycleOwner.lifecycleScope.launch {
+                val results =
+                    withContext(Dispatchers.Default) {
+                        BookSearch.findAll(book.parts.size, query, checkActive = { ensureActive() }) { book.plain(it) }
+                    }
+                if (results.hits.isEmpty()) {
+                    Snackbar.make(binding.textReaderRoot, getString(R.string.reader_search_none, query), Snackbar.LENGTH_LONG).show()
+                } else {
+                    searchDialog?.dismiss()
+                    searchDialog =
+                        showSearchResults(requireContext(), query, results, { getString(R.string.reader_search_part, it.unit + 1) }) {
+                            openHit(it)
+                        }
+                }
+            }
+    }
+
+    /** Goes to a search result: opens its part at the words, which are highlighted. */
+    private fun openHit(hit: SearchHit) {
+        binding.textReaderToolbar.menu.findItem(R.id.action_search)?.collapseActionView()
+        showPart(hit.unit, 0, report = true, highlight = hit.offset until hit.offset + hit.length)
     }
 
     /** A swipe or a tap at an edge asked for another page: turn it, or move to the next or previous part. */
@@ -234,6 +278,10 @@ class TextReaderFragment : Fragment() {
     override fun onDestroyView() {
         started = false
         chrome = null
+        searchJob?.cancel()
+        searchJob = null
+        searchDialog?.dismiss()
+        searchDialog = null
         book = null
         _binding?.textPage?.let {
             it.onTurnPage = null

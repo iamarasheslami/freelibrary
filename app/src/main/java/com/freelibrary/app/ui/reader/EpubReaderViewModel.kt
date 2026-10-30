@@ -138,7 +138,7 @@ class EpubReaderViewModel
             book: EpubBook,
         ) {
             openedBook = book
-            _paged.value = settingsRepository.readerPaged.first()
+            _paged.value = settingsRepository.readerPaged(id).first()
             _textPercent.value = settingsRepository.readerTextPercent.first()
             val saved = (startPosition as? ReaderPosition.Epub) ?: readerRepository.savedEpubPosition(id)
             val chapter = (saved?.chapter ?: 0).coerceIn(0, book.chapters.lastIndex)
@@ -159,10 +159,11 @@ class EpubReaderViewModel
             _uiState.value = EpubReaderUiState.Ready(book, title ?: book.title)
         }
 
-        /** The reader chose page view ([paged] true) or scroll view; the choice is kept for next time. */
+        /** The reader chose page view ([paged] true) or scroll view for this book; the choice is kept for next time. */
         fun setPaged(paged: Boolean) {
             _paged.value = paged
-            viewModelScope.launch { settingsRepository.setReaderPaged(paged) }
+            val id = bookId ?: return
+            viewModelScope.launch { settingsRepository.setReaderPaged(id, paged) }
         }
 
         /** The reader asked for larger ([larger] true) or smaller text; the size stays within its limits and is kept. */

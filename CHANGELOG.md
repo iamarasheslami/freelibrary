@@ -14,8 +14,13 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Changed
 
-- The readers show only the book at first. A tap on the middle of the page shows the top and bottom
-  bars and the next tap hides them; with a screen reader on, the bars stay. The top bar has small
+- Page view or scroll view is chosen for each book, not for all readers at once. In scroll view a
+  swipe to the side moves to the next or the previous chapter (or part), as it does in page view.
+- EPUB and text books can be searched: the search icon in the reader's top bar opens a search box,
+  and the results list shows the chapter or part and a line of text for every place found. A tap
+  opens that place with the words highlighted.
+- The readers show the top and bottom bars at first. A tap on the middle of the page hides them, so
+  only the book is left, and the next tap shows them again; with a screen reader on, the bars stay. The top bar has small
   icons instead of the three-dot menu and no book name. The bottom bar shows the chapter (or part)
   on the left and the page on the right, without Previous and Next buttons.
 - The Book page buttons have a wider gap between them and line up with the page's side padding.

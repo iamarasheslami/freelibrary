@@ -17,27 +17,27 @@ class ReaderChromeTest {
     private fun bars() = listOf(View(context), View(context))
 
     @Test
-    fun `a reader starts with the bars hidden but still taking their space`() {
+    fun `a reader starts with the bars showing`() {
         val bars = bars()
 
         val chrome = ReaderChrome(bars, alwaysShown = false)
 
-        assertFalse(chrome.shown)
-        bars.forEach { assertEquals(View.INVISIBLE, it.visibility) }
+        assertTrue(chrome.shown)
+        bars.forEach { assertEquals(View.VISIBLE, it.visibility) }
     }
 
     @Test
-    fun `a tap shows the bars and the next tap hides them`() {
+    fun `a tap hides the bars, keeping their space, and the next tap shows them`() {
         val bars = bars()
         val chrome = ReaderChrome(bars, alwaysShown = false)
-
-        chrome.setShown(true, animate = false)
-        assertTrue(chrome.shown)
-        bars.forEach { assertEquals(View.VISIBLE, it.visibility) }
 
         chrome.setShown(false, animate = false)
         assertFalse(chrome.shown)
         bars.forEach { assertEquals(View.INVISIBLE, it.visibility) }
+
+        chrome.setShown(true, animate = false)
+        assertTrue(chrome.shown)
+        bars.forEach { assertEquals(View.VISIBLE, it.visibility) }
     }
 
     @Test
