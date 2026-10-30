@@ -21,7 +21,7 @@ import com.freelibrary.app.domain.model.ViewMoreTarget
 import com.freelibrary.app.ui.booklist.toArgs
 import com.freelibrary.app.ui.cover.CoverTypefaces
 import com.freelibrary.app.ui.filter.FilterSheetFragment
-import com.freelibrary.app.ui.filter.showFilterOnNavigation
+import com.freelibrary.app.ui.filter.showFilterState
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -30,7 +30,7 @@ import javax.inject.Inject
 
 /**
  * The Explore page: the curated collections first, then every genre and shelf of the catalog,
- * one slider each, loaded ten at a time as the reader scrolls. "View more" opens the full list.
+ * one slider each, loaded ten at a time as the reader scrolls. "View all" opens the full list.
  */
 @AndroidEntryPoint
 class ExploreFragment : Fragment() {
@@ -58,16 +58,19 @@ class ExploreFragment : Fragment() {
         binding.exploreRoot.applySystemBarInsetsAsPadding()
         binding.exploreToolbar.inflateMenu(R.menu.menu_explore)
         binding.exploreToolbar.setOnMenuItemClickListener { item ->
-            if (item.itemId == R.id.action_search) {
-                openSearch()
-                true
-            } else {
-                false
+            when (item.itemId) {
+                R.id.action_search -> {
+                    openSearch()
+                    true
+                }
+                R.id.action_filter -> {
+                    FilterSheetFragment.show(childFragmentManager)
+                    true
+                }
+                else -> false
             }
         }
-
-        binding.exploreToolbar.showFilterOnNavigation(viewModel.filter.value.isActive)
-        binding.exploreToolbar.setNavigationOnClickListener { FilterSheetFragment.show(childFragmentManager) }
+        renderFilterState(viewModel.filter.value.isActive)
 
         val adapter =
             ExploreAdapter(
@@ -76,7 +79,7 @@ class ExploreFragment : Fragment() {
                 onBookClick = ::openBook,
                 onViewMore = ::openList,
             )
-        binding.exploreList.adapter = adapter
+        binding.exploreList.adapter = adapter.withLoadStateFooter(ExploreLoadStateAdapter())
         adapter.addLoadStateListener { states ->
             binding.exploreEmpty.setText(if (viewModel.filter.value.isActive) R.string.explore_empty_filtered else R.string.explore_empty)
             binding.exploreEmpty.isVisible = states.refresh is LoadState.NotLoading && adapter.itemCount == 0
@@ -85,9 +88,14 @@ class ExploreFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { viewModel.rows.collectLatest { adapter.submitData(it) } }
-                launch { viewModel.filter.collect { binding.exploreToolbar.showFilterOnNavigation(it.isActive) } }
+                launch { viewModel.filter.collect { renderFilterState(it.isActive) } }
             }
         }
+    }
+
+    /** Shows the filter button with or without its dot. */
+    private fun renderFilterState(active: Boolean) {
+        binding.exploreToolbar.menu.findItem(R.id.action_filter)?.showFilterState(requireContext(), active)
     }
 
     /** Opens the full list of a shelf. A second tap while the page is opening is ignored. */

@@ -35,6 +35,7 @@
     <string name="search_no_results">No books found. Try fewer words or check the spelling.</string> 
     <string name="search_failed">The search could not run. Please try again.</string>
     <string name="search_no_results_filtered">No books found with this filter. Try fewer words or change the filter.</string>
+    <string name="explore_loading_more">Loading new categories…</string>
     <string name="explore_empty_filtered">No shelves match this filter. Try choosing fewer options.</string>
     <string name="filter_title">Filters</string>
     <string name="settings_title">Settings</string>
@@ -176,6 +177,7 @@
     <string name="download_error_too_large">This file is too large to download.</string>
     <string name="download_error_storage">The file could not be saved. Check that the phone has free space.</string>
     <string name="book_files_read">Read</string>
+    <string name="book_action_unavailable">Not available</string>
     <string name="book_action_save">Save</string>
     <string name="book_action_saved">Saved</string>
     <string name="book_action_finished">Finished</string>

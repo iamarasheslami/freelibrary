@@ -76,14 +76,13 @@
                         android:paddingStart="20dp"
                         android:paddingEnd="20dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
                             android:layout_gravity="center"
-                            android:maxLines="1"
-                            android:text="@string/tab_explore"
-                            android:textAppearance="?attr/textAppearanceLabelLarge"
-                            android:textColor="@color/tab_content" />
+                            android:contentDescription="@string/tab_explore"
+                            android:src="@drawable/ic_explore"
+                            app:tint="@color/tab_content" />
                     </FrameLayout>
                 </FrameLayout>
 
