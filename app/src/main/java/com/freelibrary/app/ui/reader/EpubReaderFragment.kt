@@ -13,6 +13,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SearchView
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -22,10 +23,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.freelibrary.app.R
+import com.freelibrary.app.data.reader.BookSearch
 import com.freelibrary.app.data.reader.ContentsEntry
 import com.freelibrary.app.data.reader.EpubBook
 import com.freelibrary.app.data.reader.EpubPageServer
+import com.freelibrary.app.data.reader.HtmlText
 import com.freelibrary.app.data.reader.ReaderStyle
+import com.freelibrary.app.data.reader.SearchHit
 import com.freelibrary.app.data.repository.BookmarkRepository
 import com.freelibrary.app.databinding.FragmentEpubReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
@@ -35,17 +39,29 @@ import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
+import java.io.IOException
 import javax.inject.Inject
 
 private const val RESTORE_RETRY_MS = 60L
 private const val RESTORE_ATTEMPTS = 25
 private const val LABEL_REFRESH_MS = 300L
 private const val END_PROMPT_MS = 10_000
+private const val FIND_SETTLE_MS = 250L
 
 /** Written before a contents line for each level of nesting. */
 private const val CONTENTS_INDENT = "\u2003"
+
+/** A search result waiting for its chapter to load: the [query] and which [occurrence] of it in the chapter to show. */
+private class PendingFind(
+    val query: String,
+    val occurrence: Int,
+)
 
 /**
  * Reads an EPUB one chapter at a time in a web view, page by page or as a scroll. The book is never
@@ -76,6 +92,17 @@ class EpubReaderFragment : Fragment() {
     private var currentPagePath: String? = null
     private var pendingPermille = 0
     private var chrome: ReaderChrome? = null
+    private var searchJob: Job? = null
+    private var snapAfterFind = false
+    private val snapRunnable =
+        Runnable {
+            snapAfterFind = false
+            _binding?.readerWebView?.snapToPage()
+        }
+    private var searchDialog: AlertDialog? = null
+
+    /** The words to find and highlight once the chapter a search result is in has loaded. */
+    private var pendingFind: PendingFind? = null
 
     /** True once the page showing has loaded and been put back where the reader was. */
     private var pageReady = false
@@ -98,6 +125,7 @@ class EpubReaderFragment : Fragment() {
         chrome = ReaderChrome(listOf(binding.readerToolbar, binding.readerChapterBar), ReaderChrome.screenReaderOn(requireContext()))
         binding.readerToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.readerToolbar.inflateMenu(R.menu.menu_reader)
+        (binding.readerToolbar.menu.findItem(R.id.action_search)?.actionView as? SearchView)?.onBookSearch(::searchBook)
         binding.readerToolbar.setOnMenuItemClickListener { item ->
             if (server != null) {
                 when (item.itemId) {
@@ -156,7 +184,10 @@ class EpubReaderFragment : Fragment() {
                     url: String,
                 ) = restoreScroll(0)
             }
-        web.setOnScrollChangeListener { _, _, _, _, _ -> onScrolled() }
+        web.setOnScrollChangeListener { _, _, _, _, _ ->
+            onScrolled()
+            if (snapAfterFind) scheduleSnap()
+        }
         web.onTurnPage = ::turnPage
         web.onTap = { chrome?.toggle() }
         // The page margin in page view is padding around the web view; touches there still turn pages.
@@ -277,6 +308,89 @@ class EpubReaderFragment : Fragment() {
                 }.show()
     }
 
+    /**
+     * Looks for [query] in every chapter, off the main thread, and lists the places found. A search for the
+     * same book is the app's own: the page view has JavaScript off, so the web view cannot search more than
+     * the chapter it shows.
+     */
+    private fun searchBook(query: String) {
+        val book = book ?: return
+        searchJob?.cancel()
+        searchJob =
+            viewLifecycleOwner.lifecycleScope.launch {
+                val results =
+                    withContext(Dispatchers.Default) {
+                        BookSearch.findAll(chapters.size, query, checkActive = { ensureActive() }) { index ->
+                            chapterText(book, chapters[index])
+                        }
+                    }
+                if (results.hits.isEmpty()) {
+                    Snackbar.make(binding.readerRoot, getString(R.string.reader_search_none, query), Snackbar.LENGTH_LONG).show()
+                } else {
+                    searchDialog?.dismiss()
+                    searchDialog = showSearchResults(requireContext(), query, results, { chapterLabel(it.unit) }) { openHit(it, query) }
+                }
+            }
+    }
+
+    /** The words of chapter [path], or null if it cannot be read. */
+    private fun chapterText(
+        book: EpubBook,
+        path: String,
+    ): String? =
+        try {
+            book.read(path)?.use { HtmlText.toText(it.readBytes().toString(Charsets.UTF_8)) }
+        } catch (e: IOException) {
+            null
+        }
+
+    /** The title of the contents line a chapter falls under, or its number. */
+    private fun chapterLabel(chapter: Int): String =
+        book?.contents?.lastOrNull { it.chapter <= chapter && it.title.isNotBlank() }?.title
+            ?: getString(R.string.reader_chapter_number, chapter + 1)
+
+    /** Goes to a search result: opens its chapter (if it is not the one showing) and highlights the words. */
+    private fun openHit(
+        hit: SearchHit,
+        query: String,
+    ) {
+        binding.readerToolbar.menu.findItem(R.id.action_search)?.collapseActionView()
+        pendingFind = PendingFind(query, hit.occurrence)
+        if (pageReady && hit.unit == currentChapter && currentPagePath == chapters.getOrNull(hit.unit)) {
+            runPendingFind()
+        } else {
+            showChapter(hit.unit, 0, report = true)
+        }
+    }
+
+    /** Settles on a whole page once the scrolling after a search has been still for a moment. */
+    private fun scheduleSnap() {
+        val web = _binding?.readerWebView ?: return
+        web.removeCallbacks(snapRunnable)
+        web.postDelayed(snapRunnable, FIND_SETTLE_MS)
+    }
+
+    /** Highlights every match of the pending search in the page showing and moves to the chosen one. */
+    private fun runPendingFind() {
+        val find = pendingFind ?: return
+        pendingFind = null
+        val web = _binding?.readerWebView ?: return
+        web.setFindListener { _, matches, done ->
+            if (!done) return@setFindListener
+            web.setFindListener(null)
+            if (matches > 0) {
+                repeat(find.occurrence.coerceAtMost(matches - 1)) { web.findNext(true) }
+                // The web view scrolls to a match on its own and may stop between two pages: once it has stopped
+                // scrolling, settle on the page the match is on.
+                if (paged) {
+                    snapAfterFind = true
+                    scheduleSnap()
+                }
+            }
+        }
+        web.findAllAsync(find.query)
+    }
+
     private fun onTextPercentChanged(newValue: Int) {
         if (server == null || newValue == textPercent) return
         // Remember where the reader is, then lay the chapter out again at the new size.
@@ -372,6 +486,7 @@ class EpubReaderFragment : Fragment() {
         if (pendingPermille == 0 || web.scrollToPermille(pendingPermille)) {
             pageReady = true
             onScrolled()
+            runPendingFind()
             // The number of pages is only known once the page is laid out.
             web.postDelayed({ updateChapterBar() }, LABEL_REFRESH_MS)
         } else if (attempt < RESTORE_ATTEMPTS) {
@@ -420,11 +535,18 @@ class EpubReaderFragment : Fragment() {
         baseStyle = null
         contentsDialog?.dismiss()
         contentsDialog = null
+        searchJob?.cancel()
+        searchJob = null
+        searchDialog?.dismiss()
+        searchDialog = null
+        pendingFind = null
         chapters = emptyList()
         pageReady = false
         _binding?.readerWebView?.let { web ->
             web.onTurnPage = null
             web.onTap = null
+            web.removeCallbacks(snapRunnable)
+            web.setFindListener(null)
             web.stopLoading()
             web.webViewClient = WebViewClient()
             (web.parent as? ViewGroup)?.removeView(web)

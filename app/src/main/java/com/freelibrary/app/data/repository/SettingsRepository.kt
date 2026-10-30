@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
@@ -49,9 +50,14 @@ class SettingsRepository
         val lastCatalogSyncAt: Flow<Long?> =
             storedPreferences.map { preferences -> preferences[LAST_CATALOG_SYNC_KEY] }
 
-        /** Whether the reader shows a book page by page (true) or as one long scroll per chapter. Page by page until chosen. */
-        val readerPaged: Flow<Boolean> =
-            storedPreferences.map { preferences -> preferences[READER_PAGED_KEY] ?: true }
+        /**
+         * Whether the book [bookId] is read page by page (true, the default) or as a scroll. The choice belongs
+         * to the book: only the books that were switched to scrolling are stored.
+         */
+        fun readerPaged(bookId: Long): Flow<Boolean> =
+            storedPreferences.map { preferences ->
+                bookId.toString() !in preferences[READER_SCROLL_BOOKS_KEY].orEmpty()
+            }
 
         suspend fun setThemeMode(mode: ThemeMode) {
             dataStore.edit { preferences -> preferences[THEME_MODE_KEY] = mode.name }
@@ -77,15 +83,21 @@ class SettingsRepository
             dataStore.edit { preferences -> preferences[READER_TEXT_PERCENT_KEY] = kept }
         }
 
-        suspend fun setReaderPaged(paged: Boolean) {
-            dataStore.edit { preferences -> preferences[READER_PAGED_KEY] = paged }
+        suspend fun setReaderPaged(
+            bookId: Long,
+            paged: Boolean,
+        ) {
+            dataStore.edit { preferences ->
+                val scrolled = preferences[READER_SCROLL_BOOKS_KEY].orEmpty()
+                preferences[READER_SCROLL_BOOKS_KEY] = if (paged) scrolled - bookId.toString() else scrolled + bookId.toString()
+            }
         }
 
         private companion object {
             val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
             val WIFI_ONLY_SYNC_KEY = booleanPreferencesKey("wifi_only_sync")
             val LAST_CATALOG_SYNC_KEY = longPreferencesKey("last_catalog_sync_at")
-            val READER_PAGED_KEY = booleanPreferencesKey("reader_paged")
+            val READER_SCROLL_BOOKS_KEY = stringSetPreferencesKey("reader_scroll_books")
             val READER_TEXT_PERCENT_KEY = intPreferencesKey("reader_text_percent")
         }
     }

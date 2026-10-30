@@ -8,21 +8,21 @@ import androidx.core.content.getSystemService
 private const val FADE_MS = 150L
 
 /**
- * The reader's top and bottom bars. A reader starts with only the book showing; a tap on the page
- * shows the bars and the next tap hides them. The bars keep their space when hidden, so the page
- * never changes size and the text never moves. With a screen reader on, the bars stay: a tap on
- * the page is not available there.
+ * The reader's top and bottom bars. A reader starts with the bars showing; a tap on the page hides
+ * them, so only the book is left, and the next tap shows them again. The bars keep their space when
+ * hidden, so the page never changes size and the text never moves. With a screen reader on, the
+ * bars stay: a tap on the page is not available there.
  */
 class ReaderChrome(
     private val bars: List<View>,
     private val alwaysShown: Boolean,
 ) {
     /** True while the bars show. */
-    var shown: Boolean = false
+    var shown: Boolean = true
         private set
 
     init {
-        setShown(alwaysShown, animate = false)
+        setShown(true, animate = false)
     }
 
     fun toggle() = setShown(!shown)

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The title of the search results list: the display serif of the slider headings, in the same green. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="?attr/dialogPreferredPadding"
+    android:paddingTop="20dp"
+    android:paddingEnd="?attr/dialogPreferredPadding"
+    android:paddingBottom="12dp"
+    android:textAppearance="@style/TextAppearance.FreeLibrary.SliderHeading"
+    android:textSize="22sp" />

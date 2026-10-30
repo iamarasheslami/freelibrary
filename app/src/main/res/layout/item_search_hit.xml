@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:orientation="vertical"
+    android:paddingTop="12dp">
+
+    <!-- Where the words are (chapter or part), then a line of the text with the words marked. -->
+    <TextView
+        android:id="@+id/searchHitPlace"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingStart="?attr/dialogPreferredPadding"
+        android:paddingEnd="?attr/dialogPreferredPadding"
+        android:textAppearance="?attr/textAppearanceLabelLarge"
+        android:textColor="@color/slider_heading"
+        tools:text="Chapter 3" />
+
+    <TextView
+        android:id="@+id/searchHitText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:paddingStart="?attr/dialogPreferredPadding"
+        android:paddingTop="2dp"
+        android:paddingEnd="?attr/dialogPreferredPadding"
+        android:paddingBottom="12dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorOnSurface"
+        tools:text="…the great white whale rose out of the sea…" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="?attr/dialogPreferredPadding"
+        android:layout_marginEnd="?attr/dialogPreferredPadding"
+        android:background="?attr/colorOutlineVariant" />
+
+</LinearLayout>

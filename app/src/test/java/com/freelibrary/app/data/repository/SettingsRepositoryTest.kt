@@ -70,17 +70,29 @@ class SettingsRepositoryTest {
         }
 
     @Test
-    fun `the reader pages by default and remembers a different choice`() =
+    fun `a book is paged by default and remembers a different choice`() =
         runTest {
             val repository = SettingsRepository(InMemoryPreferences())
 
-            assertTrue(repository.readerPaged.first())
+            assertTrue(repository.readerPaged(7).first())
 
-            repository.setReaderPaged(false)
-            assertFalse(repository.readerPaged.first())
+            repository.setReaderPaged(7, false)
+            assertFalse(repository.readerPaged(7).first())
 
-            repository.setReaderPaged(true)
-            assertTrue(repository.readerPaged.first())
+            repository.setReaderPaged(7, true)
+            assertTrue(repository.readerPaged(7).first())
+        }
+
+    @Test
+    fun `the view choice belongs to one book and does not change the others`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            repository.setReaderPaged(7, false)
+
+            assertFalse(repository.readerPaged(7).first())
+            assertTrue(repository.readerPaged(8).first())
+            assertTrue(repository.readerPaged(70).first())
         }
 
     @Test

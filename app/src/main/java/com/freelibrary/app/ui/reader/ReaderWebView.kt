@@ -142,7 +142,17 @@ class ReaderWebView
                         downX = event.x
                         downY = event.y
                     }
-                    MotionEvent.ACTION_UP -> if (isTap(event)) onTap?.invoke()
+                    MotionEvent.ACTION_UP -> {
+                        val dx = event.x - downX
+                        val sideways = abs(dx) > abs(event.y - downY) * SIDEWAYS_RATIO
+                        val forward = if (sideways) PageMath.swipeForward(dx, swipeThreshold, rightToLeft) else null
+                        // In scroll view a swipe to the side asks for the next or the previous chapter.
+                        if (forward != null) {
+                            onTurnPage?.invoke(forward)
+                        } else if (isTap(event)) {
+                            onTap?.invoke()
+                        }
+                    }
                 }
                 return super.onTouchEvent(event)
             }
@@ -204,5 +214,8 @@ class ReaderWebView
 
         private companion object {
             const val MAX = ReaderPosition.MAX_PERMILLE
+
+            /** How much longer a swipe must be sideways than up or down to count as a swipe to the side. */
+            const val SIDEWAYS_RATIO = 2
         }
     }

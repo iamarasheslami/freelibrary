@@ -137,7 +137,7 @@ class TextReaderViewModel
             id: Long,
             book: TextBook,
         ) {
-            _paged.value = settingsRepository.readerPaged.first()
+            _paged.value = settingsRepository.readerPaged(id).first()
             _textPercent.value = settingsRepository.readerTextPercent.first()
             val saved = (startPosition as? ReaderPosition.Text) ?: readerRepository.savedTextPosition(id)
             val (part, permille) = saved?.let { book.locate(it.offset) } ?: (0 to 0)
@@ -157,10 +157,11 @@ class TextReaderViewModel
             _uiState.value = TextReaderUiState.Ready(book, title)
         }
 
-        /** The reader chose page view ([paged] true) or scroll view; the choice is kept for next time. */
+        /** The reader chose page view ([paged] true) or scroll view for this book; the choice is kept for next time. */
         fun setPaged(paged: Boolean) {
             _paged.value = paged
-            viewModelScope.launch { settingsRepository.setReaderPaged(paged) }
+            val id = bookId ?: return
+            viewModelScope.launch { settingsRepository.setReaderPaged(id, paged) }
         }
 
         /** The reader asked for larger ([larger] true) or smaller text; the size stays within its limits and is kept. */
