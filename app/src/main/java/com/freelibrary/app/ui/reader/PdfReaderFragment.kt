@@ -54,6 +54,7 @@ class PdfReaderFragment : Fragment() {
     private var renderedLevel = 0
     private var renderJob: Job? = null
     private var pageDialog: AlertDialog? = null
+    private var chrome: ReaderChrome? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -70,6 +71,7 @@ class PdfReaderFragment : Fragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         binding.pdfReaderRoot.applySystemBarInsetsAsPadding()
+        chrome = ReaderChrome(listOf(binding.pdfReaderToolbar, binding.pdfPageBar), ReaderChrome.screenReaderOn(requireContext()))
         applyPageColors()
         binding.pdfReaderToolbar.setNavigationOnClickListener { findNavController().navigateUp() }
         binding.pdfReaderToolbar.inflateMenu(R.menu.menu_pdf_reader)
@@ -81,9 +83,8 @@ class PdfReaderFragment : Fragment() {
             }
             true
         }
-        binding.pdfPreviousButton.setOnClickListener { goToPage(currentPage - 1) }
-        binding.pdfNextButton.setOnClickListener { goToPage(currentPage + 1) }
         binding.pdfPageView.onTurnPage = { forward -> goToPage(currentPage + if (forward) 1 else -1) }
+        binding.pdfPageView.onTap = { chrome?.toggle() }
         binding.pdfPageView.onZoomSettled = ::onZoomSettled
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -108,6 +109,7 @@ class PdfReaderFragment : Fragment() {
                 binding.pdfLoading.isVisible = false
                 binding.pdfMessage.setText(failureMessage(state.reason))
                 binding.pdfMessage.isVisible = true
+                chrome?.show()
             }
             is PdfReaderUiState.Ready ->
                 if (book == null) {
@@ -119,9 +121,7 @@ class PdfReaderFragment : Fragment() {
 
     private fun startReading(ready: PdfReaderUiState.Ready) {
         book = ready.book
-        binding.pdfReaderToolbar.title = ready.title.orEmpty()
         binding.pdfPageView.isVisible = true
-        binding.pdfPageBar.isVisible = true
         goToPage(viewModel.page, report = false)
     }
 
@@ -140,8 +140,6 @@ class PdfReaderFragment : Fragment() {
 
     private fun updatePageBar(book: PdfBook) {
         binding.pdfPageLabel.text = getString(R.string.pdf_page_label, currentPage + 1, book.pageCount)
-        binding.pdfPreviousButton.isEnabled = currentPage > 0
-        binding.pdfNextButton.isEnabled = currentPage < book.pageCount - 1
     }
 
     /** Draws [page] at [level] off the main thread and shows it, unless the reader has moved on meanwhile. */
@@ -209,6 +207,7 @@ class PdfReaderFragment : Fragment() {
 
     private fun offerToFinish() {
         val bar = _binding?.pdfPageBar ?: return
+        chrome?.show()
         Snackbar.make(binding.pdfReaderRoot, R.string.reader_end_reached, Snackbar.LENGTH_INDEFINITE)
             .setDuration(END_PROMPT_MS)
             .setAnchorView(bar)
@@ -237,8 +236,10 @@ class PdfReaderFragment : Fragment() {
         pageDialog?.dismiss()
         pageDialog = null
         book = null
+        chrome = null
         _binding?.pdfPageView?.let { view ->
             view.onTurnPage = null
+            view.onTap = null
             view.onZoomSettled = null
         }
         super.onDestroyView()

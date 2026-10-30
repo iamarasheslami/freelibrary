@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One icon button of the Book page. The root is 48dp wide, so the touch target is full size
-     while the glass circle inside it is 36dp, which leaves a small gap between the circles; seven of
-     them still fit one row on a 360dp phone. -->
+<!-- One icon button of the Book page. The glass circle is 40dp and the padding around it makes the button
+     47 x 48dp: a 7dp gap between circles and a touch target bigger than the circle. The padding is what
+     sets the size, because CenteredFlowLayout measures its children by their content and ignores a fixed
+     width. Seven of them (329dp) fit one row at the Small app size, where a phone is about 423dp wide,
+     and wrap into centred rows on a narrower screen or at a larger app size. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:paddingStart="3.5dp"
+    android:paddingTop="4dp"
+    android:paddingEnd="3.5dp"
+    android:paddingBottom="4dp">
 
     <ImageView
         android:id="@+id/bookActionIcon"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_gravity="center"
         android:background="@drawable/bg_glass_icon_button"
         android:importantForAccessibility="no"
-        android:padding="9dp"
+        android:padding="10dp"
         app:tint="?attr/colorPrimary" />
 
 </FrameLayout>

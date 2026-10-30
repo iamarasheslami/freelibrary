@@ -239,6 +239,24 @@ class TextReaderViewModelTest {
         }
 
     @Test
+    fun `a size picked on the text size bar is kept within the limits`() =
+        runBlocking<Unit> {
+            downloadText(text)
+            val first = viewModel()
+            first.settled()
+
+            first.setTextSize(150)
+            assertEquals(150, first.textPercent.value)
+            first.setTextSize(10)
+            assertEquals(ReaderStyle.MIN_TEXT_PERCENT, first.textPercent.value)
+            first.setTextSize(999)
+            assertEquals(ReaderStyle.MAX_TEXT_PERCENT, first.textPercent.value)
+
+            val kept = eventually { settings.readerTextPercent.first().takeIf { it == ReaderStyle.MAX_TEXT_PERCENT } }
+            assertEquals(ReaderStyle.MAX_TEXT_PERCENT, kept)
+        }
+
+    @Test
     fun `the text size steps within its limits and the view choice is kept`() =
         runBlocking<Unit> {
             downloadText(text)

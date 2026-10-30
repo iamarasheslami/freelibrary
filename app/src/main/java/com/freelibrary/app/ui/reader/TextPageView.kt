@@ -41,6 +41,9 @@ class TextPageView
         /** Asked for the next (true) or the previous (false) page, by a swipe or a tap at an edge. */
         var onTurnPage: ((forward: Boolean) -> Unit)? = null
 
+        /** Called for a tap that is not at an edge of a page: the reader shows or hides its bars. */
+        var onTap: (() -> Unit)? = null
+
         /** Called when the page or the scroll position changed. */
         var onMoved: (() -> Unit)? = null
 
@@ -236,7 +239,12 @@ class TextPageView
                         PageMath.swipeForward(dx, swipeThreshold)?.let { onTurnPage?.invoke(it) }
                     } else if (abs(dx) <= touchSlop && abs(dy) <= touchSlop) {
                         val forward = PageMath.tapForward(event.x, width)
-                        if (forward == null) performClick() else onTurnPage?.invoke(forward)
+                        if (forward == null) {
+                            performClick()
+                            onTap?.invoke()
+                        } else {
+                            onTurnPage?.invoke(forward)
+                        }
                     }
                 }
             }
@@ -251,6 +259,11 @@ class TextPageView
         private inner class ScrollListener : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(e: MotionEvent): Boolean {
                 scroller.forceFinished(true)
+                return true
+            }
+
+            override fun onSingleTapUp(e: MotionEvent): Boolean {
+                onTap?.invoke()
                 return true
             }
 
