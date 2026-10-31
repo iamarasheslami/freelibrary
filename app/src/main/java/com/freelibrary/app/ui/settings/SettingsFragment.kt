@@ -14,7 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * The Settings screen: a list of parent rows, each opening the page for its topic (profile,
- * appearance, catalog sync, storage, privacy, backup and about). The rows hold no state of their own.
+ * appearance, catalog sync, storage, backup and about). The rows hold no state of their own.
  */
 @AndroidEntryPoint
 class SettingsFragment : Fragment() {
@@ -42,7 +42,6 @@ class SettingsFragment : Fragment() {
         binding.appearanceRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToAppearanceSettingsFragment()) }
         binding.syncRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToSyncSettingsFragment()) }
         binding.storageRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToStorageSettingsFragment()) }
-        binding.privacyRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToPrivacySettingsFragment()) }
         binding.backupRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToBackupSettingsFragment()) }
         binding.aboutRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToAboutSettingsFragment()) }
     }

@@ -25,6 +25,13 @@ interface DownloadedBookDao {
     @Query("SELECT * FROM downloaded_books ORDER BY downloadedAt DESC")
     suspend fun getAllDownloads(): List<DownloadedBook>
 
+    /** Every downloaded file with its book's title, newest first, kept live. */
+    @Query(
+        "SELECT d.bookId AS bookId, b.title AS title, d.format AS format, d.localFilePath AS localFilePath " +
+            "FROM downloaded_books d JOIN books b ON b.id = d.bookId ORDER BY d.downloadedAt DESC, d.id DESC",
+    )
+    fun observeAllWithTitles(): Flow<List<DownloadedFileRow>>
+
     @Query("DELETE FROM downloaded_books WHERE bookId = :bookId AND format = :format")
     suspend fun delete(
         bookId: Long,

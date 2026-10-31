@@ -65,7 +65,20 @@
     <string name="settings_storage">Storage</string>
     <string name="settings_cover_cache">Cover cache</string>
     <string name="settings_cover_cache_clear">Clear</string>
-    <string name="settings_privacy">Privacy</string>
+    <string name="storage_downloads">Downloaded books</string>
+    <string name="storage_other">Other</string>
+    <string name="storage_downloads_empty">No books are downloaded to this phone.</string>
+    <string name="storage_downloads_summary">%1$s · %2$s</string>
+    <plurals name="storage_books">
+        <item quantity="one">%1$d book</item>
+        <item quantity="other">%1$d books</item>
+    </plurals>
+    <string name="storage_file_details">%1$s · %2$s</string>
+    <string name="storage_delete">Delete</string>
+    <string name="storage_delete_description">Delete %1$s</string>
+    <string name="storage_delete_title">Delete this book from your phone?</string>
+    <string name="storage_delete_message">“%1$s” (%2$s) will be deleted from your phone for good. You can download it again later when you are online. Your place in the book and your bookmarks are kept.</string>
+    <string name="storage_delete_failed">Could not delete the book. Try again.</string>
     <string name="settings_history">Reading history</string>
     <string name="settings_history_summary">Forgets which books you were reading or finished, and where you stopped in them.</string>
     <string name="settings_history_clear">Clear</string>
@@ -113,8 +126,7 @@
     <string name="settings_profile_summary">Name, birthday and picture</string>
     <string name="settings_appearance_summary">Theme and app size</string>
     <string name="settings_sync_summary">Wi-Fi only and sync now</string>
-    <string name="settings_storage_summary">Cover cache</string>
-    <string name="settings_privacy_summary">Reading history</string>
+    <string name="settings_storage_summary">Downloaded books, cover cache and reading history</string>
     <string name="settings_backup_row_summary">Export and import your data</string>
     <string name="settings_about_summary">Version, licence and links</string>
     <string name="edit_profile_save">Save</string>

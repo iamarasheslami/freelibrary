@@ -14,6 +14,9 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Changed
 
+- Settings: the Storage page lists the books downloaded to the phone with their number and total
+  size, and each one can be deleted for good after a confirmation. Clear reading history moved there
+  from the Privacy page, which is removed.
 - Page view or scroll view is chosen for each book, not for all readers at once. In scroll view a
   swipe to the side moves to the next or the previous chapter (or part), as it does in page view.
 - EPUB and text books can be searched: the search icon in the reader's top bar opens a search box,
