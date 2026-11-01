@@ -1,5 +1,6 @@
 package com.freelibrary.app.ui.theme
 
+import android.annotation.SuppressLint
 import android.content.res.Resources
 import androidx.annotation.FontRes
 import com.freelibrary.app.R
@@ -104,7 +105,11 @@ enum class AppFont(
     /** The font as the EPUB style sheet names it. */
     fun forReader(): ReaderFont = ReaderFont(faces.map { WebFont(it.file, it.weight, it.italic) })
 
-    /** The bytes of the font file the style sheet asked for by [file], or null if this font has no such file. */
+    /**
+     * The bytes of the font file the style sheet asked for by [file], or null if this font has no such file. A font file in
+     * res/font is a plain file that [Resources.openRawResource] can read, though lint expects a raw resource id there.
+     */
+    @SuppressLint("ResourceType")
     fun open(
         resources: Resources,
         file: String,
