@@ -2,6 +2,7 @@ package com.freelibrary.app.di
 
 import android.content.Context
 import com.freelibrary.app.data.remote.CatalogSyncApi
+import com.freelibrary.app.data.remote.NetworkLog
 import com.freelibrary.app.data.remote.createCatalogHttpClient
 import com.freelibrary.app.data.remote.createCatalogSyncApi
 import dagger.Module
@@ -18,5 +19,8 @@ object NetworkModule {
     @Singleton
     fun provideCatalogSyncApi(
         @ApplicationContext context: Context,
-    ): CatalogSyncApi = createCatalogSyncApi(client = createCatalogHttpClient(userAgent = appUserAgent(context)))
+    ): CatalogSyncApi =
+        createCatalogSyncApi(
+            client = createCatalogHttpClient(userAgent = appUserAgent(context), networkLog = NetworkLog.forApp(context)),
+        )
 }

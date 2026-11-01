@@ -22,10 +22,12 @@ const val MAX_CATALOG_RESPONSE_BYTES = 64L * 1024 * 1024
  * hold the sync (and its background scope) forever. An answer larger than [maxResponseBytes] is refused,
  * counted after decompression, so neither a mistake nor a hostile server can fill the phone's memory.
  * HTTPS to HTTP redirects are not followed. [userAgent], when given, tells the server which app is asking.
+ * [networkLog], when given (debug builds only), records every request.
  */
 fun createCatalogHttpClient(
     userAgent: String? = null,
     maxResponseBytes: Long = MAX_CATALOG_RESPONSE_BYTES,
+    networkLog: NetworkLog? = null,
 ): OkHttpClient =
     OkHttpClient.Builder()
         .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -39,6 +41,7 @@ fun createCatalogHttpClient(
                 }
             }
         }
+        .apply { networkLog?.let { addInterceptor(it.interceptor("sync")) } }
         .addInterceptor(ResponseSizeLimit(maxResponseBytes))
         .build()
 
