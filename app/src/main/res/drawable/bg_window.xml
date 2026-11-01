@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The window behind every screen on the light theme: the paper colour with a faint grain. The grain is a tiled
+     image whose pixels are never more than 16% dark, so text keeps its contrast (see BackdropContrastTest).
+     The readers paint their own solid page and never show it. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_background" />
+        </shape>
+    </item>
+    <item>
+        <bitmap
+            android:src="@drawable/bg_grain"
+            android:tileMode="repeat" />
+    </item>
+</layer-list>

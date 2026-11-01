@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The window behind every screen on the dark theme: Black Iris with a soft Pine Shadow glow in the middle, so the
+     edges fall away like a vignette. The centre colour is kept readable by BackdropContrastTest. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/md_background" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerColor="#00000000"
+                android:centerX="0.5"
+                android:centerY="0.4"
+                android:endColor="#00000000"
+                android:gradientRadius="90%p"
+                android:startColor="#A612372A"
+                android:type="radial" />
+        </shape>
+    </item>
+</layer-list>

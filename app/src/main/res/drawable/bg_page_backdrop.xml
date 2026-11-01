@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The same wash as bg_home_backdrop, as a page background: it fills the top 240dp and leaves the rest of the page alone. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:drawable="@drawable/bg_home_backdrop"
+        android:gravity="top"
+        android:height="240dp" />
+</layer-list>

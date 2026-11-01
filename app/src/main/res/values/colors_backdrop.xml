@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The wash at the top of Home: Moss, then Slate Green, then nothing. Strong enough to see, weak enough that the
+         headings stay readable on it (BackdropContrastTest). -->
+    <color name="backdrop_home_top">#477AA05A</color>
+    <color name="backdrop_home_mid">#1A2D5A4A</color>
+    <color name="backdrop_home_end">#002D5A4A</color>
+</resources>

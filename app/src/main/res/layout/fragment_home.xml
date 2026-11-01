@@ -5,6 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:background="@drawable/bg_home_backdrop"
+        android:importantForAccessibility="no" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/homeList"
         android:layout_width="match_parent"
