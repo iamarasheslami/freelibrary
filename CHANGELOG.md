@@ -20,6 +20,9 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Changed
 
+- Backgrounds: the light theme has a paper grain, the dark theme a soft Pine Shadow vignette, and Home, Explore and
+  Profile have a Moss to Slate Green wash at the top. All of it is static, the readers are untouched, and a test checks
+  that text keeps its contrast on every one of them.
 - Covers: a cover that is already showing or loading is no longer requested again when its row is bound again. A debug
   network log showed 367 of 429 cover requests being cancelled and restarted on Home.
 - Settings, Appearance: a Reset to defaults button for the theme, app size, reader fonts, reading text colour and

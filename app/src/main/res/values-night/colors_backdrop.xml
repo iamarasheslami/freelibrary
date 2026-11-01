@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The wash at the top of Home: Evergreen, then Pine Shadow, then nothing. -->
+    <color name="backdrop_home_top">#662F6B4F</color>
+    <color name="backdrop_home_mid">#4012372A</color>
+    <color name="backdrop_home_end">#0012372A</color>
+</resources>

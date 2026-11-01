@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A soft wash of Moss into Slate Green at the top of Home that fades into the page. Static on purpose:
+     no animation, so nothing moves for readers who are sensitive to motion and nothing costs battery. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:centerColor="@color/backdrop_home_mid"
+        android:endColor="@color/backdrop_home_end"
+        android:startColor="@color/backdrop_home_top" />
+</shape>

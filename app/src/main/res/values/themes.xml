@@ -13,6 +13,7 @@
         <item name="colorOnSecondaryContainer">@color/md_on_secondary_container</item>
 
         <item name="android:colorBackground">@color/md_background</item>
+        <item name="android:windowBackground">@drawable/bg_window</item>
         <item name="colorOnBackground">@color/md_on_background</item>
         <item name="colorSurface">@color/md_surface</item>
         <item name="colorOnSurface">@color/md_on_surface</item>
