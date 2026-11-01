@@ -11,6 +11,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -50,6 +51,8 @@ class EpubPageServerTest {
     private fun server(
         vararg files: Pair<String, ByteArray>,
         maxPageBytes: Int = EpubPageServer.DEFAULT_MAX_PAGE_BYTES,
+        withStyle: ReaderStyle = style,
+        fontOpener: (String) -> InputStream? = { null },
     ): EpubPageServer {
         val file = temporaryFolder.newFile()
         ZipOutputStream(file.outputStream()).use { zip ->
@@ -67,7 +70,7 @@ class EpubPageServerTest {
         }
         val book = (EpubBook.open(file) as EpubOpenResult.Opened).book
         opened.add(book)
-        return EpubPageServer(book, style, maxPageBytes)
+        return EpubPageServer(book, withStyle, maxPageBytes, fontOpener)
     }
 
     private fun ServedFile.text(): String = stream.use { it.readBytes().decodeToString() }
@@ -230,5 +233,46 @@ class EpubPageServerTest {
         val server = server()
 
         assertEquals(EpubPageServer.STYLE_PATH, server.pathOf(EpubPageServer.STYLE_URL))
+    }
+
+    private val fontStyle =
+        style.copy(
+            font =
+                ReaderFont(
+                    listOf(
+                        WebFont("lora.ttf", "100 900", italic = false),
+                        WebFont("lora_italic.ttf", "100 900", italic = true),
+                    ),
+                ),
+        )
+
+    @Test
+    fun `a font file of the style is served with its font type`() {
+        val server = server(withStyle = fontStyle, fontOpener = { "bytes of $it".byteInputStream() })
+
+        val served = server.serve("__freelibrary__/fonts/lora.ttf")!!
+
+        assertEquals("font/ttf", served.mimeType)
+        assertEquals("bytes of lora.ttf", served.text())
+    }
+
+    @Test
+    fun `a font the style does not use is not served, whatever the book asks for`() {
+        val server = server(withStyle = fontStyle, fontOpener = { "bytes".byteInputStream() })
+
+        assertNull(server.serve("__freelibrary__/fonts/open_sans.ttf"))
+        assertNull(server.serve("__freelibrary__/fonts/../../databases/freelibrary.db"))
+    }
+
+    @Test
+    fun `without a font in the style no font is served`() {
+        assertNull(server(fontOpener = { "bytes".byteInputStream() }).serve("__freelibrary__/fonts/lora.ttf"))
+    }
+
+    @Test
+    fun `a font file the app cannot open is not found`() {
+        val server = server(withStyle = fontStyle, fontOpener = { error("missing") })
+
+        assertNull(server.serve("__freelibrary__/fonts/lora.ttf"))
     }
 }

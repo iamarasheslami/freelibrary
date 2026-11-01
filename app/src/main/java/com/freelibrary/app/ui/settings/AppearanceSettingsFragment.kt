@@ -10,14 +10,20 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.freelibrary.app.R
 import com.freelibrary.app.databinding.FragmentSettingsAppearanceBinding
 import com.freelibrary.app.domain.model.ThemeMode
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.freelibrary.app.ui.theme.AppScale
+import com.freelibrary.app.ui.theme.FontChoices
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
-/** The Appearance page: theme and app size. Controls react to the reader's own taps only, so showing a stored value never writes it back. */
+/**
+ * The Appearance page: theme and app size, and a button that puts them back to their defaults (with the reader's
+ * font, text colour and text size). Controls react to the reader's own taps only, so showing a stored value never writes it back.
+ */
 @AndroidEntryPoint
 class AppearanceSettingsFragment : Fragment() {
     private var _binding: FragmentSettingsAppearanceBinding? = null
@@ -45,6 +51,8 @@ class AppearanceSettingsFragment : Fragment() {
             }
         }
 
+        binding.resetAppearanceButton.setOnClickListener { confirmReset() }
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
@@ -53,6 +61,21 @@ class AppearanceSettingsFragment : Fragment() {
                 }
             }
         }
+    }
+
+    /** Asks first, then puts every appearance choice back to its default and restarts the screen. */
+    private fun confirmReset() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.settings_reset_confirm_title)
+            .setMessage(R.string.settings_reset_confirm_message)
+            .setPositiveButton(R.string.settings_reset) { _, _ ->
+                val context = requireContext()
+                FontChoices.reset(context)
+                AppScale.reset(context)
+                viewModel.resetAppearance()
+                requireActivity().recreate()
+            }.setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     override fun onCreateView(

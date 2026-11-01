@@ -83,8 +83,10 @@ class TextPageView
             permille: Int,
             highlight: IntRange? = null,
             highlightColor: Int = 0,
+            typeface: Typeface = Typeface.SERIF,
         ) {
             this.paged = paged
+            paint.typeface = typeface
             content = withParagraphGaps(plain, highlight, highlightColor)
             wantedOffset = highlight?.first
             paint.textSize = textSizePx

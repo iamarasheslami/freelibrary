@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The ten reading text colours on the Alabaster page. Each keeps at least 7 to 1 (PaletteContrastTest). -->
+    <color name="reading_text_contrast">#000000</color>
+    <color name="reading_text_gray">#3B3B3B</color>
+    <color name="reading_text_brown">#5C3A1E</color>
+    <color name="reading_text_red">#9A1010</color>
+    <color name="reading_text_orange">#803B00</color>
+    <color name="reading_text_green">#17511C</color>
+    <color name="reading_text_teal">#00585C</color>
+    <color name="reading_text_blue">#0D3F91</color>
+    <color name="reading_text_purple">#5B2A86</color>
+    <color name="reading_text_pink">#94104F</color>
+</resources>

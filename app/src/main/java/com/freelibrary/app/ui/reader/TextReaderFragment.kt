@@ -1,5 +1,6 @@
 package com.freelibrary.app.ui.reader
 
+import android.graphics.Typeface
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -8,6 +9,7 @@ import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -25,6 +27,7 @@ import com.freelibrary.app.data.repository.BookmarkRepository
 import com.freelibrary.app.databinding.FragmentTextReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
+import com.freelibrary.app.ui.theme.FontChoices
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -89,12 +92,29 @@ class TextReaderFragment : Fragment() {
                     R.id.action_add_bookmark -> addBookmark()
                     R.id.action_bookmarks -> openBookmarkList()
                     R.id.action_text_size ->
-                        showTextSizeControl(
+                        showTextStyleControl(
                             binding.textReaderToolbar,
                             current = { viewModel.textPercent.value },
                             onLarger = { viewModel.changeTextSize(larger = true) },
                             onSmaller = { viewModel.changeTextSize(larger = false) },
                             onSet = viewModel::setTextSize,
+                            font =
+                                FontChoice(
+                                    current = { FontChoices.textFont(requireContext()) },
+                                    includeBookOwn = false,
+                                    onPick = { picked ->
+                                        if (picked != null) FontChoices.setTextFont(requireContext(), picked)
+                                        relayout()
+                                    },
+                                ),
+                            colour =
+                                ColourChoice(
+                                    current = { FontChoices.textColour(requireContext()) },
+                                    onPick = { picked ->
+                                        FontChoices.setTextColour(requireContext(), picked)
+                                        relayout()
+                                    },
+                                ),
                         )
                 }
             }
@@ -141,7 +161,13 @@ class TextReaderFragment : Fragment() {
         showPart(start.part, start.permille, report = false)
     }
 
-    private fun textColor(): Int = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface)
+    private fun textColor(): Int =
+        FontChoices.textColour(requireContext())
+            .resolve(requireContext(), MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface))
+
+    /** The font chosen for plain text books; the system serif if the font cannot be loaded. */
+    private fun readingTypeface(): Typeface =
+        runCatching { ResourcesCompat.getFont(requireContext(), FontChoices.textFont(requireContext()).body) }.getOrNull() ?: Typeface.SERIF
 
     private fun highlightColor(): Int = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryContainer)
 
@@ -162,6 +188,13 @@ class TextReaderFragment : Fragment() {
         // Remember where the reader is, then lay the part out again at the new size.
         val permille = _binding?.textPage?.permille() ?: viewModel.position.permille
         textPercent = newValue
+        showPart(currentPart, permille, report = false)
+    }
+
+    /** Lays the part out again, at the same place, after the font or the colour changed. */
+    private fun relayout() {
+        if (!started) return
+        val permille = _binding?.textPage?.permille() ?: viewModel.position.permille
         showPart(currentPart, permille, report = false)
     }
 
@@ -186,7 +219,17 @@ class TextReaderFragment : Fragment() {
         val plain = book.plain(part)
         val place = if (highlight != null) TextPaging.permilleOf(highlight.first, plain.length) else permille
         if (report) viewModel.onPositionChanged(part, place)
-        binding.textPage.show(plain, paged, textSizePx(), textColor(), backgroundColor(), place, highlight, highlightColor())
+        binding.textPage.show(
+            plain,
+            paged,
+            textSizePx(),
+            textColor(),
+            backgroundColor(),
+            place,
+            highlight,
+            highlightColor(),
+            readingTypeface(),
+        )
         updatePartBar()
     }
 
