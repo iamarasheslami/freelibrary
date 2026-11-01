@@ -36,6 +36,14 @@ interface BookShelfStateDao {
     @Query("SELECT COUNT(*) FROM book_shelf_state WHERE state = :state")
     fun observeCount(state: ShelfState): Flow<Int>
 
+    /** How many books in [state] were finished from [fromMillis] (included) until [toMillis] (excluded). */
+    @Query("SELECT COUNT(*) FROM book_shelf_state WHERE state = :state AND finishedAt >= :fromMillis AND finishedAt < :toMillis")
+    fun observeFinishedBetween(
+        state: ShelfState,
+        fromMillis: Long,
+        toMillis: Long,
+    ): Flow<Int>
+
     @Query("DELETE FROM book_shelf_state WHERE bookId = :bookId")
     suspend fun delete(bookId: Long)
 

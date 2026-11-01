@@ -1,9 +1,13 @@
 package com.freelibrary.app.ui.settings
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
@@ -14,7 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * The Settings screen: a list of parent rows, each opening the page for its topic (profile,
- * appearance, catalog sync, storage, backup and about). The rows hold no state of their own.
+ * appearance, catalog sync, storage, backup and about); a last row opens the help page in the browser. The rows hold no state of their own.
  */
 @AndroidEntryPoint
 class SettingsFragment : Fragment() {
@@ -44,6 +48,16 @@ class SettingsFragment : Fragment() {
         binding.storageRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToStorageSettingsFragment()) }
         binding.backupRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToBackupSettingsFragment()) }
         binding.aboutRow.setOnClickListener { open(SettingsFragmentDirections.actionSettingsFragmentToAboutSettingsFragment()) }
+        binding.helpRow.setOnClickListener { openLink(AboutLinks.ISSUES) }
+    }
+
+    /** Opens a web page in the browser; says so when no app can. */
+    private fun openLink(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(requireContext(), R.string.about_no_browser, Toast.LENGTH_SHORT).show()
+        }
     }
 
     /** Opens a page. A second tap while the page is opening is ignored. */
