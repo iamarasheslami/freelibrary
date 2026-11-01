@@ -63,5 +63,6 @@ internal object SettingsLabels {
 /** Where the About section sends the reader. */
 internal object AboutLinks {
     const val SOURCE = "https://github.com/iamarasheslami/freelibrary"
+    const val ISSUES = "https://github.com/iamarasheslami/freelibrary/issues"
     const val NOTICES = "https://github.com/iamarasheslami/freelibrary/blob/main/THIRD_PARTY_NOTICES.md"
 }

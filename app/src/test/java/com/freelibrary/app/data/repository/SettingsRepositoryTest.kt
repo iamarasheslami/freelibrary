@@ -137,4 +137,28 @@ class SettingsRepositoryTest {
 
             assertEquals(ThemeMode.DARK, repository.themeMode.first())
         }
+
+    @Test
+    fun `there is no yearly goal until the reader sets one and it can be removed`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            assertNull(repository.yearlyGoal.first())
+
+            repository.setYearlyGoal(24)
+            assertEquals(24, repository.yearlyGoal.first())
+
+            repository.setYearlyGoal(null)
+            assertNull(repository.yearlyGoal.first())
+        }
+
+    @Test
+    fun `a yearly goal outside the limits is cut to them`() =
+        runTest {
+            val repository = SettingsRepository(InMemoryPreferences())
+
+            repository.setYearlyGoal(10_000)
+
+            assertEquals(365, repository.yearlyGoal.first())
+        }
 }

@@ -10,6 +10,8 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import com.freelibrary.app.data.reader.ReaderStyle
+import com.freelibrary.app.domain.model.MAX_YEARLY_GOAL
+import com.freelibrary.app.domain.model.MIN_YEARLY_GOAL
 import com.freelibrary.app.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -83,6 +85,23 @@ class SettingsRepository
             dataStore.edit { preferences -> preferences[READER_TEXT_PERCENT_KEY] = kept }
         }
 
+        /** The yearly reading goal in books; null until the reader sets one. */
+        val yearlyGoal: Flow<Int?> =
+            storedPreferences.map { preferences ->
+                preferences[YEARLY_GOAL_KEY]?.takeIf { it in MIN_YEARLY_GOAL..MAX_YEARLY_GOAL }
+            }
+
+        /** Saves the yearly goal (kept within its limits), or removes it when [goal] is null. */
+        suspend fun setYearlyGoal(goal: Int?) {
+            dataStore.edit { preferences ->
+                if (goal == null) {
+                    preferences.remove(YEARLY_GOAL_KEY)
+                } else {
+                    preferences[YEARLY_GOAL_KEY] = goal.coerceIn(MIN_YEARLY_GOAL, MAX_YEARLY_GOAL)
+                }
+            }
+        }
+
         suspend fun setReaderPaged(
             bookId: Long,
             paged: Boolean,
@@ -99,5 +118,6 @@ class SettingsRepository
             val LAST_CATALOG_SYNC_KEY = longPreferencesKey("last_catalog_sync_at")
             val READER_SCROLL_BOOKS_KEY = stringSetPreferencesKey("reader_scroll_books")
             val READER_TEXT_PERCENT_KEY = intPreferencesKey("reader_text_percent")
+            val YEARLY_GOAL_KEY = intPreferencesKey("yearly_goal")
         }
     }

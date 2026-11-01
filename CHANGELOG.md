@@ -8,6 +8,10 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Added
 
+- Profile: a reading card under the name shows the books finished this year and this month, with a ring that fills as
+  the reader nears a yearly goal. Tapping the card sets or removes the goal (1 to 365 books). It is all worked out on the
+  phone from the dates books were marked finished.
+- Settings: a Help and feedback row opens the project's GitHub issues page in the browser.
 - Debug builds keep a plain text log of the app's network requests (`files/network-log.txt`: which part asked, host
   and path, status or error, time) to help find failing covers, syncs and downloads. Release builds never write it.
 - Home shows an explanation with a Try again button when the bundled catalog cannot be opened,

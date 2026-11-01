@@ -10,8 +10,10 @@ import coil.ImageLoader
 import com.freelibrary.app.R
 import com.freelibrary.app.data.profile.AvatarStore
 import com.freelibrary.app.databinding.ItemProfileHeaderBinding
+import com.freelibrary.app.databinding.ItemProfileReadingBinding
 import com.freelibrary.app.domain.model.BookCard
 import com.freelibrary.app.domain.model.ProfileSection
+import com.freelibrary.app.domain.model.ReadingSummary
 import com.freelibrary.app.ui.booklist.BookSliderViewHolder
 import com.freelibrary.app.ui.cover.CoverTypefaces
 
@@ -24,15 +26,21 @@ sealed interface ProfileRow {
         val highlights: Int,
     ) : ProfileRow
 
+    data class Reading(
+        val summary: ReadingSummary,
+    ) : ProfileRow
+
     data class Slider(
         val section: ProfileSection,
     ) : ProfileRow
 }
 
-/** The header, then a slider for each shelf that has books; a shelf with no books is not shown at all. */
+/** The header, the reading card, then a slider for each shelf that has books; a shelf with no books is not shown at all. */
 internal fun profileRows(state: ProfileState): List<ProfileRow> =
-    listOf(ProfileRow.Header(state.name, state.avatarVersion, state.counts.bookmarks, state.counts.highlights)) +
-        state.sections.filter { it.books.isNotEmpty() }.map { ProfileRow.Slider(it) }
+    listOf(
+        ProfileRow.Header(state.name, state.avatarVersion, state.counts.bookmarks, state.counts.highlights),
+        ProfileRow.Reading(state.reading),
+    ) + state.sections.filter { it.books.isNotEmpty() }.map { ProfileRow.Slider(it) }
 
 /** The header, then the shelves. Every slider shares one pool, so cards are reused across rows. */
 class ProfileAdapter(
@@ -42,12 +50,14 @@ class ProfileAdapter(
     private val onBookClick: (BookCard) -> Unit,
     private val onViewMore: (ProfileSection) -> Unit,
     private val onAvatarClick: () -> Unit,
+    private val onGoalClick: () -> Unit,
 ) : ListAdapter<ProfileRow, RecyclerView.ViewHolder>(DIFF) {
     private val viewPool = RecyclerView.RecycledViewPool()
 
     override fun getItemViewType(position: Int): Int =
         when (getItem(position)) {
             is ProfileRow.Header -> TYPE_HEADER
+            is ProfileRow.Reading -> TYPE_READING
             is ProfileRow.Slider -> TYPE_SLIDER
         }
 
@@ -57,6 +67,7 @@ class ProfileAdapter(
     ): RecyclerView.ViewHolder =
         when (viewType) {
             TYPE_HEADER -> HeaderViewHolder.create(parent, imageLoader, avatarStore, onAvatarClick)
+            TYPE_READING -> ReadingViewHolder.create(parent, onGoalClick)
             else -> BookSliderViewHolder.create(parent, typefaces, imageLoader, viewPool, onBookClick = onBookClick)
         }
 
@@ -67,6 +78,8 @@ class ProfileAdapter(
         val row = getItem(position)
         if (holder is HeaderViewHolder && row is ProfileRow.Header) {
             holder.bind(row)
+        } else if (holder is ReadingViewHolder && row is ProfileRow.Reading) {
+            holder.bind(row.summary)
         } else if (holder is BookSliderViewHolder && row is ProfileRow.Slider) {
             val section = row.section
             val context = holder.itemView.context
@@ -124,11 +137,56 @@ class ProfileAdapter(
         }
     }
 
+    /** The reader's year: the goal ring with the books finished this year, and the month's count. */
+    private class ReadingViewHolder(
+        private val binding: ItemProfileReadingBinding,
+        onGoalClick: () -> Unit,
+    ) : RecyclerView.ViewHolder(binding.root) {
+        init {
+            binding.readingCard.setOnClickListener { onGoalClick() }
+        }
+
+        fun bind(summary: ReadingSummary) {
+            val resources = itemView.resources
+            val goal = summary.goal
+            binding.readingRing.setProgress(summary.progress)
+            binding.readingCount.text = summary.finishedThisYear.toString()
+            binding.readingTitle.text =
+                resources.getString(if (goal == null) R.string.profile_reading_title else R.string.profile_goal_title, summary.year)
+            binding.readingGoal.text =
+                when {
+                    goal == null -> resources.getString(R.string.profile_goal_set)
+                    summary.goalReached -> resources.getQuantityString(R.plurals.profile_goal_reached, goal, goal)
+                    else -> resources.getQuantityString(R.plurals.profile_goal_progress, goal, summary.finishedThisYear, goal)
+                }
+            binding.readingMonth.text =
+                resources.getQuantityString(R.plurals.profile_finished_this_month, summary.finishedThisMonth, summary.finishedThisMonth)
+            binding.readingCard.contentDescription =
+                resources.getString(
+                    R.string.profile_reading_description,
+                    binding.readingTitle.text,
+                    binding.readingGoal.text,
+                    binding.readingMonth.text,
+                )
+        }
+
+        companion object {
+            fun create(
+                parent: ViewGroup,
+                onGoalClick: () -> Unit,
+            ) = ReadingViewHolder(
+                ItemProfileReadingBinding.inflate(LayoutInflater.from(parent.context), parent, false),
+                onGoalClick,
+            )
+        }
+    }
+
     companion object {
         const val TYPE_HEADER = 0
+        const val TYPE_READING = 2
         const val TYPE_SLIDER = 1
 
-        /** A slider is the same item while its section id is the same; there is only ever one header. */
+        /** A slider is the same item while its section id is the same; there is only ever one header and one reading card. */
         val DIFF =
             object : DiffUtil.ItemCallback<ProfileRow>() {
                 override fun areItemsTheSame(
@@ -137,6 +195,7 @@ class ProfileAdapter(
                 ): Boolean =
                     when {
                         oldItem is ProfileRow.Header && newItem is ProfileRow.Header -> true
+                        oldItem is ProfileRow.Reading && newItem is ProfileRow.Reading -> true
                         oldItem is ProfileRow.Slider && newItem is ProfileRow.Slider -> oldItem.section.id == newItem.section.id
                         else -> false
                     }

@@ -13,7 +13,9 @@ import com.freelibrary.app.data.repository.InMemoryPreferences
 import com.freelibrary.app.data.repository.ProfileRepository
 import com.freelibrary.app.data.repository.ProfileShelvesRepository
 import com.freelibrary.app.data.repository.ProfileStatsRepository
+import com.freelibrary.app.data.repository.ReadingGoalRepository
 import com.freelibrary.app.data.repository.ReadingStateRepository
+import com.freelibrary.app.data.repository.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -52,6 +54,7 @@ class ProfileViewModelTest {
                 ProfileShelvesRepository(
                     ReadingStateRepository(database, database.bookShelfStateDao(), database.bookListDao(), TimeProvider { 100L }),
                 ),
+                ReadingGoalRepository(database.bookShelfStateDao(), SettingsRepository(InMemoryPreferences()), TimeProvider { 100L }),
             )
     }
 
@@ -120,5 +123,15 @@ class ProfileViewModelTest {
             val state = viewModel.state.first { it.counts.bookmarks == 1 }
 
             assertEquals(0, state.counts.highlights)
+        }
+
+    @Test
+    fun `the yearly goal is saved and can be removed`() =
+        runTest {
+            viewModel.setYearlyGoal(12)
+            assertEquals(12, viewModel.state.first { it.reading.goal != null }.reading.goal)
+
+            viewModel.setYearlyGoal(null)
+            assertNull(viewModel.state.first { it.reading.goal == null }.reading.goal)
         }
 }

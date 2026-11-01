@@ -3,6 +3,7 @@ package com.freelibrary.app.ui.profile
 import com.freelibrary.app.domain.model.BookCard
 import com.freelibrary.app.domain.model.ProfileCounts
 import com.freelibrary.app.domain.model.ProfileSection
+import com.freelibrary.app.domain.model.ReadingSummary
 import com.freelibrary.app.domain.model.ViewMoreTarget
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -23,9 +24,10 @@ class ProfileAdapterTest {
 
         val rows = profileRows(state)
 
-        assertEquals(3, rows.size)
+        assertEquals(4, rows.size)
         assertTrue(rows[0] is ProfileRow.Header)
-        assertEquals(listOf("a", "b"), rows.drop(1).map { (it as ProfileRow.Slider).section.id })
+        assertTrue(rows[1] is ProfileRow.Reading)
+        assertEquals(listOf("a", "b"), rows.drop(2).map { (it as ProfileRow.Slider).section.id })
     }
 
     @Test
@@ -34,15 +36,16 @@ class ProfileAdapterTest {
 
         val rows = profileRows(state)
 
-        assertEquals(listOf("b"), rows.drop(1).map { (it as ProfileRow.Slider).section.id })
+        assertEquals(listOf("b"), rows.drop(2).map { (it as ProfileRow.Slider).section.id })
     }
 
     @Test
-    fun `with no books at all only the header is left`() {
+    fun `with no books at all only the header and the reading card are left`() {
         val rows = profileRows(ProfileState(sections = listOf(section("a"), section("b"))))
 
-        assertEquals(1, rows.size)
+        assertEquals(2, rows.size)
         assertTrue(rows[0] is ProfileRow.Header)
+        assertTrue(rows[1] is ProfileRow.Reading)
     }
 
     @Test
@@ -63,6 +66,24 @@ class ProfileAdapterTest {
         assertTrue(diff.areItemsTheSame(before, after))
         assertFalse(diff.areContentsTheSame(before, after))
         assertFalse(diff.areItemsTheSame(before, ProfileRow.Slider(section("finished"))))
+    }
+
+    @Test
+    fun `the reading card carries the year summary`() {
+        val summary = ReadingSummary(year = 2026, finishedThisYear = 3, finishedThisMonth = 1, goal = 12)
+
+        val card = profileRows(ProfileState(reading = summary))[1] as ProfileRow.Reading
+
+        assertEquals(summary, card.summary)
+    }
+
+    @Test
+    fun `there is only ever one reading card`() {
+        val diff = ProfileAdapter.DIFF
+
+        assertTrue(diff.areItemsTheSame(ProfileRow.Reading(ReadingSummary()), ProfileRow.Reading(ReadingSummary(goal = 5))))
+        assertFalse(diff.areContentsTheSame(ProfileRow.Reading(ReadingSummary()), ProfileRow.Reading(ReadingSummary(goal = 5))))
+        assertFalse(diff.areItemsTheSame(ProfileRow.Reading(ReadingSummary()), ProfileRow.Header(null, null, 0, 0)))
     }
 
     @Test

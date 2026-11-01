@@ -138,6 +138,29 @@
     <string name="tab_profile">Profile</string>
     <string name="profile_title">Profile</string>
     <string name="profile_picture_description">Profile picture</string>
+    <string name="profile_reading_title">Read in %1$d</string>
+    <string name="profile_goal_title">Reading goal for %1$d</string>
+    <string name="profile_goal_set">Set a yearly goal</string>
+    <plurals name="profile_goal_progress">
+        <item quantity="one">%1$d of %2$d book</item>
+        <item quantity="other">%1$d of %2$d books</item>
+    </plurals>
+    <plurals name="profile_goal_reached">
+        <item quantity="one">Goal reached: %d book</item>
+        <item quantity="other">Goal reached: %d books</item>
+    </plurals>
+    <plurals name="profile_finished_this_month">
+        <item quantity="one">%d finished this month</item>
+        <item quantity="other">%d finished this month</item>
+    </plurals>
+    <string name="profile_reading_description">%1$s. %2$s. %3$s. Tap to change your goal.</string>
+    <string name="profile_goal_dialog_title">Yearly goal</string>
+    <string name="profile_goal_hint">Books to finish this year</string>
+    <string name="profile_goal_save">Save</string>
+    <string name="profile_goal_remove">Remove goal</string>
+    <string name="profile_goal_error">Enter a number from %1$d to %2$d.</string>
+    <string name="settings_help">Help and feedback</string>
+    <string name="settings_help_summary">Report a problem or share an idea on GitHub</string>
     <string name="profile_finished">Finished</string>
     <string name="profile_counts">%1$s · %2$s</string>
     <string name="settings_profile">Profile</string>
