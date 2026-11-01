@@ -16,6 +16,8 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Changed
 
+- Covers: a cover that is already showing or loading is no longer requested again when its row is bound again. A debug
+  network log showed 367 of 429 cover requests being cancelled and restarted on Home.
 - Settings, Appearance: a Reset to defaults button for the theme, app size, reader fonts, reading text colour and
   reader text size.
 - The readers' text panel (the text size button) now also has a font drop-down (ten fonts: Literata, Noto Serif, Lora,

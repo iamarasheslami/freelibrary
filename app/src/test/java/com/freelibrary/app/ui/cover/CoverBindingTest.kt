@@ -4,6 +4,7 @@ import android.graphics.Typeface
 import androidx.test.core.app.ApplicationProvider
 import com.freelibrary.app.domain.model.BookCard
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -50,5 +51,18 @@ class CoverBindingTest {
         val typefaces = CoverTypefaces(Typeface.DEFAULT_BOLD, Typeface.DEFAULT)
 
         assertNotNull(generatedCoverFor(book(author = null), typefaces))
+    }
+
+    @Test
+    fun `the same book and picture make the same request key, so a second bind starts no second request`() {
+        assertEquals(coverRequestKey(7, "https://example.org/a.medium.jpg"), coverRequestKey(7, "https://example.org/a.medium.jpg"))
+        assertEquals(coverRequestKey(7, null), coverRequestKey(7, null))
+    }
+
+    @Test
+    fun `another book or another picture makes another key, so a recycled view loads its new cover`() {
+        assertNotEquals(coverRequestKey(7, "https://example.org/a.medium.jpg"), coverRequestKey(8, "https://example.org/a.medium.jpg"))
+        assertNotEquals(coverRequestKey(7, "https://example.org/a.medium.jpg"), coverRequestKey(7, "https://example.org/b.medium.jpg"))
+        assertNotEquals(coverRequestKey(7, null), coverRequestKey(8, null))
     }
 }

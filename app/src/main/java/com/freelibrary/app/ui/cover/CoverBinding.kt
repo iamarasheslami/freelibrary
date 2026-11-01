@@ -6,6 +6,8 @@ import android.widget.ImageView
 import androidx.core.content.res.ResourcesCompat
 import coil.ImageLoader
 import coil.load
+import coil.request.ErrorResult
+import coil.request.ImageRequest
 import com.freelibrary.app.R
 import com.freelibrary.app.domain.model.BookCard
 
@@ -45,17 +47,45 @@ fun generatedCoverFor(
 /**
  * Shows a book's cover in this view. The generated cover is on screen at once and stays if the book
  * has no picture, the request fails or the phone is offline. Otherwise the medium cover replaces it
- * when it arrives. Calling this again on a recycled view cancels the earlier request.
+ * when it arrives. Calling this again for the same book while its cover is showing or loading does nothing,
+ * because a new request would cancel the one in flight and start the same download again; a request that
+ * fails or is cancelled is forgotten, so the next call tries again. Calling it for another book (a recycled
+ * view) cancels the earlier request and loads the new cover.
  */
 fun ImageView.loadCover(
     book: BookCard,
     typefaces: CoverTypefaces,
     imageLoader: ImageLoader,
 ) {
+    val url = mediumCoverUrl(book.coverUrl)
+    val key = coverRequestKey(book.bookId, url)
+    if (getTag(R.id.cover_request_key) == key) return
+    setTag(R.id.cover_request_key, key)
     val generated = generatedCoverFor(book, typefaces)
-    load(mediumCoverUrl(book.coverUrl), imageLoader) {
+    load(url, imageLoader) {
         placeholder(generated)
         error(generated)
         fallback(generated)
+        listener(
+            object : ImageRequest.Listener {
+                override fun onCancel(request: ImageRequest) = forgetCoverRequest(key)
+
+                override fun onError(
+                    request: ImageRequest,
+                    result: ErrorResult,
+                ) = forgetCoverRequest(key)
+            },
+        )
     }
+}
+
+/** What identifies a cover request: the book and the picture asked for, so a different book never reuses another's cover. */
+internal fun coverRequestKey(
+    bookId: Long,
+    url: String?,
+): String = "$bookId|${url.orEmpty()}"
+
+/** Lets the next [loadCover] for this book start a request again, unless the view has moved on to another book meanwhile. */
+private fun ImageView.forgetCoverRequest(key: String) {
+    if (getTag(R.id.cover_request_key) == key) setTag(R.id.cover_request_key, null)
 }
