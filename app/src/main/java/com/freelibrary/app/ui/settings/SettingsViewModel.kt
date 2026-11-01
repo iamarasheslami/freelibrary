@@ -2,6 +2,7 @@ package com.freelibrary.app.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.data.repository.CatalogSyncer
 import com.freelibrary.app.data.repository.ReadingHistory
 import com.freelibrary.app.data.repository.SettingsRepository
@@ -83,6 +84,14 @@ class SettingsViewModel
 
         fun setThemeMode(mode: ThemeMode) {
             viewModelScope.launch { settings.setThemeMode(mode) }
+        }
+
+        /** Puts the theme and the reader's text size back to their defaults; the app size and fonts are reset by the caller. */
+        fun resetAppearance() {
+            viewModelScope.launch {
+                settings.setThemeMode(ThemeMode.DARK)
+                settings.setReaderTextPercent(ReaderStyle.DEFAULT_TEXT_PERCENT)
+            }
         }
 
         fun setWifiOnlySync(enabled: Boolean) {

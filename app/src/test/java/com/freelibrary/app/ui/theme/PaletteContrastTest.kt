@@ -15,8 +15,12 @@ import kotlin.math.pow
  * its contrast fails this test.
  */
 class PaletteContrastTest {
-    private val light = readColors("src/main/res/values/colors.xml")
-    private val dark = readColors("src/main/res/values-night/colors.xml")
+    private val light = readColors("src/main/res/values/colors.xml") + readColors("src/main/res/values/colors_reading.xml")
+    private val dark = readColors("src/main/res/values-night/colors.xml") + readColors("src/main/res/values-night/colors_reading.xml")
+
+    private val readingPairs =
+        listOf("contrast", "gray", "brown", "red", "orange", "green", "teal", "blue", "purple", "pink")
+            .map { "reading_text_$it" to "md_surface" }
 
     private val containers =
         listOf(
@@ -61,6 +65,12 @@ class PaletteContrastTest {
 
     @Test
     fun `dark text colors keep the AA contrast`() = assertContrast("dark", dark, textPairs, TEXT_MINIMUM)
+
+    @Test
+    fun `light reading text presets keep a contrast of 7 to 1`() = assertContrast("light", light, readingPairs, READING_MINIMUM)
+
+    @Test
+    fun `dark reading text presets keep a contrast of 7 to 1`() = assertContrast("dark", dark, readingPairs, READING_MINIMUM)
 
     @Test
     fun `the light outline stays visible`() = assertContrast("light", light, boundaryPairs, BOUNDARY_MINIMUM)
@@ -129,5 +139,6 @@ class PaletteContrastTest {
     private companion object {
         const val TEXT_MINIMUM = 4.5
         const val BOUNDARY_MINIMUM = 3.0
+        const val READING_MINIMUM = 7.0
     }
 }

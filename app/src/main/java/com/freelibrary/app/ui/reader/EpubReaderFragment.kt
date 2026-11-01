@@ -35,6 +35,7 @@ import com.freelibrary.app.databinding.FragmentEpubReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.freelibrary.app.ui.theme.AppScale
+import com.freelibrary.app.ui.theme.FontChoices
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -134,12 +135,29 @@ class EpubReaderFragment : Fragment() {
                     R.id.action_add_bookmark -> addBookmark()
                     R.id.action_bookmarks -> openBookmarkList()
                     R.id.action_text_size ->
-                        showTextSizeControl(
+                        showTextStyleControl(
                             binding.readerToolbar,
                             current = { viewModel.textPercent.value },
                             onLarger = { viewModel.changeTextSize(larger = true) },
                             onSmaller = { viewModel.changeTextSize(larger = false) },
                             onSet = viewModel::setTextSize,
+                            font =
+                                FontChoice(
+                                    current = { FontChoices.epubFont(requireContext()) },
+                                    includeBookOwn = true,
+                                    onPick = { picked ->
+                                        FontChoices.setEpubFont(requireContext(), picked)
+                                        restyle()
+                                    },
+                                ),
+                            colour =
+                                ColourChoice(
+                                    current = { FontChoices.textColour(requireContext()) },
+                                    onPick = { picked ->
+                                        FontChoices.setTextColour(requireContext(), picked)
+                                        restyle()
+                                    },
+                                ),
                         )
                 }
             }
@@ -237,7 +255,9 @@ class EpubReaderFragment : Fragment() {
     private fun readerStyle(): ReaderStyle {
         val view = requireView()
         return ReaderStyle(
-            textColor = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurface),
+            textColor =
+                FontChoices.textColour(requireContext())
+                    .resolve(requireContext(), MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurface)),
             backgroundColor = MaterialColors.getColor(view, com.google.android.material.R.attr.colorSurface),
             linkColor = MaterialColors.getColor(view, androidx.appcompat.R.attr.colorPrimary),
         )
@@ -246,6 +266,8 @@ class EpubReaderFragment : Fragment() {
     /** Sets up the server, the page margin and the menu for the mode in [paged]. */
     private fun applyMode() {
         val book = book ?: return
+        val font = FontChoices.epubFont(requireContext())
+        val appResources = requireContext().applicationContext.resources
         val style =
             (baseStyle ?: return).copy(
                 paged = paged,
@@ -253,8 +275,9 @@ class EpubReaderFragment : Fragment() {
                 pageHeight = pageHeightInCssPixels(),
                 rightToLeft = book.rightToLeft,
                 appScale = AppScale.current(requireContext()).scale,
+                font = font?.forReader(),
             )
-        server = EpubPageServer(book, style)
+        server = EpubPageServer(book, style) { file -> font?.open(appResources, file) }
         val margin = if (paged) resources.getDimensionPixelSize(R.dimen.reader_page_margin) else 0
         binding.readerPageHost.setPadding(margin, 0, margin, 0)
         binding.readerPageHost.setBackgroundColor(style.backgroundColor)
@@ -396,6 +419,15 @@ class EpubReaderFragment : Fragment() {
         // Remember where the reader is, then lay the chapter out again at the new size.
         val permille = _binding?.readerWebView?.takeIf { pageReady }?.scrolledPermille() ?: viewModel.position.permille
         textPercent = newValue
+        applyMode()
+        showChapter(currentChapter, permille, report = false)
+    }
+
+    /** Lays the chapter out again, at the same place, after the font or the text colour changed. */
+    private fun restyle() {
+        if (server == null) return
+        val permille = _binding?.readerWebView?.takeIf { pageReady }?.scrolledPermille() ?: viewModel.position.permille
+        baseStyle = readerStyle()
         applyMode()
         showChapter(currentChapter, permille, report = false)
     }

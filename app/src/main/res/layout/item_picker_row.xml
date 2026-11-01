@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One row of a font or colour list in the reader's text panel and in Settings. -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:drawablePadding="@dimen/spacing_m"
+    android:gravity="center_vertical"
+    android:minHeight="48dp"
+    android:paddingStart="@dimen/spacing_m"
+    android:paddingEnd="@dimen/spacing_m"
+    android:textAppearance="?attr/textAppearanceBodyLarge" />

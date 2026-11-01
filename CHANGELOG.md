@@ -16,6 +16,12 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Changed
 
+- Settings, Appearance: a Reset to defaults button for the theme, app size, reader fonts, reading text colour and
+  reader text size.
+- The readers' text panel (the text size button) now also has a font drop-down (ten fonts: Literata, Noto Serif, Lora,
+  Source Serif 4, Crimson Pro, EB Garamond, Libre Baskerville, Open Sans, Atkinson Hyperlegible, OpenDyslexic) and a text
+  colour drop-down with ten colours, each in a shade that stays readable on the light and on the dark page. An EPUB keeps its own font unless
+  one is chosen.
 - Settings: the Storage page lists the books downloaded to the phone with their number and total
   size, and each one can be deleted for good after a confirmation. Clear reading history moved there
   from the Privacy page, which is removed.
