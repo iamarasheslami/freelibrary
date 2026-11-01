@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The ten reading text colours on the Black Iris page. Each keeps at least 7 to 1 (PaletteContrastTest). -->
+    <color name="reading_text_contrast">#FFFFFF</color>
+    <color name="reading_text_gray">#D0D0D0</color>
+    <color name="reading_text_brown">#E0C3A0</color>
+    <color name="reading_text_red">#FF9A9A</color>
+    <color name="reading_text_orange">#FFB870</color>
+    <color name="reading_text_green">#A5E0A0</color>
+    <color name="reading_text_teal">#8FE0DA</color>
+    <color name="reading_text_blue">#9CC4FF</color>
+    <color name="reading_text_purple">#CDB0FF</color>
+    <color name="reading_text_pink">#FFA8D0</color>
+</resources>

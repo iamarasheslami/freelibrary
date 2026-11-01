@@ -112,6 +112,21 @@
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_l"
+                android:text="@string/settings_reset_summary"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/resetAppearanceButton"
+                style="@style/Widget.FreeLibrary.Button.Glass"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_s"
+                android:text="@string/settings_reset" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

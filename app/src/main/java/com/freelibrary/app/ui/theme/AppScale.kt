@@ -2,6 +2,7 @@ package com.freelibrary.app.ui.theme
 
 import android.content.Context
 import android.content.res.Configuration
+import android.content.res.Resources
 import com.freelibrary.app.domain.model.AppSize
 import kotlin.math.roundToInt
 
@@ -34,6 +35,11 @@ object AppScale {
         val picked = AppSize.forScreen(context.resources.configuration.smallestScreenWidthDp)
         save(context, picked)
         return picked
+    }
+
+    /** Goes back to the size picked for this screen on first use, measured at the phone's own density. */
+    fun reset(context: Context) {
+        save(context, AppSize.forScreen(Resources.getSystem().configuration.smallestScreenWidthDp))
     }
 
     fun save(

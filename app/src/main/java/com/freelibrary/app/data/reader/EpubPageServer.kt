@@ -25,6 +25,8 @@ data class ReaderStyle(
      * density and ignores the app's, so the text size has to follow the setting through this.
      */
     val appScale: Float = 1f,
+    /** The font that replaces the book's own, or null to keep the book's font. */
+    val font: ReaderFont? = null,
 ) {
     private val pageBoxHeight: String get() = if (pageHeight > 0) "${pageHeight}px" else "100vh"
 
@@ -35,7 +37,8 @@ data class ReaderStyle(
         val link = hex(linkColor)
         val percent = (textPercent.coerceIn(MIN_TEXT_PERCENT, MAX_TEXT_PERCENT) * appScale).roundToInt()
         val sheet = if (paged) pagedCss(text, background, link, percent) else scrollCss(text, background, link, percent)
-        return if (rightToLeft) sheet + "\n" + rightToLeftCss() else sheet
+        val directed = if (rightToLeft) sheet + "\n" + rightToLeftCss() else sheet
+        return if (font != null) directed + "\n" + font.css() else directed
     }
 
     private fun scrollCss(
@@ -113,6 +116,8 @@ class EpubPageServer(
     private val book: EpubBook,
     private val style: ReaderStyle,
     private val maxPageBytes: Int = DEFAULT_MAX_PAGE_BYTES,
+    /** Opens the bytes of one of the style's font files by name, or returns null for a file the app does not have. */
+    private val fontOpener: (String) -> InputStream? = { null },
 ) {
     private val styleLink = """<link rel="stylesheet" type="text/css" href="$STYLE_URL?v=${style.css().hashCode()}"/>"""
 
@@ -141,10 +146,18 @@ class EpubPageServer(
     /** The file at [path] in the book (or the style sheet), or null if there is nothing to serve there. */
     fun serve(path: String): ServedFile? {
         if (path == STYLE_PATH) return ServedFile("text/css", "utf-8", ByteArrayInputStream(style.css().toByteArray()))
+        if (path.startsWith(FONT_PATH)) return serveFont(path.removePrefix(FONT_PATH))
         val mimeType = book.mimeType(path)
         if (mimeType == XHTML || mimeType == HTML) return servePage(path, mimeType)
         val stream = book.read(path) ?: return null
         return ServedFile(mimeType, null, stream)
+    }
+
+    /** Only the files of the style's own font are served, so a book cannot ask for anything else from the app. */
+    private fun serveFont(file: String): ServedFile? {
+        val face = style.font?.face(file) ?: return null
+        val stream = runCatching { fontOpener(file) }.getOrNull() ?: return null
+        return ServedFile(face.mimeType, null, stream)
     }
 
     private fun servePage(
@@ -183,6 +196,8 @@ class EpubPageServer(
         const val HOST = "epub.invalid"
         const val STYLE_PATH = "__freelibrary__/reader.css"
         const val STYLE_URL = "https://$HOST/$STYLE_PATH"
+        const val FONT_PATH = "__freelibrary__/fonts/"
+        const val FONT_URL = "https://$HOST/$FONT_PATH"
         const val DEFAULT_MAX_PAGE_BYTES = 8 * 1024 * 1024
 
         private const val BUFFER_BYTES = 8192

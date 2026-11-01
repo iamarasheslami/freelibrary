@@ -54,4 +54,46 @@ class ReaderStyleTest {
 
         assertTrue(css.contains("font-size: 60% !important"))
     }
+
+    private val lora =
+        ReaderFont(
+            listOf(
+                WebFont("lora.ttf", "100 900", italic = false),
+                WebFont("lora_italic.ttf", "100 900", italic = true),
+            ),
+        )
+
+    @Test
+    fun `a book keeps its own font when no font is chosen`() {
+        assertFalse(style(paged = true, rightToLeft = false).css().contains("font-family"))
+        assertFalse(style(paged = false, rightToLeft = false).css().contains("@font-face"))
+    }
+
+    @Test
+    fun `a chosen font is loaded from the server and replaces the book's, except for code`() {
+        for (paged in listOf(true, false)) {
+            val css = style(paged = paged, rightToLeft = false).copy(font = lora).css()
+
+            assertTrue(css.contains("src: url('${EpubPageServer.FONT_URL}lora.ttf') format('truetype')"))
+            assertTrue(css.contains("font-style: italic; font-weight: 100 900; src: url('${EpubPageServer.FONT_URL}lora_italic.ttf')"))
+            assertTrue(css.contains("body, body * { font-family: '${ReaderFont.FAMILY}', serif !important; }"))
+            assertTrue(css.contains("pre, pre *, code, kbd, samp, tt { font-family: monospace !important; }"))
+        }
+    }
+
+    @Test
+    fun `an opentype file is declared as opentype`() {
+        val font = ReaderFont(listOf(WebFont("a.otf", "400", italic = false)))
+
+        val css = style(paged = true, rightToLeft = false).copy(font = font).css()
+
+        assertTrue(css.contains("format('opentype')"))
+    }
+
+    @Test
+    fun `changing the font changes the style sheet, so a cached sheet is never reused`() {
+        val plain = style(paged = true, rightToLeft = false)
+
+        assertTrue(plain.css().hashCode() != plain.copy(font = lora).css().hashCode())
+    }
 }
