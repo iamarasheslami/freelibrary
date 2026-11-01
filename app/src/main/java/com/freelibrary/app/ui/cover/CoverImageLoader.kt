@@ -5,6 +5,7 @@ import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.freelibrary.app.data.remote.CoverMirrorInterceptor
+import com.freelibrary.app.data.remote.NetworkLog
 import com.freelibrary.app.data.remote.OfficialHostHealth
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -32,11 +33,12 @@ private const val CHECK_TIMEOUT_SECONDS = 3L
 private const val CHECK_URL = "https://www.gutenberg.org/robots.txt"
 
 /** Asks gutenberg.org for one small file and reports whether it answered at all, whatever the answer was. */
-private fun officialSiteAnswers(): Boolean {
+private fun officialSiteAnswers(log: NetworkLog?): Boolean {
     val client =
         OkHttpClient.Builder()
             .connectTimeout(CHECK_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .callTimeout(CHECK_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .apply { log?.let { addInterceptor(it.interceptor("probe")) } }
             .build()
     return try {
         client.newCall(Request.Builder().url(CHECK_URL).head().build()).execute().use { true }
@@ -46,12 +48,16 @@ private fun officialSiteAnswers(): Boolean {
 }
 
 /** The connection covers use: short time limits, and the mirror when gutenberg.org cannot be reached. */
-private fun coverHttpClient(health: OfficialHostHealth): OkHttpClient =
+private fun coverHttpClient(
+    health: OfficialHostHealth,
+    log: NetworkLog?,
+): OkHttpClient =
     OkHttpClient.Builder()
         .connectTimeout(COVER_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .readTimeout(COVER_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .callTimeout(COVER_CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .addInterceptor(CoverMirrorInterceptor(OFFICIAL_COVER_HOST.toHttpUrl(), MIRROR_COVER_HOST.toHttpUrl(), health))
+        .apply { log?.let { addInterceptor(it.interceptor("covers")) } }
         .build()
 
 /**
@@ -66,9 +72,10 @@ private fun coverHttpClient(health: OfficialHostHealth): OkHttpClient =
 fun createCoverImageLoader(context: Context): ImageLoader {
     val appContext = context.applicationContext
     // Found out now, so the first covers do not have to find out the hard way that the official site is blocked.
-    val health = OfficialHostHealth(::officialSiteAnswers).also { it.start() }
+    val log = NetworkLog.forApp(appContext)
+    val health = OfficialHostHealth(probe = { officialSiteAnswers(log) }).also { it.start() }
     return ImageLoader.Builder(appContext)
-        .okHttpClient(coverHttpClient(health))
+        .okHttpClient(coverHttpClient(health, log))
         .memoryCache {
             MemoryCache.Builder(appContext)
                 .maxSizeBytes(COVER_MEMORY_CACHE_BYTES)

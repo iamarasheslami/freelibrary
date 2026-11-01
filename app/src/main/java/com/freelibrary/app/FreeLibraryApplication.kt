@@ -1,6 +1,7 @@
 package com.freelibrary.app
 
 import android.app.Application
+import com.freelibrary.app.data.remote.NetworkLog
 import com.freelibrary.app.ui.theme.ThemeModeApplier
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +29,7 @@ class FreeLibraryApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        NetworkLog.forApp(this)?.note("app started")
         themeModeApplier.applyStored()
         applicationScope.launch { themeModeApplier.follow() }
     }

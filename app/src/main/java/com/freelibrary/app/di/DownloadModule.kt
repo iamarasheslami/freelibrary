@@ -2,6 +2,7 @@ package com.freelibrary.app.di
 
 import android.content.Context
 import com.freelibrary.app.data.download.DownloadClient
+import com.freelibrary.app.data.remote.NetworkLog
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,6 +37,7 @@ object DownloadModule {
             .addInterceptor { chain ->
                 chain.proceed(chain.request().newBuilder().header("User-Agent", userAgent).build())
             }
+            .apply { NetworkLog.forApp(context)?.let { addInterceptor(it.interceptor("download")) } }
             .build()
     }
 }

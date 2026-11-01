@@ -8,6 +8,8 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Added
 
+- Debug builds keep a plain text log of the app's network requests (`files/network-log.txt`: which part asked, host
+  and path, status or error, time) to help find failing covers, syncs and downloads. Release builds never write it.
 - Home shows an explanation with a Try again button when the bundled catalog cannot be opened,
   for example because the phone has no room to copy it on the first start.
 - Privacy policy (`PRIVACY.md`), security policy (`SECURITY.md`) and store listing text.
