@@ -36,7 +36,6 @@ import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.freelibrary.app.ui.theme.AppScale
 import com.freelibrary.app.ui.theme.FontChoices
-import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -141,6 +140,14 @@ class EpubReaderFragment : Fragment() {
                             onLarger = { viewModel.changeTextSize(larger = true) },
                             onSmaller = { viewModel.changeTextSize(larger = false) },
                             onSet = viewModel::setTextSize,
+                            theme =
+                                ThemeChoice(
+                                    current = { FontChoices.readerTheme(requireContext()) },
+                                    onPick = { picked ->
+                                        FontChoices.setReaderTheme(requireContext(), picked)
+                                        restyle()
+                                    },
+                                ),
                             font =
                                 FontChoice(
                                     current = { FontChoices.epubFont(requireContext()) },
@@ -253,13 +260,11 @@ class EpubReaderFragment : Fragment() {
     }
 
     private fun readerStyle(): ReaderStyle {
-        val view = requireView()
+        val page = FontChoices.readerTheme(requireContext()).page(requireView())
         return ReaderStyle(
-            textColor =
-                FontChoices.textColour(requireContext())
-                    .resolve(requireContext(), MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurface)),
-            backgroundColor = MaterialColors.getColor(view, com.google.android.material.R.attr.colorSurface),
-            linkColor = MaterialColors.getColor(view, androidx.appcompat.R.attr.colorPrimary),
+            textColor = FontChoices.textColour(requireContext()).resolve(requireContext(), page),
+            backgroundColor = page.background,
+            linkColor = page.link,
         )
     }
 

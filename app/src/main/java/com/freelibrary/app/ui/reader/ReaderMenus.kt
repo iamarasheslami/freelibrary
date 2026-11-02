@@ -15,11 +15,12 @@ import com.freelibrary.app.R
 import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.databinding.PopupTextStyleBinding
 import com.freelibrary.app.ui.theme.AppFont
+import com.freelibrary.app.ui.theme.ReaderTheme
 import com.freelibrary.app.ui.theme.TextColour
 import com.freelibrary.app.ui.theme.colourAdapter
 import com.freelibrary.app.ui.theme.fontAdapter
 import com.freelibrary.app.ui.theme.swatch
-import com.freelibrary.app.ui.theme.themeTextColour
+import com.freelibrary.app.ui.theme.themeAdapter
 import com.google.android.material.slider.Slider
 
 private const val STEP_PERCENT = 10
@@ -29,6 +30,12 @@ class FontChoice(
     val current: () -> AppFont?,
     val includeBookOwn: Boolean,
     val onPick: (AppFont?) -> Unit,
+)
+
+/** The page drop-down of the text panel: the page theme now and what to do with a pick. */
+class ThemeChoice(
+    val current: () -> ReaderTheme,
+    val onPick: (ReaderTheme) -> Unit,
 )
 
 /** The colour drop-down of the text panel: the colour now and what to do with a pick. */
@@ -42,7 +49,7 @@ class ColourChoice(
  * button at its ends. The buttons do what the reader's larger and smaller text actions do ([onSmaller], [onLarger]). The bar
  * changes the size when the finger lifts, so the page is laid out once and not on every step of the drag; the size in
  * percent shows while dragging. [current] is the size now, in percent, and [onSet] is asked for a size picked on the bar.
- * Under the bar are a drop-down for the font ([font]) and one for the text colour ([colour]).
+ * Under the bar are drop-downs for the page ([theme]), the font ([font]) and the text colour ([colour]).
  */
 fun showTextStyleControl(
     anchor: View,
@@ -50,6 +57,7 @@ fun showTextStyleControl(
     onLarger: () -> Unit,
     onSmaller: () -> Unit,
     onSet: (Int) -> Unit,
+    theme: ThemeChoice,
     font: FontChoice,
     colour: ColourChoice,
 ) {
@@ -94,8 +102,20 @@ fun showTextStyleControl(
     }
 
     val context = anchor.context
-    val themeColour = themeTextColour(anchor)
     val arrow = ContextCompat.getDrawable(context, R.drawable.ic_arrow_drop_down)
+
+    fun page() = theme.current().page(anchor)
+
+    fun showTheme() {
+        val chosen = theme.current()
+        binding.readerPageField.setText(chosen.label)
+        binding.readerPageField.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            swatch(context, chosen.page(anchor).background),
+            null,
+            arrow,
+            null,
+        )
+    }
 
     fun showFont() {
         binding.readerFontField.text = font.current()?.label ?: context.getString(R.string.font_book_own)
@@ -106,15 +126,25 @@ fun showTextStyleControl(
         val chosen = colour.current()
         binding.readerColourField.setText(chosen.label)
         binding.readerColourField.setCompoundDrawablesRelativeWithIntrinsicBounds(
-            swatch(context, chosen.resolve(context, themeColour)),
+            swatch(context, chosen.resolve(context, page())),
             null,
             arrow,
             null,
         )
     }
+    showTheme()
     showFont()
     showColour()
 
+    binding.readerPageField.setOnClickListener {
+        val themes = ReaderTheme.entries
+        val adapter = themeAdapter(context, themes, themes.indexOf(theme.current()))
+        dropDown(binding.readerPageField, adapter) { position ->
+            theme.onPick(themes[position])
+            showTheme()
+            showColour()
+        }
+    }
     binding.readerFontField.setOnClickListener {
         val fonts: List<AppFont?> = (if (font.includeBookOwn) listOf(null) else emptyList()) + AppFont.entries
         val adapter = fontAdapter(context, fonts, context.getString(R.string.font_book_own), fonts.indexOf(font.current()))
@@ -125,7 +155,7 @@ fun showTextStyleControl(
     }
     binding.readerColourField.setOnClickListener {
         val colours = TextColour.entries
-        val adapter = colourAdapter(context, colours, themeColour, colours.indexOf(colour.current()))
+        val adapter = colourAdapter(context, colours, page(), colours.indexOf(colour.current()))
         dropDown(binding.readerColourField, adapter) { position ->
             colour.onPick(colours[position])
             showColour()

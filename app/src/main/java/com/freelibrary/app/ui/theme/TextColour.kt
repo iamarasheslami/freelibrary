@@ -1,13 +1,14 @@
 package com.freelibrary.app.ui.theme
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import com.freelibrary.app.R
 
 /**
- * The colour of the text in the readers. [DEFAULT] follows the theme. The ten others are real colours, each in a shade for the
+ * The colour of the text in the readers. [DEFAULT] follows the page. The ten others are real colours, each in a shade for the
  * light page and a lighter one for the dark page, so the text stays readable: every shade keeps a contrast of at least 7 to 1
  * on its page (PaletteContrastTest checks it).
  */
@@ -29,11 +30,24 @@ enum class TextColour(
     PINK("pink", R.string.text_colour_pink, R.color.reading_text_pink),
     ;
 
-    /** The colour to draw text in: this one's shade for the current theme, or [themeColour] for [DEFAULT]. */
+    /**
+     * The colour to draw text in on [page]: this one's shade for a light or a dark page, or the page's own ink for [DEFAULT].
+     * The shade follows the page and not the app theme, because a Sepia page stays light in a dark app.
+     */
     fun resolve(
         context: Context,
-        themeColour: Int,
-    ): Int = colour?.let { ContextCompat.getColor(context, it) } ?: themeColour
+        page: ReaderPage,
+    ): Int = colour?.let { ContextCompat.getColor(shadeContext(context, page.dark), it) } ?: page.ink
+
+    private fun shadeContext(
+        context: Context,
+        dark: Boolean,
+    ): Context {
+        val configuration = Configuration(context.resources.configuration)
+        val night = if (dark) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+        configuration.uiMode = (configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or night
+        return context.createConfigurationContext(configuration)
+    }
 
     companion object {
         fun fromId(id: String?): TextColour = entries.firstOrNull { it.id == id } ?: DEFAULT

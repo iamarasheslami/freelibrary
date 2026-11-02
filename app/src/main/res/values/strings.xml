@@ -57,6 +57,10 @@
     <string name="text_colour_purple">Purple</string>
     <string name="text_colour_pink">Pink</string>
     <string name="reader_font">Font</string>
+    <string name="reader_page_theme">Page</string>
+    <string name="reader_theme_app">Match the app</string>
+    <string name="reader_theme_sepia">Sepia</string>
+    <string name="reader_theme_dim">Dim night</string>
     <string name="reader_text_colour">Text colour</string>
     <string name="settings_reset">Reset to default</string>
     <string name="settings_reset_summary">Theme, app size, reader fonts, text colour and reader text size go back to their defaults.</string>
