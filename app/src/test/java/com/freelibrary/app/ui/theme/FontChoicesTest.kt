@@ -67,4 +67,24 @@ class FontChoicesTest {
         assertNull(FontChoices.epubFont(context))
         assertEquals(TextColour.DEFAULT, FontChoices.textColour(context))
     }
+
+    @Test
+    fun `the reader page follows the app until the reader picks one, and is remembered`() {
+        assertEquals(ReaderTheme.APP, FontChoices.readerTheme(context))
+
+        FontChoices.setReaderTheme(context, ReaderTheme.SEPIA)
+        assertEquals(ReaderTheme.SEPIA, FontChoices.readerTheme(context))
+
+        FontChoices.setReaderTheme(context, ReaderTheme.DIM)
+        assertEquals(ReaderTheme.DIM, FontChoices.readerTheme(context))
+    }
+
+    @Test
+    fun `reset puts the reader page back to the app's`() {
+        FontChoices.setReaderTheme(context, ReaderTheme.DIM)
+
+        FontChoices.reset(context)
+
+        assertEquals(ReaderTheme.APP, FontChoices.readerTheme(context))
+    }
 }

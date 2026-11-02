@@ -18,9 +18,6 @@ fun typefaceOf(
     font: AppFont,
 ): Typeface? = runCatching { ResourcesCompat.getFont(context, font.body) }.getOrNull()
 
-/** The colour text has in the current theme. */
-fun themeTextColour(view: View): Int = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurface)
-
 private abstract class PickerAdapter<T>(
     private val items: List<T>,
     private val selected: Int,
@@ -73,7 +70,7 @@ fun fontAdapter(
 fun colourAdapter(
     context: Context,
     colours: List<TextColour>,
-    themeColour: Int,
+    page: ReaderPage,
     selected: Int,
 ): BaseAdapter =
     object : PickerAdapter<TextColour>(colours, selected) {
@@ -83,7 +80,24 @@ fun colourAdapter(
         ) {
             row.setText(item.label)
             row.setTextColor(MaterialColors.getColor(row, com.google.android.material.R.attr.colorOnSurface))
-            row.setCompoundDrawablesRelativeWithIntrinsicBounds(swatch(context, item.resolve(context, themeColour)), null, null, null)
+            row.setCompoundDrawablesRelativeWithIntrinsicBounds(swatch(context, item.resolve(context, page)), null, null, null)
+        }
+    }
+
+/** A list of reader pages, each with a round swatch in its paper colour. */
+fun themeAdapter(
+    context: Context,
+    themes: List<ReaderTheme>,
+    selected: Int,
+): BaseAdapter =
+    object : PickerAdapter<ReaderTheme>(themes, selected) {
+        override fun bind(
+            row: TextView,
+            item: ReaderTheme,
+        ) {
+            row.setText(item.label)
+            row.setTextColor(MaterialColors.getColor(row, com.google.android.material.R.attr.colorOnSurface))
+            row.setCompoundDrawablesRelativeWithIntrinsicBounds(swatch(context, item.page(row).background), null, null, null)
         }
     }
 

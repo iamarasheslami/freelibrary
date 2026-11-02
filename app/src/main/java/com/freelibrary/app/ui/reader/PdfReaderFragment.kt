@@ -23,7 +23,8 @@ import com.freelibrary.app.data.repository.BookmarkRepository
 import com.freelibrary.app.databinding.FragmentPdfReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
-import com.google.android.material.color.MaterialColors
+import com.freelibrary.app.ui.theme.FontChoices
+import com.freelibrary.app.ui.theme.ReaderTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -94,12 +95,16 @@ class PdfReaderFragment : Fragment() {
         }
     }
 
-    /** In a dark theme the white pages are redrawn in the theme's own paper and ink, so they do not glare. */
+    /**
+     * White pages are redrawn in the page theme's own paper and ink, so they do not glare in a dark theme and match a Sepia
+     * page. With the app's own light page they are shown as they are.
+     */
     private fun applyPageColors() {
         val view = binding.pdfPageView
-        val paper = MaterialColors.getColor(view, com.google.android.material.R.attr.colorSurface)
-        val ink = MaterialColors.getColor(view, com.google.android.material.R.attr.colorOnSurface)
-        if (PdfNightColors.isDark(paper)) view.setNightColors(paper, ink) else view.setNightColors(null, null)
+        val theme = FontChoices.readerTheme(requireContext())
+        val page = theme.page(view)
+        view.setBackgroundColor(page.background)
+        if (theme != ReaderTheme.APP || page.dark) view.setNightColors(page.background, page.ink) else view.setNightColors(null, null)
     }
 
     private fun render(state: PdfReaderUiState) {

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The reader page themes. They do not change with the app theme: a Sepia page is light and a Dim night page is
+         dark whichever theme the app is in. ReaderPageContrastTest checks every pair, and the ten reading text
+         colours on each page. -->
+    <color name="reader_page_sepia">#F7F0DF</color>
+    <color name="reader_page_sepia_ink">#3B2F22</color>
+    <color name="reader_page_sepia_link">#0D4C3C</color>
+    <color name="reader_page_sepia_highlight">#E9D8A6</color>
+    <color name="reader_page_dim">#1C1A17</color>
+    <color name="reader_page_dim_ink">#B9B2A3</color>
+    <color name="reader_page_dim_link">#9CCDA8</color>
+    <color name="reader_page_dim_highlight">#3D3825</color>
+</resources>

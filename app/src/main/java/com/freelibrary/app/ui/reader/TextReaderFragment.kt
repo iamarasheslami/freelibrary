@@ -28,7 +28,7 @@ import com.freelibrary.app.databinding.FragmentTextReaderBinding
 import com.freelibrary.app.domain.model.ReaderPosition
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.freelibrary.app.ui.theme.FontChoices
-import com.google.android.material.color.MaterialColors
+import com.freelibrary.app.ui.theme.ReaderPage
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -98,6 +98,14 @@ class TextReaderFragment : Fragment() {
                             onLarger = { viewModel.changeTextSize(larger = true) },
                             onSmaller = { viewModel.changeTextSize(larger = false) },
                             onSet = viewModel::setTextSize,
+                            theme =
+                                ThemeChoice(
+                                    current = { FontChoices.readerTheme(requireContext()) },
+                                    onPick = { picked ->
+                                        FontChoices.setReaderTheme(requireContext(), picked)
+                                        relayout()
+                                    },
+                                ),
                             font =
                                 FontChoice(
                                     current = { FontChoices.textFont(requireContext()) },
@@ -161,17 +169,13 @@ class TextReaderFragment : Fragment() {
         showPart(start.part, start.permille, report = false)
     }
 
-    private fun textColor(): Int =
-        FontChoices.textColour(requireContext())
-            .resolve(requireContext(), MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurface))
+    private fun page(): ReaderPage = FontChoices.readerTheme(requireContext()).page(requireView())
+
+    private fun textColor(page: ReaderPage): Int = FontChoices.textColour(requireContext()).resolve(requireContext(), page)
 
     /** The font chosen for plain text books; the system serif if the font cannot be loaded. */
     private fun readingTypeface(): Typeface =
         runCatching { ResourcesCompat.getFont(requireContext(), FontChoices.textFont(requireContext()).body) }.getOrNull() ?: Typeface.SERIF
-
-    private fun highlightColor(): Int = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimaryContainer)
-
-    private fun backgroundColor(): Int = MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorSurface)
 
     private fun textSizePx(): Float =
         TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, TEXT_BASE_SP * textPercent / 100f, resources.displayMetrics)
@@ -219,15 +223,16 @@ class TextReaderFragment : Fragment() {
         val plain = book.plain(part)
         val place = if (highlight != null) TextPaging.permilleOf(highlight.first, plain.length) else permille
         if (report) viewModel.onPositionChanged(part, place)
+        val page = page()
         binding.textPage.show(
             plain,
             paged,
             textSizePx(),
-            textColor(),
-            backgroundColor(),
+            textColor(page),
+            page.background,
             place,
             highlight,
-            highlightColor(),
+            page.highlight,
             readingTypeface(),
         )
         updatePartBar()

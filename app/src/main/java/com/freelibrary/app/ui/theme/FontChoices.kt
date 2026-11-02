@@ -11,13 +11,17 @@ object FontChoices {
     private const val KEY_TEXT_FONT = "text_font"
     private const val KEY_EPUB_FONT = "epub_font"
     private const val KEY_TEXT_COLOUR = "text_colour"
+    private const val KEY_READER_THEME = "reader_theme"
 
     /** Stored for an EPUB when the book's own font is kept; a font id means that font replaces the book's. */
     private const val BOOK_OWN = "book"
 
-    /** Forgets every choice: the reader fonts go back to Literata (a book keeps its own font) and the colour to the theme's. */
+    /**
+     * Forgets every choice: the reader fonts go back to Literata (a book keeps its own font), the colour to the page's and
+     * the page to the app's.
+     */
     fun reset(context: Context) {
-        preferences(context).edit().remove(KEY_TEXT_FONT).remove(KEY_EPUB_FONT).remove(KEY_TEXT_COLOUR).apply()
+        preferences(context).edit().remove(KEY_TEXT_FONT).remove(KEY_EPUB_FONT).remove(KEY_TEXT_COLOUR).remove(KEY_READER_THEME).apply()
     }
 
     private fun preferences(context: Context) = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
@@ -45,4 +49,12 @@ object FontChoices {
         context: Context,
         colour: TextColour,
     ) = preferences(context).edit().putString(KEY_TEXT_COLOUR, colour.id).apply()
+
+    /** The page the readers draw: the app's own until the reader picks Sepia or Dim night. */
+    fun readerTheme(context: Context): ReaderTheme = ReaderTheme.fromId(preferences(context).getString(KEY_READER_THEME, null))
+
+    fun setReaderTheme(
+        context: Context,
+        theme: ReaderTheme,
+    ) = preferences(context).edit().putString(KEY_READER_THEME, theme.id).apply()
 }
