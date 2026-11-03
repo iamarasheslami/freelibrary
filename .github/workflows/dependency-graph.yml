@@ -37,4 +37,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Submit the dependency graph
-        uses: gradle/actions/dependency-submission@7296c772c13d12d9871528814b51fb2143c138ef # v6.4.1
+        uses: gradle/actions/dependency-submission@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
