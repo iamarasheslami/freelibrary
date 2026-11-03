@@ -36,6 +36,12 @@ so releases are built on the maintainer's machine (see "Release builds" in
    - create the GitHub release from that tag, attach the APK and publish its SHA-256
      (`Get-FileHash <apk> -Algorithm SHA256` in PowerShell) in the release notes.
 
+## Releasing from CI instead
+
+Once the four release secrets are set (see [docs/ci-cd.md](docs/ci-cd.md)), steps 4 to 7 can be done by
+the Release workflow: push the tag and it runs every check, signs and verifies the APK, and publishes the
+release with its SHA-256. Building on your own machine stays possible.
+
 ## Keys
 
 - Keep the keystore and its passwords outside the repository, in at least two backups.

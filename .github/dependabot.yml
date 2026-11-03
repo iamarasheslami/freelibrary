@@ -6,6 +6,10 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 3
+    # Wait three days after a release before proposing it, so a withdrawn or broken release is
+    # usually gone before it reaches a pull request. Security updates ignore this wait.
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: "build"
       include: scope
@@ -44,6 +48,8 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: "ci"
       include: scope

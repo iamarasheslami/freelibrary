@@ -19,6 +19,7 @@ jobs:
     # Remove this workflow once the project accepts outside contributors.
     if: github.event.pull_request.user.login == 'iamarasheslami' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Enable squash auto-merge
         run: gh pr merge --auto --squash "$PR_URL"

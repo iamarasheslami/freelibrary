@@ -19,6 +19,7 @@ jobs:
     name: Build, lint, and test
     # Pinned: ubuntu-latest moves to Ubuntu 26.04 during Oct-Nov 2026; this makes the image explicit.
     runs-on: ubuntu-26.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -30,7 +31,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@7296c772c13d12d9871528814b51fb2143c138ef # v6.4.1
+        with:
+          # Pull requests only read the cache, so a branch can never poison the cache that main builds from.
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -41,6 +47,12 @@ jobs:
       - name: Run ktlint
         run: ./gradlew ktlintCheck
 
+      # The app's tests above do not cover the two plain JVM modules: the shared contract and the
+      # catalog tool (which the nightly sync runs). Without this step a change to either, such as a
+      # new sqlite-jdbc, would reach main untested.
+      - name: Run shared and catalog-tool tests
+        run: ./gradlew :shared:test :catalog-tool:test
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
@@ -49,6 +61,15 @@ jobs:
 
       - name: Build release APK (shrinking and obfuscation check)
         run: ./gradlew assembleRelease
+
+      - name: Upload debug APK
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 7
+          if-no-files-found: warn
 
       - name: Upload test reports
         if: failure()
@@ -63,6 +84,7 @@ jobs:
   android-lint:
     name: Android Lint
     runs-on: ubuntu-26.04
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -74,7 +96,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@7296c772c13d12d9871528814b51fb2143c138ef # v6.4.1
+        with:
+          # Pull requests only read the cache, so a branch can never poison the cache that main builds from.
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew

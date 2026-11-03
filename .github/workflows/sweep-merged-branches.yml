@@ -20,6 +20,7 @@ jobs:
   sweep:
     name: Delete branches of merged pull requests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Delete every branch whose tip was merged through a pull request
         run: |
