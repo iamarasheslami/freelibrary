@@ -1,5 +1,6 @@
 package com.freelibrary.app.ui.profile
 
+import android.net.Uri
 import android.os.Bundle
 import android.text.format.DateUtils
 import android.view.LayoutInflater
@@ -10,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +22,7 @@ import com.freelibrary.app.R
 import com.freelibrary.app.data.profile.AvatarStore
 import com.freelibrary.app.databinding.FragmentEditProfileBinding
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
+import com.freelibrary.app.ui.profile.avatar.AvatarCreatorFragment
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.DateValidatorPointBackward
 import com.google.android.material.datepicker.MaterialDatePicker
@@ -83,6 +86,10 @@ class EditProfileFragment : Fragment() {
         binding.editAvatarCard.setOnClickListener(choose)
         binding.choosePictureButton.setOnClickListener(choose)
         binding.removePictureButton.setOnClickListener { viewModel.onPictureRemoved() }
+        binding.createAvatarButton.setOnClickListener { openAvatarCreator() }
+        setFragmentResultListener(AvatarCreatorFragment.RESULT_KEY) { _, bundle ->
+            bundle.getString(AvatarCreatorFragment.RESULT_PICTURE)?.let { viewModel.onPictureChosen(Uri.parse(it)) }
+        }
 
         binding.nameInput.doAfterTextChanged { viewModel.onNameChanged(it?.toString().orEmpty()) }
         binding.birthdayInput.setOnClickListener { showBirthdayPicker() }
@@ -161,6 +168,13 @@ class EditProfileFragment : Fragment() {
         val picker = builder.build()
         picker.addOnPositiveButtonClickListener { viewModel.onBirthdayPicked(it) }
         picker.show(childFragmentManager, "birthday")
+    }
+
+    /** Opens the avatar creator. A second tap while the page is opening is ignored. */
+    private fun openAvatarCreator() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.editProfileFragment) return
+        navController.navigate(R.id.action_editProfileFragment_to_avatarCreatorFragment)
     }
 
     private fun confirmDiscard() {

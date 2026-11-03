@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/avatarCreatorRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/avatarCreatorToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:navigationContentDescription="@string/back"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:title="@string/avatar_creator_title"
+        app:titleTextAppearance="@style/TextAppearance.FreeLibrary.TitleLarge" />
+
+    <com.freelibrary.app.ui.profile.avatar.AvatarView
+        android:id="@+id/avatarPreview"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:layout_gravity="center_horizontal"
+        android:importantForAccessibility="no" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/avatarRandomize"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/avatar_randomize" />
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/avatarTabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:tabGravity="start"
+        app:tabMode="scrollable" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/avatarTiles"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingStart="@dimen/spacing_s"
+        android:paddingEnd="@dimen/spacing_s"
+        tools:listitem="@layout/item_avatar_tile" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/avatarSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/spacing_m"
+        android:text="@string/avatar_use" />
+
+</LinearLayout>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One choice in the avatar creator: a round avatar or colour, with a ring that is thicker when it is the chosen one. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/spacing_xs"
+    android:background="@drawable/bg_avatar_tile"
+    android:clickable="true"
+    android:focusable="true"
+    android:padding="4dp">
+
+    <com.freelibrary.app.ui.profile.avatar.AvatarView
+        android:id="@+id/avatarTile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:importantForAccessibility="no" />
+
+</FrameLayout>

@@ -231,6 +231,15 @@
     <fragment
         android:id="@+id/editProfileFragment"
         android:name="com.freelibrary.app.ui.profile.EditProfileFragment"
-        tools:layout="@layout/fragment_edit_profile" />
+        tools:layout="@layout/fragment_edit_profile">
+        <action
+            android:id="@+id/action_editProfileFragment_to_avatarCreatorFragment"
+            app:destination="@id/avatarCreatorFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/avatarCreatorFragment"
+        android:name="com.freelibrary.app.ui.profile.avatar.AvatarCreatorFragment"
+        tools:layout="@layout/fragment_avatar_creator" />
 
 </navigation>
