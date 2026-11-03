@@ -157,7 +157,19 @@
         <item quantity="one">%d finished this month</item>
         <item quantity="other">%d finished this month</item>
     </plurals>
-    <string name="profile_reading_description">%1$s. %2$s. %3$s. Tap to change your goal.</string>
+    <plurals name="profile_streak">
+        <item quantity="one">%d day in a row</item>
+        <item quantity="other">%d days in a row</item>
+    </plurals>
+    <plurals name="profile_streak_with_best">
+        <item quantity="one">%1$d day in a row · best %2$d</item>
+        <item quantity="other">%1$d days in a row · best %2$d</item>
+    </plurals>
+    <plurals name="profile_streak_best_only">
+        <item quantity="one">Best run: %d day</item>
+        <item quantity="other">Best run: %d days</item>
+    </plurals>
+    <string name="profile_reading_description">%1$s. Tap to change your goal.</string>
     <string name="profile_goal_dialog_title">Yearly goal</string>
     <string name="profile_goal_hint">Books to finish this year</string>
     <string name="profile_goal_save">Save</string>

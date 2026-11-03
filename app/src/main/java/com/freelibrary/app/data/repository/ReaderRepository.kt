@@ -3,13 +3,17 @@ package com.freelibrary.app.data.repository
 import android.database.sqlite.SQLiteException
 import com.freelibrary.app.data.TimeProvider
 import com.freelibrary.app.data.local.dao.DownloadedBookDao
+import com.freelibrary.app.data.local.dao.ReadingDayDao
 import com.freelibrary.app.data.local.dao.ReadingProgressDao
+import com.freelibrary.app.data.local.entity.ReadingDay
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.domain.model.BookFileFormat
 import com.freelibrary.app.domain.model.ReaderPosition
+import com.freelibrary.app.domain.model.localDay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,6 +24,7 @@ class ReaderRepository
     constructor(
         private val downloadedBookDao: DownloadedBookDao,
         private val readingProgressDao: ReadingProgressDao,
+        private val readingDayDao: ReadingDayDao,
         private val timeProvider: TimeProvider,
     ) {
         /** The downloaded EPUB of [bookId], or null when none was downloaded or its file has gone. */
@@ -41,7 +46,7 @@ class ReaderRepository
         suspend fun savedTextPosition(bookId: Long): ReaderPosition.Text? = savedPosition(bookId) as? ReaderPosition.Text
 
         /**
-         * Saves where the reader is in [bookId]. Returns false when it could not be saved, for
+         * Saves where the reader is in [bookId], and notes today as a day of reading. Returns false when it could not be saved, for
          * example because a catalog sync removed the book; reading goes on either way.
          */
         suspend fun savePosition(
@@ -49,7 +54,9 @@ class ReaderRepository
             position: ReaderPosition,
         ): Boolean =
             try {
-                readingProgressDao.upsert(ReadingProgress(bookId, position.encode(), timeProvider.nowMillis()))
+                val now = timeProvider.nowMillis()
+                readingProgressDao.upsert(ReadingProgress(bookId, position.encode(), now))
+                readingDayDao.add(ReadingDay(localDay(now, TimeZone.getDefault())))
                 true
             } catch (e: SQLiteException) {
                 false

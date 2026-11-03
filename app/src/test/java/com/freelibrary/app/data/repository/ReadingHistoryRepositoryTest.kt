@@ -6,9 +6,11 @@ import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookShelfState
 import com.freelibrary.app.data.local.entity.Bookmark
+import com.freelibrary.app.data.local.entity.ReadingDay
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -53,7 +55,13 @@ class ReadingHistoryRepositoryTest {
                     ApplicationProvider.getApplicationContext(),
                     FreeLibraryDatabase::class.java,
                 ).allowMainThreadQueries().build()
-            repository = ReadingHistoryRepository(database, database.bookShelfStateDao(), database.readingProgressDao())
+            repository =
+                ReadingHistoryRepository(
+                    database,
+                    database.bookShelfStateDao(),
+                    database.readingProgressDao(),
+                    database.readingDayDao(),
+                )
             sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
         }
 
@@ -90,6 +98,16 @@ class ReadingHistoryRepositoryTest {
             repository.clear()
 
             assertEquals(emptyList<ReadingProgress>(), database.readingProgressDao().getMostRecent(10))
+        }
+
+    @Test
+    fun `clearing forgets the days of reading`() =
+        runTest {
+            database.readingDayDao().add(ReadingDay(20_000L))
+
+            repository.clear()
+
+            assertEquals(emptyList<Long>(), database.readingDayDao().observeDays().first())
         }
 
     @Test

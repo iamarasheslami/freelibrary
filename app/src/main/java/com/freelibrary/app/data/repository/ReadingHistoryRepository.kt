@@ -3,6 +3,7 @@ package com.freelibrary.app.data.repository
 import androidx.room.withTransaction
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.dao.BookShelfStateDao
+import com.freelibrary.app.data.local.dao.ReadingDayDao
 import com.freelibrary.app.data.local.dao.ReadingProgressDao
 import com.freelibrary.app.data.local.entity.ShelfState
 import javax.inject.Inject
@@ -12,7 +13,7 @@ import javax.inject.Singleton
 interface ReadingHistory {
     /**
      * Forgets what the reader has read: books leave the Currently Reading and Already Read shelves
-     * and every saved reading position is deleted. The Want to Read list, bookmarks, downloaded
+     * every saved reading position and the days of reading are deleted. The Want to Read list, bookmarks, downloaded
      * books and settings are not touched.
      */
     suspend fun clear()
@@ -26,11 +27,13 @@ class ReadingHistoryRepository
         private val database: FreeLibraryDatabase,
         private val bookShelfStateDao: BookShelfStateDao,
         private val readingProgressDao: ReadingProgressDao,
+        private val readingDayDao: ReadingDayDao,
     ) : ReadingHistory {
         override suspend fun clear() {
             database.withTransaction {
                 bookShelfStateDao.deleteAllExcept(ShelfState.WANT_TO_READ)
                 readingProgressDao.deleteAll()
+                readingDayDao.deleteAll()
             }
         }
     }

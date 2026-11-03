@@ -9,6 +9,8 @@ import com.freelibrary.app.data.local.entity.DownloadedBook
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.domain.model.ReaderPosition
+import com.freelibrary.app.domain.model.localDay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -23,6 +25,7 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.io.File
+import java.util.TimeZone
 
 @RunWith(RobolectricTestRunner::class)
 class ReaderRepositoryTest {
@@ -55,7 +58,13 @@ class ReaderRepositoryTest {
                         lastModified = "2026-10-16",
                     ),
                 )
-            repository = ReaderRepository(database.downloadedBookDao(), database.readingProgressDao(), TimeProvider { now })
+            repository =
+                ReaderRepository(
+                    database.downloadedBookDao(),
+                    database.readingProgressDao(),
+                    database.readingDayDao(),
+                    TimeProvider { now },
+                )
         }
 
     @After
@@ -155,6 +164,26 @@ class ReaderRepositoryTest {
             assertTrue(repository.savePosition(bookId, ReaderPosition.Epub(12, 250)))
 
             assertEquals(ReaderPosition.Epub(12, 250), repository.savedEpubPosition(bookId))
+        }
+
+    @Test
+    fun `saving a position notes the day as a day of reading, once however often the reader saves`() =
+        runBlocking<Unit> {
+            repository.savePosition(bookId, ReaderPosition.Epub(1, 100))
+            now = 9_000L
+            repository.savePosition(bookId, ReaderPosition.Epub(2, 900))
+
+            assertEquals(listOf(localDay(5_000L, TimeZone.getDefault())), database.readingDayDao().observeDays().first())
+        }
+
+    @Test
+    fun `saving a position on another day adds another day of reading`() =
+        runBlocking<Unit> {
+            repository.savePosition(bookId, ReaderPosition.Epub(1, 100))
+            now = 5_000L + 2 * 86_400_000L
+            repository.savePosition(bookId, ReaderPosition.Epub(1, 200))
+
+            assertEquals(2, database.readingDayDao().observeDays().first().size)
         }
 
     @Test

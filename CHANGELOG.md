@@ -8,6 +8,10 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ### Added
 
+- Profile: the reading card shows a gentle streak, the number of days in a row on which a book was opened. The streak is
+  still alive while today has not been read yet, nothing is said about a streak that has ended except the best run, and
+  Settings, Clear reading history, resets it. The days are kept only on the phone (database version 12, with a migration
+  that fills them in from the books already opened or finished).
 - Readers: a Page choice in the text panel (Match the app, Sepia, Dim night) for the EPUB, text and PDF readers. Sepia is a
   warm light page and Dim night a soft dark one, each in either app theme. The reading text colours pick the shade that suits
   the page, and a test checks that every one keeps a contrast of 7 to 1 on both pages. Reset to defaults puts the page back.
