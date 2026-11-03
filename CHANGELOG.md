@@ -11,6 +11,12 @@ All notable changes to FreeLibrary are listed here. The format follows
 - Readers: a Page choice in the text panel (Match the app, Sepia, Dim night) for the EPUB, text and PDF readers. Sepia is a
   warm light page and Dim night a soft dark one, each in either app theme. The reading text colours pick the shade that suits
   the page, and a test checks that every one keeps a contrast of 7 to 1 on both pages. Reset to defaults puts the page back.
+- Profile: an avatar creator, opened from Edit profile with Create an avatar. The reader builds a round cartoon avatar from
+  original artwork: skin tone, five face shapes, five noses, sixteen hair styles (short, long, curly, braids, afro, buns and
+  more) in eight colours, seven eye styles in eight eye colours, five mouths, seven glasses, eight hats (beanie, cap, bucket,
+  beret, headscarf, cowboy and more) in eight colours, earrings in one or both ears, eleven outfits in eight colours, and a
+  background colour, with a Surprise me button. Every choice shows a small preview already wearing it. The avatar is saved
+  like a chosen photo, so it appears on Profile and in backups; the creator opens again with the last avatar.
 - Profile: a reading card under the name shows the books finished this year and this month, with a ring that fills as
   the reader nears a yearly goal. Tapping the card sets or removes the goal (1 to 365 books). It is all worked out on the
   phone from the dates books were marked finished.
