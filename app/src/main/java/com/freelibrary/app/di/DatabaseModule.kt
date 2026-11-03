@@ -20,6 +20,7 @@ import com.freelibrary.app.data.local.dao.BookmarkDao
 import com.freelibrary.app.data.local.dao.BookshelfDao
 import com.freelibrary.app.data.local.dao.DownloadedBookDao
 import com.freelibrary.app.data.local.dao.HighlightDao
+import com.freelibrary.app.data.local.dao.ReadingDayDao
 import com.freelibrary.app.data.local.dao.ReadingProgressDao
 import com.freelibrary.app.data.local.dao.SourceDao
 import com.freelibrary.app.data.local.dao.SubjectDao
@@ -89,6 +90,9 @@ object DatabaseModule {
 
     @Provides
     fun provideReadingProgressDao(database: FreeLibraryDatabase): ReadingProgressDao = database.readingProgressDao()
+
+    @Provides
+    fun provideReadingDayDao(database: FreeLibraryDatabase): ReadingDayDao = database.readingDayDao()
 
     @Provides
     fun provideDownloadedBookDao(database: FreeLibraryDatabase): DownloadedBookDao = database.downloadedBookDao()

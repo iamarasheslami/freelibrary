@@ -59,7 +59,13 @@ class BookmarksViewModelTest {
                     FreeLibraryDatabase::class.java,
                 ).allowMainThreadQueries().build()
             bookmarks = BookmarkRepository(database.bookmarkDao(), TimeProvider { 5L })
-            readerRepository = ReaderRepository(database.downloadedBookDao(), database.readingProgressDao(), TimeProvider { 0L })
+            readerRepository =
+                ReaderRepository(
+                    database.downloadedBookDao(),
+                    database.readingProgressDao(),
+                    database.readingDayDao(),
+                    TimeProvider { 0L },
+                )
             val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
             bookId =
                 database.bookDao().insert(

@@ -6,9 +6,12 @@ import com.freelibrary.app.data.TimeProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookShelfState
+import com.freelibrary.app.data.local.entity.ReadingDay
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.domain.model.ReadingStreak
 import com.freelibrary.app.domain.model.ReadingSummary
+import com.freelibrary.app.domain.model.localDay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -36,7 +39,7 @@ class ReadingGoalRepositoryTest {
                     FreeLibraryDatabase::class.java,
                 ).allowMainThreadQueries().build()
             settings = SettingsRepository(InMemoryPreferences())
-            repository = ReadingGoalRepository(database.bookShelfStateDao(), settings, TimeProvider { NOW })
+            repository = ReadingGoalRepository(database.bookShelfStateDao(), database.readingDayDao(), settings, TimeProvider { NOW })
             sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
         }
 
@@ -94,6 +97,19 @@ class ReadingGoalRepositoryTest {
 
             repository.setGoal(null)
             assertEquals(null, repository.summary.first().goal)
+        }
+
+    @Test
+    fun `the streak follows the days the reader read`() =
+        runTest {
+            val today = localDay(NOW, TimeZone.getDefault())
+            listOf(today - 5, today - 2, today - 1).forEach { database.readingDayDao().add(ReadingDay(it)) }
+
+            assertEquals(ReadingStreak(current = 2, longest = 2, readToday = false), repository.summary.first().streak)
+
+            database.readingDayDao().add(ReadingDay(today))
+
+            assertEquals(ReadingStreak(current = 3, longest = 3, readToday = true), repository.summary.first().streak)
         }
 
     private companion object {

@@ -11,13 +11,14 @@ fun parseYearlyGoal(raw: String?): Int? = raw?.trim()?.toIntOrNull()?.takeIf { i
 
 /**
  * What the Profile page shows about the reader's year: books finished this calendar [year] and
- * this month, and the yearly [goal] if the reader set one.
+ * this month, the yearly [goal] if the reader set one, and the run of reading days ([streak]).
  */
 data class ReadingSummary(
     val year: Int = 0,
     val finishedThisYear: Int = 0,
     val finishedThisMonth: Int = 0,
     val goal: Int? = null,
+    val streak: ReadingStreak = ReadingStreak(),
 ) {
     /** True once the reader has finished as many books this year as the goal asks for. */
     val goalReached: Boolean get() = goal != null && finishedThisYear >= goal

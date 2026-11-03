@@ -92,7 +92,13 @@ class EpubReaderViewModelTest {
                 ).allowMainThreadQueries().build()
             readingState =
                 ReadingStateRepository(database, database.bookShelfStateDao(), database.bookListDao(), TimeProvider { 0L })
-            readerRepository = ReaderRepository(database.downloadedBookDao(), database.readingProgressDao(), TimeProvider { 0L })
+            readerRepository =
+                ReaderRepository(
+                    database.downloadedBookDao(),
+                    database.readingProgressDao(),
+                    database.readingDayDao(),
+                    TimeProvider { 0L },
+                )
             val sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
             bookId =
                 database.bookDao().insert(

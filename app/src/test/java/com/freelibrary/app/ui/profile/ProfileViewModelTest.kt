@@ -54,7 +54,12 @@ class ProfileViewModelTest {
                 ProfileShelvesRepository(
                     ReadingStateRepository(database, database.bookShelfStateDao(), database.bookListDao(), TimeProvider { 100L }),
                 ),
-                ReadingGoalRepository(database.bookShelfStateDao(), SettingsRepository(InMemoryPreferences()), TimeProvider { 100L }),
+                ReadingGoalRepository(
+                    database.bookShelfStateDao(),
+                    database.readingDayDao(),
+                    SettingsRepository(InMemoryPreferences()),
+                    TimeProvider { 100L },
+                ),
             )
     }
 
