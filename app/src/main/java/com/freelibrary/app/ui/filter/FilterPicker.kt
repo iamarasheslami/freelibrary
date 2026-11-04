@@ -20,6 +20,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 import java.util.Locale
 
 /** One line of the picker: the choice, how to show it, and whether it is chosen now. */
@@ -119,7 +120,7 @@ internal class FilterPicker(
                 onClick: (String) -> Unit,
             ) {
                 binding.filterPickerLabel.text = row.label
-                binding.filterPickerCount.text = row.bookCount.toString()
+                binding.filterPickerCount.text = NumberFormat.getInstance().format(row.bookCount)
                 binding.filterPickerCheck.visibility = if (row.selected) View.VISIBLE else View.INVISIBLE
                 binding.root.isSelected = row.selected
                 binding.root.setOnClickListener { onClick(row.value) }

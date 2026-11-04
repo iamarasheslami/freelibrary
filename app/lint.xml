@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Font XML: the fallback attributes for older Android versions sit in res/font, and the newer ones in res/font-v26. -->
+    <issue id="UnusedAttribute">
+        <ignore path="src/main/res/font/*" />
+        <ignore path="src/main/res/font-v26/*" />
+    </issue>
+
+    <!-- The toolbar icons are always shown on purpose: the reader's actions should never hide in an overflow menu. -->
+    <issue id="AlwaysShowAction">
+        <ignore path="src/main/res/menu/*" />
+    </issue>
+
+    <!-- These wrappers give a larger touch target or a shared background, so they are not useless. -->
+    <issue id="UselessParent">
+        <ignore path="src/main/res/layout/activity_main.xml" />
+        <ignore path="src/main/res/layout/item_profile_reading.xml" />
+    </issue>
+
+    <!-- The splash overlay and the Wi-Fi row are not meant to take keyboard focus. -->
+    <issue id="KeyboardInaccessibleWidget">
+        <ignore path="src/main/res/layout/activity_main.xml" />
+        <ignore path="src/main/res/layout/fragment_settings_sync.xml" />
+    </issue>
+
+    <!-- The delete icon's description is set in StorageAdapter, because it names the book. -->
+    <issue id="ContentDescription">
+        <ignore path="src/main/res/layout/item_storage_download.xml" />
+    </issue>
+</lint>

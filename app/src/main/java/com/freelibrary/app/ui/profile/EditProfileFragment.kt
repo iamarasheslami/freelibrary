@@ -1,6 +1,5 @@
 package com.freelibrary.app.ui.profile
 
-import android.net.Uri
 import android.os.Bundle
 import android.text.format.DateUtils
 import android.view.LayoutInflater
@@ -8,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -88,7 +88,7 @@ class EditProfileFragment : Fragment() {
         binding.removePictureButton.setOnClickListener { viewModel.onPictureRemoved() }
         binding.createAvatarButton.setOnClickListener { openAvatarCreator() }
         setFragmentResultListener(AvatarCreatorFragment.RESULT_KEY) { _, bundle ->
-            bundle.getString(AvatarCreatorFragment.RESULT_PICTURE)?.let { viewModel.onPictureChosen(Uri.parse(it)) }
+            bundle.getString(AvatarCreatorFragment.RESULT_PICTURE)?.let { viewModel.onPictureChosen(it.toUri()) }
         }
 
         binding.nameInput.doAfterTextChanged { viewModel.onNameChanged(it?.toString().orEmpty()) }

@@ -1,6 +1,7 @@
 package com.freelibrary.app.data.profile
 
 import android.content.Context
+import androidx.core.content.edit
 import com.freelibrary.app.domain.model.AvatarDesign
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -22,7 +23,7 @@ class AvatarDesignStore
         fun load(): AvatarDesign? = AvatarDesign.decode(preferences.getString(KEY, null))
 
         fun save(design: AvatarDesign) {
-            preferences.edit().putString(KEY, design.encode()).apply()
+            preferences.edit { putString(KEY, design.encode()) }
         }
 
         private companion object {

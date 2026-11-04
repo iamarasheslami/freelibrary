@@ -1,6 +1,7 @@
 package com.freelibrary.app.data.reader
 
 import android.net.Uri
+import androidx.core.net.toUri
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -136,7 +137,7 @@ class EpubPageServer(
 
     /** The path inside the book an address points at, or null if it is not one of this server's addresses. */
     fun pathOf(url: String): String? {
-        val uri = Uri.parse(url)
+        val uri = url.toUri()
         if (!uri.scheme.equals("https", ignoreCase = true) || !uri.host.equals(HOST, ignoreCase = true)) return null
         return uri.encodedPath
             ?.let { EpubPackageParser.resolve("", it) }

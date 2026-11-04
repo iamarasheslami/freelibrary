@@ -18,6 +18,7 @@ import com.freelibrary.app.domain.model.ReadingStreak
 import com.freelibrary.app.domain.model.ReadingSummary
 import com.freelibrary.app.ui.booklist.BookSliderViewHolder
 import com.freelibrary.app.ui.cover.CoverTypefaces
+import java.text.NumberFormat
 
 /** One row of the Profile list: the reader's picture and name first, then one slider per shelf. */
 sealed interface ProfileRow {
@@ -165,7 +166,7 @@ class ProfileAdapter(
             val resources = itemView.resources
             val goal = summary.goal
             binding.readingRing.setProgress(summary.progress)
-            binding.readingCount.text = summary.finishedThisYear.toString()
+            binding.readingCount.text = NumberFormat.getInstance().format(summary.finishedThisYear)
             binding.readingTitle.text =
                 resources.getString(if (goal == null) R.string.profile_reading_title else R.string.profile_goal_title, summary.year)
             binding.readingGoal.text =

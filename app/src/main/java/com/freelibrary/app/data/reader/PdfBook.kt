@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import androidx.core.graphics.createBitmap
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -74,7 +75,7 @@ class PdfBook private constructor(
             val page = renderer.openPage(index)
             try {
                 val (width, height) = renderSize(page.width, page.height, viewWidth, level)
-                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val bitmap = createBitmap(width, height)
                 bitmap.eraseColor(Color.WHITE)
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                 bitmap

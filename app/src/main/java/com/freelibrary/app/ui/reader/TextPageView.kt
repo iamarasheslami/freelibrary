@@ -18,6 +18,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.widget.OverScroller
+import androidx.core.graphics.withSave
 import com.freelibrary.app.R
 import kotlin.math.abs
 
@@ -142,6 +143,7 @@ class TextPageView
             return spanned
         }
 
+        @SuppressLint("InlinedApi") // the constant is inlined at build time; justification is only set on Android 8+
         private fun rebuild(permille: Int) {
             wanted = permille
             quiet = true
@@ -203,19 +205,19 @@ class TextPageView
 
         override fun onDraw(canvas: Canvas) {
             val l = layout ?: return
-            canvas.save()
-            if (paged) {
-                // Only this page's own lines are drawn: the first line of the next page must not show in part.
-                val first = pageStarts[page]
-                val last = (if (page < pageStarts.lastIndex) pageStarts[page + 1] else l.lineCount) - 1
-                val top = l.getLineTop(first)
-                canvas.clipRect(0, verticalPadding, width, verticalPadding + l.getLineBottom(last) - top)
-                canvas.translate(sidePadding.toFloat(), (verticalPadding - top).toFloat())
-            } else {
-                canvas.translate(sidePadding.toFloat(), verticalPadding.toFloat())
+            canvas.withSave {
+                if (paged) {
+                    // Only this page's own lines are drawn: the first line of the next page must not show in part.
+                    val first = pageStarts[page]
+                    val last = (if (page < pageStarts.lastIndex) pageStarts[page + 1] else l.lineCount) - 1
+                    val top = l.getLineTop(first)
+                    canvas.clipRect(0, verticalPadding, width, verticalPadding + l.getLineBottom(last) - top)
+                    canvas.translate(sidePadding.toFloat(), (verticalPadding - top).toFloat())
+                } else {
+                    canvas.translate(sidePadding.toFloat(), verticalPadding.toFloat())
+                }
+                l.draw(canvas)
             }
-            l.draw(canvas)
-            canvas.restore()
         }
 
         override fun computeVerticalScrollRange(): Int = (layout?.height ?: 0) + 2 * verticalPadding
