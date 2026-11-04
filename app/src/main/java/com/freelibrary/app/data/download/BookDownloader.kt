@@ -14,6 +14,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -30,6 +31,7 @@ private const val FREE_SPACE_MARGIN_BYTES = 20L * 1024 * 1024
 private const val BUFFER_BYTES = 16 * 1024
 private const val PROGRESS_STEP_BYTES = 64L * 1024
 private const val HEAD_BYTES = 512
+private const val MAX_REDIRECTS = 10
 
 /**
  * Downloads one book file into the books folder, the same folder and naming the backup restore
@@ -37,7 +39,8 @@ private const val HEAD_BYTES = 512
  * only renamed into place once it is complete and looks like what was asked for, so a stopped,
  * failed or cancelled download never leaves a half file or a record behind, and a web page sent
  * instead of a book is never kept as one. One download is one call; the caller decides how many
- * run at once.
+ * run at once. A file is only fetched from an address that [allowHost] accepts, the first one and
+ * every redirect, by default Project Gutenberg and its mirrors over https.
  */
 class BookDownloader internal constructor(
     private val client: OkHttpClient,
@@ -45,6 +48,7 @@ class BookDownloader internal constructor(
     private val downloadedBookDao: DownloadedBookDao,
     private val timeProvider: TimeProvider,
     private val maxBytes: Long,
+    private val allowHost: (HttpUrl) -> Boolean = DownloadSources::isAllowed,
 ) {
     @Inject
     constructor(
@@ -53,6 +57,9 @@ class BookDownloader internal constructor(
         downloadedBookDao: DownloadedBookDao,
         timeProvider: TimeProvider,
     ) : this(client, storage, downloadedBookDao, timeProvider, MAX_FILE_BYTES)
+
+    /** Redirects are followed here, one by one, so that each address can be checked before it is asked for. */
+    private val noRedirectClient = client.newBuilder().followRedirects(false).followSslRedirects(false).build()
 
     /** Downloads [url] as [format] of book [bookId], replacing any earlier copy of that format. */
     suspend fun download(
@@ -68,9 +75,16 @@ class BookDownloader internal constructor(
                 } catch (e: IllegalArgumentException) {
                     return@withContext DownloadOutcome.Failed(DownloadError.NOT_FOUND)
                 }
+            if (!allowHost(request.url)) {
+                logFailure("Refused a download from ${request.url.host}: not an allowed address", null)
+                return@withContext DownloadOutcome.Failed(DownloadError.NOT_FOUND)
+            }
             val response =
                 try {
-                    openFollowingInsecureRedirects(request)
+                    openFollowingRedirects(request)
+                } catch (e: RedirectNotAllowedException) {
+                    logFailure("Refused a redirect to ${e.host}: not an allowed address", null)
+                    return@withContext DownloadOutcome.Failed(DownloadError.NOT_FOUND)
                 } catch (e: IOException) {
                     logFailure("Could not reach $url", e)
                     return@withContext DownloadOutcome.Failed(DownloadError.OFFLINE)
@@ -79,24 +93,28 @@ class BookDownloader internal constructor(
         }
 
     /**
-     * The response for [request]. The client never follows a redirect from https to plain http, and
+     * The response for [request], following redirects one at a time. A redirect to an address that is
+     * not allowed is never asked for. The client never follows a redirect from https to plain http, and
      * Project Gutenberg redirects some files that way, so such a redirect is followed to the same
      * address over https instead. A download never travels over plain http.
      */
-    private suspend fun openFollowingInsecureRedirects(request: Request): Response {
-        val maxHops = 5
-        var response = client.newCall(request).await()
+    private suspend fun openFollowingRedirects(request: Request): Response {
+        var current = request
         var hops = 0
-        while (response.isRedirect && hops < maxHops) {
-            val target = response.header("Location")?.let { response.request.url.resolve(it) } ?: break
-            if (target.isHttps) break
+        while (true) {
+            val response = noRedirectClient.newCall(current).await()
+            if (!response.isRedirect || hops >= MAX_REDIRECTS) return response
+            val location = response.header("Location")?.let { response.request.url.resolve(it) } ?: return response
             response.close()
-            val secure = request.newBuilder().url(target.newBuilder().scheme("https").build()).build()
-            response = client.newCall(secure).await()
+            val target =
+                if (current.url.isHttps && !location.isHttps) location.newBuilder().scheme("https").build() else location
+            if (!allowHost(target)) throw RedirectNotAllowedException(target.host)
+            current = current.newBuilder().url(target).build()
             hops++
         }
-        return response
     }
+
+    private class RedirectNotAllowedException(val host: String) : Exception("Redirect to $host is not allowed")
 
     private fun logFailure(
         what: String,

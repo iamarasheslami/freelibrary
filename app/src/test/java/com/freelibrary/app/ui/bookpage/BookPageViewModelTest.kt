@@ -79,6 +79,7 @@ class BookPageViewModelTest {
                 database.downloadedBookDao(),
                 TimeProvider { 0L },
                 1_000_000L,
+                allowHost = { true },
             ),
             database.bookFormatDao(),
             database.downloadedBookDao(),

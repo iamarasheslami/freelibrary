@@ -1,7 +1,10 @@
 package com.freelibrary.app.data.download
 
 import com.freelibrary.app.domain.model.BookFileFormat
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DownloadSourcesTest {
@@ -63,5 +66,29 @@ class DownloadSourcesTest {
         assertEquals(listOf(small), DownloadSources.candidates(small, BookFileFormat.TEXT))
         assertEquals(listOf(other), DownloadSources.candidates(other, BookFileFormat.TEXT))
         assertEquals(listOf("not an address"), DownloadSources.candidates("not an address", BookFileFormat.TEXT))
+    }
+
+    @Test
+    fun `project gutenberg and its mirrors are allowed over https`() {
+        listOf(
+            "https://gutenberg.org/ebooks/1342.epub3.images",
+            "https://www.gutenberg.org/ebooks/1342.epub3.images",
+            "https://gutenberg.pglaf.org/cache/epub/1342/pg1342.epub",
+            "https://aleph.gutenberg.org/1/3/4/1342/1342-0.txt",
+            "https://www.mirrorservice.org/sites/ftp.ibiblio.org/pub/docs/books/gutenberg/1/3/4/1342/1342.txt",
+            "https://mirrors.xmission.com/gutenberg/1/3/4/1342/1342.txt",
+        ).forEach { assertTrue(it, DownloadSources.isAllowed(it.toHttpUrl())) }
+    }
+
+    @Test
+    fun `other hosts, look-alike hosts and plain http are not allowed`() {
+        listOf(
+            "http://www.gutenberg.org/ebooks/1342.epub3.images",
+            "https://example.com/book.epub",
+            "https://evilgutenberg.org/book.epub",
+            "https://gutenberg.org.example.com/book.epub",
+            "https://www.mirrorservice.org.example.com/book.epub",
+            "https://raw.githubusercontent.com/iamarasheslami/freelibrary-catalog-data/main/manifest.json",
+        ).forEach { assertFalse(it, DownloadSources.isAllowed(it.toHttpUrl())) }
     }
 }
