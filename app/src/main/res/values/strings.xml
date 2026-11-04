@@ -263,7 +263,7 @@
         <item quantity="one">%1$d downloaded book file could not be found and was left out.</item>
         <item quantity="other">%1$d downloaded book files could not be found and were left out.</item>
     </plurals>
-    <string name="backup_import_done">Restored %1$d items and %2$d book files.</string>
+    <string name="backup_import_done">Restored %1$s and %2$s.</string>
     <string name="backup_import_settings">Settings restored.</string>
     <plurals name="backup_import_skipped">
         <item quantity="one">%1$d item or file was skipped because this phone\'s catalog does not have the book, or this phone already has the same or newer data. Sync the catalog and import again to restore the rest.</item>
