@@ -1,9 +1,12 @@
 name: Release
 
 # Builds, signs, checks and publishes a release when a version tag such as v0.1.0 is pushed.
-# It needs the four signing secrets described in docs/ci-cd.md. Until they are set, the job stops
-# at its first step with a clear message, and a release can still be built on the maintainer's machine
-# as RELEASING.md describes.
+#
+# Two jobs, so that the signing key never meets build code:
+#   build  runs Gradle (plugins, tests, dependencies) and has no access to any secret. It makes the unsigned APK.
+#   sign   holds the signing key, runs no Gradle, and only signs the finished file with apksigner. It runs in the
+#          "release" environment, whose secrets and approval are set up as described in docs/ci-cd.md.
+# Until the secrets are set, a release can still be built on the maintainer's machine as RELEASING.md describes.
 on:
   push:
     tags:
@@ -17,35 +20,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build and publish the release
+  build:
+    name: Build the unsigned release
     runs-on: ubuntu-26.04
     timeout-minutes: 90
     permissions:
-      contents: write
-      id-token: write
-      attestations: write
-    env:
-      KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
-      STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-      KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-      KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Check that the signing secrets are set
-        run: |
-          for name in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::The release signing secrets are not set (missing: $name). See docs/ci-cd.md."
-              exit 1
-            fi
-          done
-
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Check the tag, version, changelog and store text agree
+        id: version
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
@@ -54,6 +44,7 @@ jobs:
           [ "$name" = "$version" ] || { echo "::error::Tag is v$version but versionName is $name"; exit 1; }
           grep -q "^## \[$version\]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no section for $version"; exit 1; }
           [ -s "fastlane/metadata/android/en-US/changelogs/$code.txt" ] || { echo "::error::Missing fastlane changelog $code.txt"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Set up JDK 21
@@ -76,52 +67,31 @@ jobs:
       - name: Run every check before building
         run: ./gradlew ktlintCheck lintDebug :shared:test :catalog-tool:test testDebugUnitTest
 
-      - name: Write the signing key
-        run: |
-          set -euo pipefail
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release.keystore
-          {
-            echo "storeFile=release.keystore"
-            echo "storePassword=$STORE_PASSWORD"
-            echo "keyAlias=$KEY_ALIAS"
-            echo "keyPassword=$KEY_PASSWORD"
-          } > keystore.properties
-
-      - name: Build the signed release APK
+      # No keystore.properties exists here, so the build is unsigned.
+      - name: Build the unsigned release APK
         run: ./gradlew assembleRelease
 
-      - name: Check the signature and name the files
+      - name: Collect the files to sign and publish
         run: |
           set -euo pipefail
-          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
-          "$apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
           mkdir dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/FreeLibrary-$VERSION.apk"
+          cp app/build/outputs/apk/release/app-release-unsigned.apk dist/app-release-unsigned.apk
           cp app/build/outputs/mapping/release/mapping.txt "dist/mapping-$VERSION.txt"
-          (cd dist && sha256sum "FreeLibrary-$VERSION.apk" > "FreeLibrary-$VERSION.apk.sha256")
-          rm -f release.keystore keystore.properties
-
-      - name: Attest where the APK came from
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with:
-          subject-path: dist/FreeLibrary-${{ env.VERSION }}.apk
-
-      - name: Publish the GitHub release
-        run: |
-          set -euo pipefail
           awk -v v="$VERSION" '
             $0 ~ "^## \\[" v "\\]" { found = 1; next }
             found && /^## \[/ { exit }
             found { print }
-          ' CHANGELOG.md > notes.md
-          {
-            echo
-            echo "SHA-256 of the APK: \`$(cut -d' ' -f1 "dist/FreeLibrary-$VERSION.apk.sha256")\`"
-          } >> notes.md
-          gh release create "$GITHUB_REF_NAME" "dist/FreeLibrary-$VERSION.apk" "dist/FreeLibrary-$VERSION.apk.sha256" \
-            --title "FreeLibrary $VERSION" --notes-file notes.md --verify-tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ' CHANGELOG.md > dist/notes.md
+
+      - name: Keep the unsigned APK and the release notes for the signing job
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unsigned-release
+          path: |
+            dist/app-release-unsigned.apk
+            dist/notes.md
+          retention-days: 1
+          if-no-files-found: error
 
       - name: Keep the R8 mapping file
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -129,3 +99,81 @@ jobs:
           name: r8-mapping-${{ env.VERSION }}
           path: dist/mapping-${{ env.VERSION }}.txt
           retention-days: 90
+
+  sign:
+    name: Sign and publish the release
+    needs: build
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - name: Download the unsigned APK
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: unsigned-release
+          path: unsigned
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # From here on the key exists only inside this one step, and no action or Gradle runs while it does.
+      - name: Align and sign the APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The release signing secrets are not set (missing: $name). See docs/ci-cd.md."
+              exit 1
+            fi
+          done
+          tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          keystore="$RUNNER_TEMP/release.keystore"
+          trap 'rm -f "$keystore"' EXIT
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          "$tools/zipalign" -f -p 4 unsigned/app-release-unsigned.apk aligned.apk
+          "$tools/apksigner" sign \
+            --ks "$keystore" \
+            --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:STORE_PASSWORD \
+            --key-pass env:KEY_PASSWORD \
+            --out "FreeLibrary-$VERSION.apk" \
+            aligned.apk
+
+      - name: Check the signature and write the checksum
+        run: |
+          set -euo pipefail
+          tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$tools/apksigner" verify --verbose --print-certs "FreeLibrary-$VERSION.apk"
+          sha256sum "FreeLibrary-$VERSION.apk" > "FreeLibrary-$VERSION.apk.sha256"
+
+      - name: Attest where the APK came from
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: FreeLibrary-${{ env.VERSION }}.apk
+
+      - name: Publish the GitHub release
+        run: |
+          set -euo pipefail
+          cp unsigned/notes.md notes.md
+          {
+            echo
+            echo "SHA-256 of the APK: \`$(cut -d' ' -f1 "FreeLibrary-$VERSION.apk.sha256")\`"
+          } >> notes.md
+          gh release create "$GITHUB_REF_NAME" "FreeLibrary-$VERSION.apk" "FreeLibrary-$VERSION.apk.sha256" \
+            --repo "$GITHUB_REPOSITORY" --title "FreeLibrary $VERSION" --notes-file notes.md --verify-tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

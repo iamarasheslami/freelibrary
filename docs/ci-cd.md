@@ -122,15 +122,23 @@ To do, later (each is its own small pull request):
 
 ## Release from CI
 
-1. Create the four secrets once (PowerShell, from the repository folder; the keystore stays outside the repository):
+1. Set up the protected `release` environment and the four secrets once (PowerShell, from the repository folder; the keystore stays
+   outside the repository). The secrets live in the environment, so only the signing job can ever read them, and the job
+   waits for your approval before it starts:
    ```
-   [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\release.jks")) | gh secret set RELEASE_KEYSTORE_BASE64
-   gh secret set RELEASE_STORE_PASSWORD
-   gh secret set RELEASE_KEY_ALIAS
-   gh secret set RELEASE_KEY_PASSWORD
+   $id = gh api user --jq .id
+   '{"reviewers":[{"type":"User","id":' + $id + '}],"deployment_branch_policy":{"protected_branches":false,"custom_branch_policies":true}}' | gh api --method PUT repos/iamarasheslami/freelibrary/environments/release --input -
+   gh api --method POST repos/iamarasheslami/freelibrary/environments/release/deployment-branch-policies -f name='v*' -f type=tag
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\release.jks")) | gh secret set RELEASE_KEYSTORE_BASE64 --env release
+   gh secret set RELEASE_STORE_PASSWORD --env release
+   gh secret set RELEASE_KEY_ALIAS --env release
+   gh secret set RELEASE_KEY_PASSWORD --env release
    ```
 2. Prepare the release pull request as `RELEASING.md` says, merge it, then tag:
    `git tag -a v0.1.0 -m "FreeLibrary 0.1.0"` and `git push origin v0.1.0`.
-3. The Release workflow publishes `FreeLibrary-0.1.0.apk`, its `.sha256`, and the attestation. Check a download with
+3. The Release workflow first builds and checks the unsigned APK with no access to any secret. Then the signing job waits for
+   your approval (Actions, the running workflow, "Review deployments"); approve it, and it signs the file with `apksigner`
+   (no Gradle runs while the key exists), verifies the signature and publishes
+   `FreeLibrary-0.1.0.apk`, its `.sha256`, and the attestation. Check a download with
    `gh attestation verify FreeLibrary-0.1.0.apk --repo iamarasheslami/freelibrary`.
 4. Keep your own backup of the keystore. If the key is lost, installed apps can no longer be updated.
