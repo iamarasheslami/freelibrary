@@ -5,8 +5,8 @@ on:
     - cron: "0 3 * * *"
   workflow_dispatch:
 
-# The workflow's own token only reads this repository; the push to the data repository
-# uses the CATALOG_DATA_PAT secret.
+# The workflow's own token only reads this repository. The push to the data repository uses the
+# CATALOG_DATA_PAT secret, which only the final push step receives: the build and the sync run without it.
 permissions:
   contents: read
 
@@ -31,7 +31,8 @@ jobs:
         with:
           repository: iamarasheslami/freelibrary-catalog-data
           path: catalog-data
-          token: ${{ secrets.CATALOG_DATA_PAT }}
+          # The data repository is public, so it is read without the token, and no credentials stay in its Git config.
+          persist-credentials: false
 
       - name: Set up JDK 21
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
@@ -65,6 +66,8 @@ jobs:
 
       - name: Commit and push if there are changes
         working-directory: catalog-data
+        env:
+          CATALOG_DATA_PAT: ${{ secrets.CATALOG_DATA_PAT }}
         run: |
           git config user.name "freelibrary-bot"
           git config user.email "actions@github.com"
@@ -73,9 +76,12 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "chore: nightly catalog sync $(date -u +%Y-%m-%d)"
+            # The token is given to Git for these pushes only; nothing is written to the Git config.
+            auth=$(printf 'x-access-token:%s' "$CATALOG_DATA_PAT" | base64 -w0)
+            echo "::add-mask::$auth"
             # GitHub sometimes answers a push with a short-lived server error: try again a few times before failing.
             for attempt in 1 2 3 4; do
-              if git push; then
+              if git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push; then
                 exit 0
               fi
               echo "Push failed (attempt $attempt of 4)."
