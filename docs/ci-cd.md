@@ -38,6 +38,23 @@ Required checks are the three that block merging. A pull request cannot merge wh
 - Stuck update: comment `@dependabot rebase` on the PR to rerun the checks on today's main. If it still fails and the new
   version is the cause, comment `@dependabot ignore this minor version` (or `this dependency`).
 - Review the ignored majors and the toolchain by hand once every quarter.
+- Updates to the GitHub Actions themselves are merged by hand on purpose: they change code that runs with the repository's
+  secrets, and the default workflow token cannot always queue a merge for changes to `.github/workflows`. Before merging,
+  check that CI is green and that each pinned SHA is the commit of the tagged release (the peeled `^{}` commit, not the
+  annotated tag object).
+
+## Security alerts
+
+- The Dependabot alerts for `settings.gradle.kts` are the build's own plugin classpath (Android Gradle Plugin, Gradle and
+  lint internals: netty, bouncycastle, logback and similar). None of it is packaged in the app.
+- On 2026-11-04 the release runtime classpath was checked (`:app:dependencies --configuration releaseRuntimeClasspath`)
+  and none of the flagged libraries are in it, so all 61 alerts were dismissed as "not used".
+- An alert on a library that is in the app is different: fix it by updating the library, and do not dismiss it.
+
+## Known failures that are not bugs
+
+- Nightly Catalog Sync: if the push to the data repository fails with `remote: Internal Server Error`, GitHub had a
+  problem. Nothing is lost; run the workflow again from the Actions tab.
 
 ## Checklist
 
