@@ -2,6 +2,29 @@
 
 FreeLibrary bundles the following third-party material.
 
+## Libraries compiled into the app
+
+These libraries are part of the app and are used under the Apache License, Version 2.0. The full text of the licence
+is in `app/src/main/assets/licenses/Apache-2.0.txt` and ships inside the app. Each project is the work of its own
+authors; follow the link for its copyright and, where it has one, its NOTICE text.
+
+| Library | Used for | Project |
+| --- | --- | --- |
+| AndroidX (Core, AppCompat, ConstraintLayout, Navigation, Lifecycle, Room, DataStore, Paging) | The app's structure, database, settings and lists | https://developer.android.com/jetpack/androidx |
+| Material Components for Android | Buttons, dialogs, sheets and other controls | https://github.com/material-components/material-components-android |
+| Dagger and Hilt | Dependency injection | https://github.com/google/dagger |
+| Coil | Loading and caching cover pictures | https://github.com/coil-kt/coil |
+| Retrofit, with its kotlinx.serialization converter | The catalog update requests | https://github.com/square/retrofit |
+| OkHttp and Okio | Network connections and downloads | https://github.com/square/okhttp, https://github.com/square/okio |
+| kotlinx.serialization and kotlinx.coroutines | Reading the catalog and backups; background work | https://github.com/Kotlin/kotlinx.serialization, https://github.com/Kotlin/kotlinx.coroutines |
+| Kotlin standard library | The Kotlin language runtime | https://github.com/JetBrains/kotlin |
+
+The libraries these depend on (for example `javax.inject` and the JetBrains annotations) are also under the Apache
+License, Version 2.0. This list is kept by hand from `gradle/libs.versions.toml`: when a library is added to the
+app, add it here. Libraries used only to build the app, to run the tests or by the catalog tool are not part of
+the app and are not listed. FreeLibrary itself is under the GNU General Public License, version 3, which accepts
+code under the Apache License, Version 2.0.
+
 ## Literata (fonts)
 
 - Files: `app/src/main/res/font/literata_medium.ttf` and `app/src/main/res/font/literata_semibold.ttf`
