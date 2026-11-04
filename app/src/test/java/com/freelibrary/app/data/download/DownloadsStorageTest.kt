@@ -45,7 +45,14 @@ class DownloadsStorageTest {
             sourceId = database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
             booksDir = File(temporaryFolder.root, "books").also { it.mkdirs() }
             val downloader =
-                BookDownloader(OkHttpClient(), BookStorage(booksDir), database.downloadedBookDao(), TimeProvider { 5_000L }, 1_000_000L)
+                BookDownloader(
+                    OkHttpClient(),
+                    BookStorage(booksDir),
+                    database.downloadedBookDao(),
+                    TimeProvider { 5_000L },
+                    1_000_000L,
+                    allowHost = { true },
+                )
             storage = DownloadsStorage(database.downloadedBookDao(), downloader)
         }
 

@@ -76,7 +76,14 @@ class BookDownloaderTest {
     }
 
     private fun downloaderWithLimit(limit: Long) =
-        BookDownloader(OkHttpClient(), BookStorage(booksDir), database.downloadedBookDao(), TimeProvider { 5_000L }, limit)
+        BookDownloader(
+            OkHttpClient(),
+            BookStorage(booksDir),
+            database.downloadedBookDao(),
+            TimeProvider { 5_000L },
+            limit,
+            allowHost = { true },
+        )
 
     private fun url(path: String = "/book") = server.url(path).toString()
 
@@ -338,6 +345,62 @@ class BookDownloaderTest {
             val outcome = downloader.download(bookId, BookFileFormat.EPUB, "not a link")
 
             assertEquals(DownloadOutcome.Failed(DownloadError.NOT_FOUND), outcome)
+        }
+
+    @Test
+    fun `an address that is not an allowed one is refused before any request is made`() =
+        runTest {
+            val strict =
+                BookDownloader(OkHttpClient(), BookStorage(booksDir), database.downloadedBookDao(), TimeProvider { 5_000L }, 1_000_000L)
+
+            assertEquals(DownloadOutcome.Failed(DownloadError.NOT_FOUND), strict.download(bookId, BookFileFormat.EPUB, url()))
+            assertEquals(
+                DownloadOutcome.Failed(DownloadError.NOT_FOUND),
+                strict.download(bookId, BookFileFormat.EPUB, "https://example.com/book.epub"),
+            )
+            assertEquals(0, server.requestCount)
+            assertTrue(filesLeft().isEmpty())
+        }
+
+    @Test
+    fun `a redirect to an address that is not allowed is never asked for`() =
+        runTest {
+            val onlyThisServer =
+                BookDownloader(
+                    OkHttpClient(),
+                    BookStorage(booksDir),
+                    database.downloadedBookDao(),
+                    TimeProvider { 5_000L },
+                    1_000_000L,
+                    allowHost = { it.port == server.port },
+                )
+            server.enqueue(MockResponse().setResponseCode(302).setHeader("Location", "http://other.example:81/book"))
+
+            val outcome = onlyThisServer.download(bookId, BookFileFormat.EPUB, url())
+
+            assertEquals(DownloadOutcome.Failed(DownloadError.NOT_FOUND), outcome)
+            assertEquals(1, server.requestCount)
+            assertTrue(filesLeft().isEmpty())
+            assertTrue(database.downloadedBookDao().getFormatsForBook(bookId).isEmpty())
+        }
+
+    @Test
+    fun `a redirect to an allowed address is followed`() =
+        runTest {
+            val onlyThisServer =
+                BookDownloader(
+                    OkHttpClient(),
+                    BookStorage(booksDir),
+                    database.downloadedBookDao(),
+                    TimeProvider { 5_000L },
+                    1_000_000L,
+                    allowHost = { it.port == server.port },
+                )
+            server.enqueue(MockResponse().setResponseCode(301).setHeader("Location", "/moved"))
+            respond(epubBytes())
+
+            assertTrue(onlyThisServer.download(bookId, BookFileFormat.EPUB, url()) is DownloadOutcome.Done)
+            assertEquals(listOf("/book", "/moved"), listOf(server.takeRequest().path, server.takeRequest().path))
         }
 
     @Test

@@ -72,7 +72,14 @@ class BookDownloadManagerTest {
                 ),
             )
             val downloader =
-                BookDownloader(OkHttpClient(), BookStorage(booksDir), database.downloadedBookDao(), TimeProvider { 5_000L }, 1_000_000L)
+                BookDownloader(
+                    OkHttpClient(),
+                    BookStorage(booksDir),
+                    database.downloadedBookDao(),
+                    TimeProvider { 5_000L },
+                    1_000_000L,
+                    allowHost = { true },
+                )
             manager = BookDownloadManager(downloader, database.bookFormatDao(), database.downloadedBookDao())
         }
 
