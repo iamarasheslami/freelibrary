@@ -1,7 +1,6 @@
 package com.freelibrary.app.ui.reader
 
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +10,7 @@ import android.widget.ListPopupWindow
 import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toDrawable
 import com.freelibrary.app.R
 import com.freelibrary.app.data.reader.ReaderStyle
 import com.freelibrary.app.databinding.PopupTextStyleBinding
@@ -164,7 +164,7 @@ fun showTextStyleControl(
 
     PopupWindow(binding.root, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
         .apply {
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
             elevation = anchor.resources.displayMetrics.density * 8
             showAsDropDown(anchor, 0, 0, Gravity.END)
         }

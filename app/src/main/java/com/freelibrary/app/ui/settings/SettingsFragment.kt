@@ -2,12 +2,12 @@ package com.freelibrary.app.ui.settings
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
@@ -54,7 +54,7 @@ class SettingsFragment : Fragment() {
     /** Opens a web page in the browser; says so when no app can. */
     private fun openLink(url: String) {
         try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
         } catch (e: ActivityNotFoundException) {
             Toast.makeText(requireContext(), R.string.about_no_browser, Toast.LENGTH_SHORT).show()
         }

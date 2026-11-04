@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import androidx.core.graphics.PathParser
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withScale
 import com.freelibrary.app.domain.model.AvatarDesign
 import com.freelibrary.app.domain.model.AvatarSlot
 
@@ -75,43 +77,42 @@ internal object AvatarRenderer {
     ) {
         val palette = Palette(design)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        canvas.save()
-        canvas.scale(size / AvatarArt.BOX, size / AvatarArt.BOX)
-        paint.style = Paint.Style.FILL
-        paint.color = opaque(palette.background)
-        canvas.drawRect(0f, 0f, AvatarArt.BOX, AvatarArt.BOX, paint)
+        canvas.withScale(size / AvatarArt.BOX, size / AvatarArt.BOX) {
+            paint.style = Paint.Style.FILL
+            paint.color = opaque(palette.background)
+            canvas.drawRect(0f, 0f, AvatarArt.BOX, AvatarArt.BOX, paint)
 
-        canvas.translate(AvatarArt.FIGURE_CENTRE_X, AvatarArt.FIGURE_CENTRE_Y)
-        canvas.scale(AvatarArt.FIGURE_SCALE, AvatarArt.FIGURE_SCALE)
-        canvas.translate(-AvatarArt.FIGURE_CENTRE_X, -AvatarArt.FIGURE_CENTRE_Y)
-        zoomFor(focus)?.let {
-            canvas.translate(it.x, it.y)
-            canvas.scale(it.scale, it.scale)
-            canvas.translate(-it.x, -it.y)
+            canvas.translate(AvatarArt.FIGURE_CENTRE_X, AvatarArt.FIGURE_CENTRE_Y)
+            canvas.scale(AvatarArt.FIGURE_SCALE, AvatarArt.FIGURE_SCALE)
+            canvas.translate(-AvatarArt.FIGURE_CENTRE_X, -AvatarArt.FIGURE_CENTRE_Y)
+            zoomFor(focus)?.let {
+                canvas.translate(it.x, it.y)
+                canvas.scale(it.scale, it.scale)
+                canvas.translate(-it.x, -it.y)
+            }
+
+            val hairLayers = hair[design[AvatarSlot.HAIR]]
+            val hat = hats[design[AvatarSlot.HAT]]
+            val outfit = outfits[design[AvatarSlot.OUTFIT]]
+            drawShapes(canvas, paint, hairLayers.back, palette)
+            drawShapes(canvas, paint, hat.back, palette)
+            drawShapes(canvas, paint, outfit.back, palette)
+            fill(canvas, paint, neck, palette.skinNeck)
+            fill(canvas, paint, body, palette.outfit)
+            drawShapes(canvas, paint, outfit.front, palette)
+            fill(canvas, paint, earLeft, palette.skin)
+            fill(canvas, paint, earRight, palette.skin)
+            fill(canvas, paint, heads[design[AvatarSlot.FACE_SHAPE]], palette.skin)
+            drawShapes(canvas, paint, blush, palette)
+            drawShapes(canvas, paint, noses[design[AvatarSlot.NOSE]], palette)
+            drawShapes(canvas, paint, eyes[design[AvatarSlot.EYES]], palette)
+            drawShapes(canvas, paint, brows, palette)
+            drawShapes(canvas, paint, mouths[design[AvatarSlot.MOUTH]], palette)
+            drawShapes(canvas, paint, glasses[design[AvatarSlot.GLASSES]], palette)
+            drawShapes(canvas, paint, hairLayers.front, palette)
+            drawShapes(canvas, paint, earrings[design[AvatarSlot.EARRINGS]], palette)
+            drawShapes(canvas, paint, hat.front, palette)
         }
-
-        val hairLayers = hair[design[AvatarSlot.HAIR]]
-        val hat = hats[design[AvatarSlot.HAT]]
-        val outfit = outfits[design[AvatarSlot.OUTFIT]]
-        drawShapes(canvas, paint, hairLayers.back, palette)
-        drawShapes(canvas, paint, hat.back, palette)
-        drawShapes(canvas, paint, outfit.back, palette)
-        fill(canvas, paint, neck, palette.skinNeck)
-        fill(canvas, paint, body, palette.outfit)
-        drawShapes(canvas, paint, outfit.front, palette)
-        fill(canvas, paint, earLeft, palette.skin)
-        fill(canvas, paint, earRight, palette.skin)
-        fill(canvas, paint, heads[design[AvatarSlot.FACE_SHAPE]], palette.skin)
-        drawShapes(canvas, paint, blush, palette)
-        drawShapes(canvas, paint, noses[design[AvatarSlot.NOSE]], palette)
-        drawShapes(canvas, paint, eyes[design[AvatarSlot.EYES]], palette)
-        drawShapes(canvas, paint, brows, palette)
-        drawShapes(canvas, paint, mouths[design[AvatarSlot.MOUTH]], palette)
-        drawShapes(canvas, paint, glasses[design[AvatarSlot.GLASSES]], palette)
-        drawShapes(canvas, paint, hairLayers.front, palette)
-        drawShapes(canvas, paint, earrings[design[AvatarSlot.EARRINGS]], palette)
-        drawShapes(canvas, paint, hat.front, palette)
-        canvas.restore()
     }
 
     /** The avatar as a square picture [size] pixels wide. */
@@ -119,7 +120,7 @@ internal object AvatarRenderer {
         design: AvatarDesign,
         size: Int,
     ): Bitmap {
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(size, size)
         draw(Canvas(bitmap), size.toFloat(), design)
         return bitmap
     }

@@ -3,6 +3,7 @@ package com.freelibrary.app.ui.theme
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
+import androidx.core.content.edit
 import com.freelibrary.app.domain.model.AppSize
 import kotlin.math.roundToInt
 
@@ -46,7 +47,7 @@ object AppScale {
         context: Context,
         size: AppSize,
     ) {
-        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit().putString(KEY_APP_SIZE, size.name).apply()
+        context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit { putString(KEY_APP_SIZE, size.name) }
     }
 }
 

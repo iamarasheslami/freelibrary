@@ -29,6 +29,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -119,7 +120,8 @@ class ProfileFragment : Fragment() {
         val inputLayout = content.findViewById<TextInputLayout>(R.id.goalInputLayout)
         val input = checkNotNull(inputLayout.editText)
         val current = viewModel.state.value.reading.goal
-        input.setText(current?.toString().orEmpty())
+        // Plain digits whatever the phone's language: the goal is read back with parseYearlyGoal.
+        input.setText(current?.let { String.format(Locale.ROOT, "%d", it) }.orEmpty())
         val builder =
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.profile_goal_dialog_title)

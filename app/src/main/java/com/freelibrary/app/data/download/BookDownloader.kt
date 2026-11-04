@@ -1,5 +1,6 @@
 package com.freelibrary.app.data.download
 
+import android.annotation.SuppressLint
 import android.util.Log
 import com.freelibrary.app.data.TimeProvider
 import com.freelibrary.app.data.backup.BookStorage
@@ -155,6 +156,7 @@ class BookDownloader internal constructor(
         }
     }
 
+    @SuppressLint("UsableSpace") // a plain free-space check is enough: the margin covers cache the system could clear
     private suspend fun fetch(
         response: Response,
         bookId: Long,

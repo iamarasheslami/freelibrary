@@ -161,19 +161,24 @@ class BackupSettingsFragment : Fragment() {
     }
 
     private fun exportMessage(summary: ExportSummary): String {
-        val done = getString(R.string.backup_export_done, summary.dataItems, summary.bookFiles)
+        val done = getString(R.string.backup_export_done, items(summary.dataItems), bookFiles(summary.bookFiles))
         return if (summary.missingBookFiles > 0) {
-            done + "\n\n" + getString(R.string.backup_export_missing, summary.missingBookFiles)
+            done + "\n\n" + resources.getQuantityString(R.plurals.backup_export_missing, summary.missingBookFiles, summary.missingBookFiles)
         } else {
             done
         }
     }
 
+    private fun items(count: Int): String = resources.getQuantityString(R.plurals.backup_items, count, count)
+
+    private fun bookFiles(count: Int): String = resources.getQuantityString(R.plurals.backup_book_files, count, count)
+
     private fun importMessage(summary: ImportSummary): String {
-        val lines = mutableListOf(getString(R.string.backup_import_done, summary.restoredItems, summary.bookFilesRestored))
+        val restored = getString(R.string.backup_import_done, items(summary.restoredItems), bookFiles(summary.bookFilesRestored))
+        val lines = mutableListOf(restored)
         if (summary.settingsRestored) lines += getString(R.string.backup_import_settings)
         val skipped = summary.skippedItems + summary.bookFilesSkipped
-        if (skipped > 0) lines += getString(R.string.backup_import_skipped, skipped)
+        if (skipped > 0) lines += resources.getQuantityString(R.plurals.backup_import_skipped, skipped, skipped)
         return lines.joinToString("\n\n")
     }
 

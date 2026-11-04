@@ -1,6 +1,7 @@
 package com.freelibrary.app.ui.theme
 
 import android.content.Context
+import androidx.core.content.edit
 
 /**
  * The reader's choices of font and text colour. Like [AppScale] they live in the small "display" preferences file, not in
@@ -21,7 +22,12 @@ object FontChoices {
      * the page to the app's.
      */
     fun reset(context: Context) {
-        preferences(context).edit().remove(KEY_TEXT_FONT).remove(KEY_EPUB_FONT).remove(KEY_TEXT_COLOUR).remove(KEY_READER_THEME).apply()
+        preferences(context).edit {
+            remove(KEY_TEXT_FONT)
+            remove(KEY_EPUB_FONT)
+            remove(KEY_TEXT_COLOUR)
+            remove(KEY_READER_THEME)
+        }
     }
 
     private fun preferences(context: Context) = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
@@ -32,7 +38,7 @@ object FontChoices {
     fun setTextFont(
         context: Context,
         font: AppFont,
-    ) = preferences(context).edit().putString(KEY_TEXT_FONT, font.id).apply()
+    ) = preferences(context).edit { putString(KEY_TEXT_FONT, font.id) }
 
     /** The font that replaces an EPUB book's own, or null to keep the book's font (the default). */
     fun epubFont(context: Context): AppFont? = AppFont.fromId(preferences(context).getString(KEY_EPUB_FONT, null))
@@ -40,7 +46,7 @@ object FontChoices {
     fun setEpubFont(
         context: Context,
         font: AppFont?,
-    ) = preferences(context).edit().putString(KEY_EPUB_FONT, font?.id ?: BOOK_OWN).apply()
+    ) = preferences(context).edit { putString(KEY_EPUB_FONT, font?.id ?: BOOK_OWN) }
 
     /** The colour of reading text. */
     fun textColour(context: Context): TextColour = TextColour.fromId(preferences(context).getString(KEY_TEXT_COLOUR, null))
@@ -48,7 +54,7 @@ object FontChoices {
     fun setTextColour(
         context: Context,
         colour: TextColour,
-    ) = preferences(context).edit().putString(KEY_TEXT_COLOUR, colour.id).apply()
+    ) = preferences(context).edit { putString(KEY_TEXT_COLOUR, colour.id) }
 
     /** The page the readers draw: the app's own until the reader picks Sepia or Dim night. */
     fun readerTheme(context: Context): ReaderTheme = ReaderTheme.fromId(preferences(context).getString(KEY_READER_THEME, null))
@@ -56,5 +62,5 @@ object FontChoices {
     fun setReaderTheme(
         context: Context,
         theme: ReaderTheme,
-    ) = preferences(context).edit().putString(KEY_READER_THEME, theme.id).apply()
+    ) = preferences(context).edit { putString(KEY_READER_THEME, theme.id) }
 }

@@ -1,5 +1,6 @@
 package com.freelibrary.app.ui.reader
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
@@ -27,6 +28,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
  * or part ([labelOf]) in green and a line of the text with the words marked. [onPick] is called with the hit
  * the reader taps.
  */
+@SuppressLint("InflateParams") // a dialog title has no parent to inflate into
 fun showSearchResults(
     context: Context,
     query: String,
@@ -37,7 +39,7 @@ fun showSearchResults(
     val count = results.hits.size
     val title =
         if (results.capped) {
-            context.getString(R.string.reader_search_results_capped, count, query)
+            context.resources.getQuantityString(R.plurals.reader_search_results_capped, count, count, query)
         } else {
             context.resources.getQuantityString(R.plurals.reader_search_results, count, count, query)
         }

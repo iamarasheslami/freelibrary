@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -10,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:accessibilityHeading="true"
+        tools:targetApi="p"
         android:paddingStart="@dimen/spacing_m"
         android:paddingTop="@dimen/spacing_s"
         android:paddingEnd="@dimen/spacing_m"
@@ -50,6 +52,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:accessibilityHeading="true"
+                    tools:targetApi="p"
                     android:text="@string/filter_language"
                     android:textAppearance="?attr/textAppearanceTitleMedium" />
 
@@ -107,6 +110,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:accessibilityHeading="true"
+                    tools:targetApi="p"
                     android:text="@string/filter_format"
                     android:textAppearance="?attr/textAppearanceTitleMedium" />
 
@@ -131,6 +135,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:accessibilityHeading="true"
+                    tools:targetApi="p"
                     android:text="@string/filter_genre"
                     android:textAppearance="?attr/textAppearanceTitleMedium" />
 

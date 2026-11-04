@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.net.Uri
+import androidx.core.graphics.createBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -127,7 +128,7 @@ class AvatarStore(
         val left = (source.width - side) / 2
         val top = (source.height - side) / 2
         val target = minOf(side, AVATAR_SIZE_PX)
-        val result = Bitmap.createBitmap(target, target, Bitmap.Config.ARGB_8888)
+        val result = createBitmap(target, target)
         val canvas = Canvas(result)
         canvas.drawColor(Color.WHITE)
         canvas.drawBitmap(source, Rect(left, top, left + side, top + side), Rect(0, 0, target, target), Paint(Paint.FILTER_BITMAP_FLAG))

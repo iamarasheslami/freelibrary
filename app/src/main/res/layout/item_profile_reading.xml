@@ -9,6 +9,7 @@
 
     <LinearLayout
         android:id="@+id/readingCard"
+        android:baselineAligned="false"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_glass_card"
