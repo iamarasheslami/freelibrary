@@ -73,5 +73,15 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "chore: nightly catalog sync $(date -u +%Y-%m-%d)"
-            git push
+            # GitHub sometimes answers a push with a short-lived server error: try again a few times before failing.
+            for attempt in 1 2 3 4; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push failed (attempt $attempt of 4)."
+              if [ "$attempt" -lt 4 ]; then
+                sleep $((attempt * 30))
+              fi
+            done
+            exit 1
           fi
