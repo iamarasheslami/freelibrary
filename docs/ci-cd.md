@@ -43,6 +43,33 @@ Required checks are the three that block merging. A pull request cannot merge wh
   check that CI is green and that each pinned SHA is the commit of the tagged release (the peeled `^{}` commit, not the
   annotated tag object).
 
+## Building from a network that blocks the official hosts
+
+The committed build uses only Google Maven, Maven Central and the Gradle Plugin Portal, so CI, releases and F-Droid
+resolve every library from official sources. A developer whose network cannot reach them adds mirrors on their own
+machine, outside the repository, with a Gradle init script. Create `%USERPROFILE%\.gradle\init.d\mirrors.init.gradle.kts`:
+
+```kotlin
+// Machine-local: never commit this. Mirrors are asked first, then the official repositories.
+beforeSettings {
+    pluginManagement {
+        repositories {
+            maven { url = uri("https://maven.myket.ir/") }
+            maven { url = uri("https://maven.devneeds.ir") }
+        }
+    }
+    dependencyResolutionManagement {
+        repositories {
+            maven { url = uri("https://maven.myket.ir/") }
+            maven { url = uri("https://maven.devneeds.ir") }
+        }
+    }
+}
+```
+
+To ask the mirrors only after the official hosts fail, use `settingsEvaluated` instead of `beforeSettings`.
+A release is always built by CI from official sources, never through a mirror.
+
 ## Security alerts
 
 - The Dependabot alerts for `settings.gradle.kts` are the build's own plugin classpath (Android Gradle Plugin, Gradle and
