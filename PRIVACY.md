@@ -23,10 +23,10 @@ The app requests the INTERNET and ACCESS_NETWORK_STATE permissions and connects 
 | Host | Purpose |
 | --- | --- |
 | `raw.githubusercontent.com` | Catalog updates (public JSON files from the project's data repository) |
-| `gutenberg.org` | Book files and covers you choose to open or download |
+| `gutenberg.org` | Book files you download, and book cover pictures, which are loaded while you browse; the app also sends a small request for `robots.txt` (the answer is not read) to check whether the site can be reached |
 | `gutenberg.pglaf.org`, `aleph.gutenberg.org`, `www.mirrorservice.org`, `mirrors.xmission.com` | Project Gutenberg mirrors, tried in this order only if a download from `gutenberg.org` fails; `gutenberg.pglaf.org` is also asked for a book's cover picture when `gutenberg.org` cannot be reached |
 
-Every request is made over HTTPS. Requests carry a User-Agent of the form `FreeLibrary/<version> (+https://github.com/iamarasheslami/freelibrary)` and your IP address is visible to these hosts as with any web request; they are operated by third parties under their own privacy policies (GitHub and Project Gutenberg). No identifier, account or device information is added by the app.
+A book file is only ever fetched from these Project Gutenberg hosts: the app refuses any other address, even one that appeared in the catalog. Every request is made over HTTPS. Requests carry a User-Agent of the form `FreeLibrary/<version> (+https://github.com/iamarasheslami/freelibrary)` and your IP address is visible to these hosts as with any web request; they are operated by third parties under their own privacy policies (GitHub and Project Gutenberg). No identifier, account or device information is added by the app.
 
 The built-in reader displays books in a WebView with JavaScript disabled and network loads blocked, so book content cannot make requests of its own.
 
