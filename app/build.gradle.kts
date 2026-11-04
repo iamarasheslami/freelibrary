@@ -80,8 +80,10 @@ android {
     }
 
     lint {
-        // Dependency and Gradle version updates are handled by Dependabot; the toolchain is frozen on purpose.
-        disable += setOf("NewerVersionAvailable", "AndroidGradlePluginVersion", "GradleDependency")
+        // Version updates are handled by Dependabot; the toolchain and the target SDK change on purpose, not because lint says so.
+        disable += setOf("NewerVersionAvailable", "AndroidGradlePluginVersion", "GradleDependency", "OldTargetApi")
+        // The project is at zero warnings: a new one fails the build, so none can pile up again.
+        warningsAsErrors = true
     }
 
     testOptions {

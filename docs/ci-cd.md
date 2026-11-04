@@ -80,7 +80,7 @@ To do, by you (settings and secrets, not code):
 
 To do, later (each is its own small pull request):
 - [ ] Instrumented smoke tests on an emulator (API 23, 29, 34) as a separate, non-blocking workflow; this replaces the manual emulator pass
-- [ ] Android Lint at zero warnings, then `warningsAsErrors = true` so new warnings fail the PR
+- [x] Android Lint at zero warnings, with `warningsAsErrors = true` so new warnings fail the PR (a justified exception goes in `app/lint.xml` with a comment)
 - [ ] Test coverage report (JaCoCo) with a floor that only goes up
 - [ ] actionlint on the workflow files
 - [ ] Merge queue, if several people ever merge at once (`merge_group` trigger on CI)
