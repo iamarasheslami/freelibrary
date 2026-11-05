@@ -5,7 +5,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import java.util.TimeZone
 
 /** The schema version of the database. Raise it together with a new migration in [MIGRATIONS]; a test enforces that. */
-const val DATABASE_VERSION = 12
+const val DATABASE_VERSION = 13
 
 /**
  * The oldest schema version that may be on a reader's phone. Databases older than this only ever
@@ -18,7 +18,7 @@ const val FIRST_RELEASED_VERSION = 11
  * shelves, reading places, bookmarks and downloads live in this database, so a schema change
  * must never wipe it: add a migration for each version bump, with its test.
  */
-val MIGRATIONS: Array<Migration> = arrayOf(migration11To12())
+val MIGRATIONS: Array<Migration> = arrayOf(migration11To12(), migration12To13())
 
 private const val MILLIS_PER_DAY = 86_400_000L
 
@@ -38,6 +38,20 @@ fun migration11To12(zone: TimeZone = TimeZone.getDefault()): Migration =
                 UNION
                 SELECT (finishedAt + $offset) / $MILLIS_PER_DAY FROM book_shelf_state WHERE finishedAt IS NOT NULL
                 """.trimIndent(),
+            )
+        }
+    }
+
+/**
+ * Version 13 adds the table that marks books the catalog has withdrawn but the reader still has something of.
+ * It starts empty and changes no existing table.
+ */
+fun migration12To13(): Migration =
+    object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `withdrawn_books` (`bookId` INTEGER NOT NULL, PRIMARY KEY(`bookId`), " +
+                    "FOREIGN KEY(`bookId`) REFERENCES `books`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
             )
         }
     }

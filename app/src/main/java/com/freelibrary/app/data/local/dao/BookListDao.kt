@@ -81,6 +81,7 @@ interface BookListDao {
                b.coverUrl AS coverUrl
         FROM books AS b
         WHERE b.primaryLanguage = :language
+        AND NOT EXISTS (SELECT 1 FROM withdrawn_books AS wd WHERE wd.bookId = b.id)
         ORDER BY b.issuedDate DESC, CAST(b.externalId AS INTEGER) DESC
         LIMIT :limit
         """,
@@ -152,6 +153,7 @@ interface BookListDao {
                b.coverUrl AS coverUrl
         FROM books AS b
         WHERE b.primaryLanguage = :language
+        AND NOT EXISTS (SELECT 1 FROM withdrawn_books AS wd WHERE wd.bookId = b.id)
         ORDER BY b.issuedDate DESC, CAST(b.externalId AS INTEGER) DESC
         """,
     )
@@ -204,6 +206,7 @@ interface BookListDao {
         SELECT primaryLanguage AS value, COUNT(*) AS bookCount
         FROM books
         WHERE primaryLanguage IS NOT NULL AND primaryLanguage != ''
+        AND id NOT IN (SELECT bookId FROM withdrawn_books)
         GROUP BY primaryLanguage
         ORDER BY bookCount DESC, value
         """,
@@ -215,6 +218,7 @@ interface BookListDao {
         """
         SELECT formatType AS value, COUNT(*) AS bookCount
         FROM book_formats
+        WHERE bookId NOT IN (SELECT bookId FROM withdrawn_books)
         GROUP BY formatType
         ORDER BY bookCount DESC, value
         """,
@@ -228,6 +232,7 @@ interface BookListDao {
         FROM bookshelves AS s
         INNER JOIN book_bookshelves AS bb ON bb.bookshelfId = s.id
         WHERE s.name LIKE 'Category: %'
+        AND bb.bookId NOT IN (SELECT bookId FROM withdrawn_books)
         GROUP BY s.id
         ORDER BY bookCount DESC, value
         """,

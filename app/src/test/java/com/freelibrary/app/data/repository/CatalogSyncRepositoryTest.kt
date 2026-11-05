@@ -10,6 +10,7 @@ import com.freelibrary.app.data.local.entity.BookFormat
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.Source
+import com.freelibrary.app.data.local.entity.WithdrawnBook
 import com.freelibrary.app.data.remote.createCatalogSyncApi
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.Dispatcher
@@ -20,6 +21,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -101,6 +103,7 @@ class CatalogSyncRepositoryTest {
             bookFormatDao = bookFormatDao,
             bookFtsDao = database.bookFtsDao(),
             bookSummaryDao = database.bookSummaryDao(),
+            withdrawnBookDao = database.withdrawnBookDao(),
             sources = sources,
         )
     }
@@ -514,5 +517,92 @@ class CatalogSyncRepositoryTest {
             assertEquals("2026-09-01", book?.lastModified)
             assertEquals(listOf("Old Shelf"), database.bookBookshelfDao().getBookshelvesForBook(existingId).map { it.name })
             assertEquals(listOf("epub"), database.bookFormatDao().getFormatsForBook(existingId).map { it.formatType })
+        }
+
+    private fun withdrawalManifest(
+        listed: List<String>,
+        withdrawn: List<String>,
+    ) = """
+        { "generatedAt": "2026-10-20", "baselineVersion": "2026-09-19",
+          "books": [ ${listed.joinToString { """{ "externalId": "$it", "lastModified": "2026-09-19" }""" }} ],
+          "withdrawn": [ ${withdrawn.joinToString { "\"$it\"" }} ] }
+        """.trimIndent()
+
+    private fun withdrawalDispatcher(manifest: String) =
+        object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                when (request.path) {
+                    "/manifest.json" -> MockResponse().setBody(manifest).setHeader("Content-Type", "application/json")
+                    "/books/158.json" ->
+                        MockResponse().setBody(bookJson("158", "Emma", "2026-09-19")).setHeader("Content-Type", "application/json")
+                    else -> MockResponse().setResponseCode(404)
+                }
+        }
+
+    private suspend fun insertLocalBook(externalId: String): Long {
+        val existingSource = database.sourceDao().findByName("Project Gutenberg")
+        val sourceId = existingSource?.id ?: database.sourceDao().insert(Source(name = "Project Gutenberg", attribution = "PG"))
+        return database.bookDao().insert(
+            Book(
+                sourceId = sourceId,
+                externalId = externalId,
+                title = "Book $externalId",
+                issuedDate = null,
+                primaryLanguage = "en",
+                locc = null,
+                lastModified = "2026-09-19",
+            ),
+        )
+    }
+
+    @Test
+    fun `a withdrawn book nobody has anything of is deleted`() =
+        runTest {
+            val id = insertLocalBook("1342")
+            repository = buildRepository(withdrawalDispatcher(withdrawalManifest(listOf("158"), listOf("1342"))))
+
+            repository.sync()
+
+            assertNull(database.bookDao().getById(id))
+            assertEquals(1, database.bookDao().count())
+        }
+
+    @Test
+    fun `a withdrawn book the reader has data of is kept, marked, and its data survives`() =
+        runTest {
+            val id = insertLocalBook("1342")
+            database.readingProgressDao().upsert(ReadingProgress(bookId = id, lastPosition = "para-9", lastOpenedAt = 1L))
+            repository = buildRepository(withdrawalDispatcher(withdrawalManifest(listOf("158"), listOf("1342"))))
+
+            repository.sync()
+
+            assertNotNull(database.bookDao().getById(id))
+            assertEquals("para-9", database.readingProgressDao().getForBook(id)?.lastPosition)
+            val sourceId = database.bookDao().getById(id)!!.sourceId
+            assertEquals(listOf("1342"), database.withdrawnBookDao().markedExternalIds(sourceId))
+        }
+
+    @Test
+    fun `a book listed again is unmarked`() =
+        runTest {
+            val id = insertLocalBook("158")
+            database.withdrawnBookDao().mark(WithdrawnBook(id))
+            repository = buildRepository(withdrawalDispatcher(withdrawalManifest(listOf("158"), emptyList())))
+
+            repository.sync()
+
+            val sourceId = database.bookDao().getById(id)!!.sourceId
+            assertTrue(database.withdrawnBookDao().markedExternalIds(sourceId).isEmpty())
+        }
+
+    @Test
+    fun `an unknown withdrawn id is ignored`() =
+        runTest {
+            repository = buildRepository(withdrawalDispatcher(withdrawalManifest(listOf("158"), listOf("999"))))
+
+            val result = repository.sync()
+
+            assertEquals(1, result.added)
+            assertEquals(0, result.failed)
         }
 }

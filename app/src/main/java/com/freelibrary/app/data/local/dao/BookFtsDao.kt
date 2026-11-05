@@ -20,6 +20,7 @@ interface BookFtsDao {
         SELECT books.* FROM books
         INNER JOIN books_fts ON books.id = books_fts.rowid
         WHERE books_fts MATCH :query
+        AND books.id NOT IN (SELECT bookId FROM withdrawn_books)
         """,
     )
     suspend fun search(query: String): List<Book>

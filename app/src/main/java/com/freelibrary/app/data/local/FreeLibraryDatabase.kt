@@ -21,6 +21,7 @@ import com.freelibrary.app.data.local.dao.ReadingDayDao
 import com.freelibrary.app.data.local.dao.ReadingProgressDao
 import com.freelibrary.app.data.local.dao.SourceDao
 import com.freelibrary.app.data.local.dao.SubjectDao
+import com.freelibrary.app.data.local.dao.WithdrawnBookDao
 import com.freelibrary.app.data.local.entity.Author
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookAuthor
@@ -38,6 +39,7 @@ import com.freelibrary.app.data.local.entity.ReadingDay
 import com.freelibrary.app.data.local.entity.ReadingProgress
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.local.entity.Subject
+import com.freelibrary.app.data.local.entity.WithdrawnBook
 
 /**
  * The app's single Room database. Entities and DAOs are added here as each
@@ -66,6 +68,7 @@ import com.freelibrary.app.data.local.entity.Subject
         BookShelfState::class,
         BookSummary::class,
         ReadingDay::class,
+        WithdrawnBook::class,
     ],
     version = DATABASE_VERSION,
     exportSchema = true,
@@ -108,4 +111,6 @@ abstract class FreeLibraryDatabase : RoomDatabase() {
     abstract fun bookListDao(): BookListDao
 
     abstract fun backupDao(): BackupDao
+
+    abstract fun withdrawnBookDao(): WithdrawnBookDao
 }

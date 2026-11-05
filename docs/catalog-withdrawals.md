@@ -10,8 +10,11 @@ deliberate step.
 - Its id joins the manifest's `withdrawn` list. The list is permanent: ids stay in it, and the checks refuse to
   publish a manifest that drops one (unless the book is listed again).
 - The nightly sync and the full catalog rebuild skip withdrawn ids, so a book does not come back by itself.
-- An app that still has the book removes it from its own catalog on its next sync. The reader's own shelves,
-  progress, bookmarks, highlights and downloaded files are never deleted.
+- An app that still has the book handles it on its next sync. If the reader has nothing of it (no reading
+  place, bookmark, highlight, shelf state or download), the book is deleted from the app's catalog. If the reader
+  has any of those, the book stays, is marked in the `withdrawn_books` table, and no longer appears in browsing,
+  search or filter counts; it still shows on the reader's own lists. A book listed again is unmarked on the next
+  sync. The reader's own shelves, progress, bookmarks, highlights and downloaded files are never deleted.
 
 ## How to withdraw books
 
