@@ -99,6 +99,7 @@ Done:
 - [x] Dependency graph submitted to GitHub
 - [x] Release workflow: version, changelog and store text must agree; signature verified; SHA-256; build provenance; R8 mapping kept
 - [x] CODEOWNERS
+- [x] Gradle wrapper pinned by checksum (`distributionSha256Sum`) and validated in CI; when Gradle is upgraded, take the new checksum from https://gradle.org/release-checksums/
 
 To do, by you (settings and secrets, not code):
 - [ ] Release secrets, only when you want CI to build releases (see below)
