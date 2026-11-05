@@ -142,6 +142,45 @@ class ExportValidatorTest {
         assertTrue(validateExport(dir, published).errors.any { it.contains("158") && it.contains("gone") })
     }
 
+    private fun withdrawing(
+        manifest: Manifest,
+        vararg ids: String,
+    ) = manifest.copy(withdrawn = ids.toList())
+
+    @Test
+    fun `a book that was withdrawn on purpose may be gone from the published manifest`() {
+        val dir = export(withdrawing(manifest("1342" to "2026-10-02"), "158"), book())
+        val published = manifest("1342" to "2026-10-02", "158" to "2026-10-02")
+
+        assertTrue(validateExport(dir, published).errors.toString(), validateExport(dir, published).ok)
+    }
+
+    @Test
+    fun `a book that is both listed and withdrawn is an error`() {
+        val dir = export(withdrawing(manifest("1342" to "2026-10-02"), "1342"), book())
+
+        assertTrue(validateExport(dir).errors.any { it.contains("both listed and withdrawn") })
+    }
+
+    @Test
+    fun `an unsafe or repeated withdrawn id is an error`() {
+        val unsafe = export(withdrawing(manifest("1342" to "2026-10-02"), "../x"), book())
+        val twice = export(withdrawing(manifest("1342" to "2026-10-02"), "158", "158"), book())
+
+        assertTrue(validateExport(unsafe).errors.any { it.contains("Unsafe book id in the withdrawn list") })
+        assertTrue(validateExport(twice).errors.any { it.contains("withdrawn list twice") })
+    }
+
+    @Test
+    fun `a withdrawal cannot be dropped, except by listing the book again`() {
+        val published = withdrawing(manifest("1342" to "2026-10-02"), "158")
+        val dropped = export(manifest("1342" to "2026-10-02"), book())
+        val restored = export(manifest("1342" to "2026-10-02", "158" to "2026-11-05"), book(), book(id = "158", date = "2026-11-05"))
+
+        assertTrue(validateExport(dropped, published).errors.any { it.contains("158") && it.contains("withdrawn") })
+        assertTrue(validateExport(restored, published).errors.toString(), validateExport(restored, published).ok)
+    }
+
     @Test
     fun `a date that went backwards is an error and a newer one is accepted`() {
         val dir = export(manifest("1342" to "2026-10-02"), book(date = "2026-10-02"))

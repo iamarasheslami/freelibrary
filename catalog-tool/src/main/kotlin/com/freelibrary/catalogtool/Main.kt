@@ -52,7 +52,10 @@ fun main() {
 
     // A rebuild must not change what the sync compares: a Gutenberg book keeps the date the existing
     // manifest (copied into data/export before the run) gives it, and only a new book gets today's date.
-    val previousDates = readManifest(exportManifestDir)?.books?.associate { it.externalId to it.lastModified } ?: emptyMap()
+    val previousManifest = readManifest(exportManifestDir)
+    val previousDates = previousManifest?.books?.associate { it.externalId to it.lastModified } ?: emptyMap()
+    val withdrawn = previousManifest?.withdrawn.orEmpty()
+    val withdrawnIds = withdrawn.toSet()
 
     var parsedCount = 0
     var skippedCount = 0
@@ -73,7 +76,7 @@ fun main() {
             return@readRdfEntriesFromArchive
         }
 
-        if (book == null) {
+        if (book == null || book.externalId in withdrawnIds) {
             skippedCount++
             return@readRdfEntriesFromArchive
         }
@@ -102,7 +105,7 @@ fun main() {
 
     writeManifest(
         exportManifestDir,
-        Manifest(generatedAt = today, baselineVersion = BASELINE_VERSION, books = manifestEntries),
+        Manifest(generatedAt = today, baselineVersion = BASELINE_VERSION, books = manifestEntries, withdrawn = withdrawn),
     )
 
     println(
