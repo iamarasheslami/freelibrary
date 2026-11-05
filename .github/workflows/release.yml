@@ -56,6 +56,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
+          # The committed Gradle wrapper must be an official one.
+          validate-wrappers: true
           cache-read-only: true
 
       - name: Grant execute permission for gradlew
