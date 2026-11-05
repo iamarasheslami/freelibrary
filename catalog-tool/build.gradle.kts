@@ -36,6 +36,15 @@ tasks.register<JavaExec>("nightlySync") {
     mainClass.set("com.freelibrary.catalogtool.NightlySyncKt")
 }
 
+tasks.register<JavaExec>("withdrawBooks") {
+    group = "application"
+    description = "Takes books out of the catalog (arguments in -PexportArgs: the export folder, then the book ids)."
+    classpath = sourceSets.main.get().runtimeClasspath
+    workingDir = rootProject.projectDir
+    mainClass.set("com.freelibrary.catalogtool.WithdrawBooksKt")
+    args = (project.findProperty("exportArgs") as String?)?.split(" ")?.filter { it.isNotBlank() } ?: emptyList()
+}
+
 tasks.register<JavaExec>("validateExport") {
     group = "application"
     description = "Checks an export folder before it is published (arguments in -PexportArgs, paths from the repository root)."

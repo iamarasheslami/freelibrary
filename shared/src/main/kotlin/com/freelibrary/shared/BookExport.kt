@@ -52,9 +52,18 @@ data class ManifestEntry(
     val lastModified: String,
 )
 
+/**
+ * The manifest of one catalog source.
+ *
+ * [withdrawn] lists the ids of books taken out of the catalog on purpose (a takedown, or a bad batch). They are no
+ * longer in [books] and have no book file. An app that still has one of them removes it from its own catalog,
+ * but never the reader's own shelves, progress, notes or downloaded files. A withdrawal is permanent:
+ * the id stays in the list unless the book is listed again. The field is absent while nothing has been withdrawn.
+ */
 @Serializable
 data class Manifest(
     val generatedAt: String,
     val baselineVersion: String,
     val books: List<ManifestEntry>,
+    val withdrawn: List<String> = emptyList(),
 )

@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 import java.nio.file.Files
 import java.nio.file.Path
 
-private val BOOK_ID = Regex("[A-Za-z0-9_-]{1,40}")
+internal val BOOK_ID = Regex("[A-Za-z0-9_-]{1,40}")
 private val ISO_DATE = Regex("\\d{4}-\\d{2}-\\d{2}")
 private const val MAX_REPORTED = 50
 
@@ -48,8 +48,9 @@ private class Findings {
  * Checks an export folder (manifest.json and books/) before it is published, because the app trusts it:
  * the manifest must parse and list every book once under a safe id; every listed book must have a file that
  * decodes, names the same book and carries the same lastModified; no file may be left unlisted. When the
- * [previous] manifest (the one currently published) is given, no book may have disappeared and no
- * lastModified may have gone backwards, since a nightly sync only ever adds and updates.
+ * [previous] manifest (the one currently published) is given, no book may have disappeared unless it is in the
+ * withdrawn list, no withdrawal may be dropped (unless the book is listed again), and no lastModified may have
+ * gone backwards, since a nightly sync only ever adds and updates.
  */
 fun validateExport(
     exportDir: Path,
@@ -81,6 +82,16 @@ fun validateExport(
         checkBookFile(booksDir.resolve("${entry.externalId}.json"), entry.externalId, entry.lastModified, findings)
     }
 
+    val withdrawn = HashSet<String>()
+    for (id in manifest.withdrawn) {
+        if (!BOOK_ID.matches(id)) {
+            findings.error("Unsafe book id in the withdrawn list: \"$id\"")
+            continue
+        }
+        if (!withdrawn.add(id)) findings.error("Book $id is in the withdrawn list twice")
+        if (id in listed) findings.error("Book $id is both listed and withdrawn")
+    }
+
     if (Files.isDirectory(booksDir)) {
         Files.newDirectoryStream(booksDir).use { files ->
             for (file in files) {
@@ -97,8 +108,16 @@ fun validateExport(
         for (old in previous.books) {
             val current = now[old.externalId]
             when {
-                current == null -> findings.error("Book ${old.externalId} was in the published manifest and is gone")
+                current == null ->
+                    if (old.externalId !in withdrawn) {
+                        findings.error("Book ${old.externalId} was in the published manifest and is gone")
+                    }
                 current < old.lastModified -> findings.error("Book ${old.externalId} went back from ${old.lastModified} to $current")
+            }
+        }
+        for (id in previous.withdrawn) {
+            if (id !in withdrawn && id !in listed) {
+                findings.error("Book $id was withdrawn and is missing from the withdrawn list; it can only leave it by being listed again")
             }
         }
     }

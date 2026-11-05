@@ -66,6 +66,26 @@ class ManifestWriterTest {
     }
 
     @Test
+    fun `a manifest with nothing withdrawn writes no withdrawn list and an old manifest reads as an empty one`() {
+        val tempDir = Files.createTempDirectory("manifest-test")
+        writeManifest(tempDir, Manifest("2026-09-16", "2026-09-16", listOf(ManifestEntry("1342", "2026-09-16"))))
+
+        assertTrue(!Files.readString(tempDir.resolve("manifest.json")).contains("withdrawn"))
+        assertEquals(emptyList<String>(), readManifest(tempDir)?.withdrawn)
+    }
+
+    @Test
+    fun `the withdrawn list is written and read back`() {
+        val tempDir = Files.createTempDirectory("manifest-test")
+        writeManifest(
+            tempDir,
+            Manifest("2026-11-05", "2026-09-16", listOf(ManifestEntry("1342", "2026-09-16")), withdrawn = listOf("158", "99999")),
+        )
+
+        assertEquals(listOf("158", "99999"), readManifest(tempDir)?.withdrawn)
+    }
+
+    @Test
     fun `toExport correctly maps a ParsedBook, including format type mapping`() {
         val parsedBook =
             ParsedBook(

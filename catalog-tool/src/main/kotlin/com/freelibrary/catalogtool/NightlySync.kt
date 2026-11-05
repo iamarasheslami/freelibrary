@@ -52,6 +52,8 @@ fun main() {
     val existingManifest = readManifest(exportDir)
     val manifestEntries = existingManifest?.books?.associateBy { it.externalId }?.toMutableMap() ?: mutableMapOf()
     val baselineVersion = existingManifest?.baselineVersion ?: today
+    val withdrawn = existingManifest?.withdrawn.orEmpty()
+    val withdrawnIds = withdrawn.toSet()
 
     var updatedCount = 0
     var unchangedCount = 0
@@ -60,6 +62,10 @@ fun main() {
     val failureSamples = mutableListOf<String>()
 
     for (externalId in bookIds) {
+        if (externalId in withdrawnIds) {
+            skippedCount++
+            continue
+        }
         try {
             Thread.sleep(200)
             val rdfBytes = fetchBytes("https://www.gutenberg.org/cache/epub/$externalId/pg$externalId.rdf")
@@ -88,7 +94,12 @@ fun main() {
 
     writeManifest(
         exportDir,
-        Manifest(generatedAt = today, baselineVersion = baselineVersion, books = manifestEntries.values.toList()),
+        Manifest(
+            generatedAt = today,
+            baselineVersion = baselineVersion,
+            books = manifestEntries.values.toList(),
+            withdrawn = withdrawn,
+        ),
     )
 
     println("Done. Updated: $updatedCount, unchanged: $unchangedCount, skipped: $skippedCount, failed: $failedCount")
