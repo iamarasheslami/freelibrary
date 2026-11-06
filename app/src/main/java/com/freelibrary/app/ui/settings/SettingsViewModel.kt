@@ -40,7 +40,7 @@ sealed interface SyncStatus {
 
 /** Everything the Settings screen shows. */
 data class SettingsState(
-    val themeMode: ThemeMode = ThemeMode.DARK,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val wifiOnlySync: Boolean = false,
     val lastSyncAt: Long? = null,
     val syncStatus: SyncStatus = SyncStatus.Idle,
@@ -89,7 +89,7 @@ class SettingsViewModel
         /** Puts the theme and the reader's text size back to their defaults; the app size and fonts are reset by the caller. */
         fun resetAppearance() {
             viewModelScope.launch {
-                settings.setThemeMode(ThemeMode.DARK)
+                settings.setThemeMode(ThemeMode.SYSTEM)
                 settings.setReaderTextPercent(ReaderStyle.DEFAULT_TEXT_PERCENT)
             }
         }

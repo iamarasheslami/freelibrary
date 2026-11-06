@@ -30,29 +30,56 @@
             android:paddingEnd="@dimen/spacing_m"
             android:paddingBottom="@dimen/spacing_m">
 
-            <!-- Downloaded books: how many and how much room, then every file with a delete button. -->
-            <TextView
+            <!-- Downloaded books: a row with the count and the room they take; the list itself is its own page. -->
+            <LinearLayout
+                android:id="@+id/downloadsRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/storage_downloads"
-                android:textAppearance="@style/TextAppearance.FreeLibrary.SliderHeading"
-                android:textSize="20sp" />
+                android:background="@drawable/bg_glass_card"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="64dp"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/spacing_m"
+                android:paddingEnd="@dimen/spacing_m">
 
-            <TextView
-                android:id="@+id/downloadsSummary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_xs"
-                android:textAppearance="?attr/textAppearanceBodyMedium"
-                android:textColor="?attr/colorOnSurfaceVariant" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:paddingTop="@dimen/spacing_s"
+                    android:paddingBottom="@dimen/spacing_s">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/downloadsList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_s"
-                android:nestedScrollingEnabled="false"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/storage_downloads"
+                        android:textAppearance="?attr/textAppearanceBodyLarge" />
+
+                    <TextView
+                        android:id="@+id/downloadsSummary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textAppearance="?attr/textAppearanceBodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="@dimen/spacing_m"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/colorOnSurfaceVariant" />
+
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"

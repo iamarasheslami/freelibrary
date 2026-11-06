@@ -14,12 +14,6 @@ data class UserProfile(
     val avatarVersion: Long? = null,
 )
 
-/** The reader's totals, shown under their name. */
-data class ProfileCounts(
-    val bookmarks: Int,
-    val highlights: Int,
-)
-
 /** A name with its ends trimmed, runs of spaces made single and its length capped; null when nothing is left. */
 fun cleanProfileName(raw: String?): String? =
     raw

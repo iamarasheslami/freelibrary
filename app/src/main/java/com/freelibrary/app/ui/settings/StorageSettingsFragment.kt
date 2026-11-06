@@ -13,7 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.freelibrary.app.R
-import com.freelibrary.app.data.download.StoredDownload
 import com.freelibrary.app.databinding.FragmentSettingsStorageBinding
 import com.freelibrary.app.ui.insets.applySystemBarInsetsAsPadding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -22,9 +21,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 /**
- * The Storage page: the books downloaded to this phone, how many and how much room they take, with a
- * button to delete each one for good (after a confirmation); the size of the cover cache with a button
- * to clear it; and the button that clears the reading history, also after a confirmation.
+ * The Storage page: a row with the number of books downloaded to this phone and the room they take, which opens
+ * the Downloaded books page; the size of the cover cache with a button to clear it; and the button that clears
+ * the reading history, after a confirmation.
  */
 @AndroidEntryPoint
 class StorageSettingsFragment : Fragment() {
@@ -44,8 +43,9 @@ class StorageSettingsFragment : Fragment() {
         binding.clearCacheButton.setOnClickListener { viewModel.clearCoverCache() }
         binding.clearHistoryButton.setOnClickListener { confirmClearHistory() }
 
-        val adapter = StorageAdapter(::confirmDelete)
-        binding.downloadsList.adapter = adapter
+        binding.downloadsRow.setOnClickListener {
+            findNavController().navigate(R.id.action_storageSettingsFragment_to_downloadedBooksFragment)
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -57,7 +57,6 @@ class StorageSettingsFragment : Fragment() {
                 }
                 launch {
                     storageViewModel.state.collect { state ->
-                        adapter.submitList(state.downloads)
                         binding.downloadsSummary.text =
                             if (state.downloads.isEmpty()) {
                                 getString(R.string.storage_downloads_empty)
@@ -71,20 +70,8 @@ class StorageSettingsFragment : Fragment() {
                 launch {
                     viewModel.historyCleared.collect { showMessage(if (it) R.string.history_cleared else R.string.history_clear_failed) }
                 }
-                launch { storageViewModel.deleteFailed.collect { showMessage(R.string.storage_delete_failed) } }
             }
         }
-    }
-
-    /** Asks first, because a deleted file is gone from the phone for good; the book can be downloaded again later. */
-    private fun confirmDelete(download: StoredDownload) {
-        val format = getString(StorageAdapter.formatName(download.format))
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.storage_delete_title)
-            .setMessage(getString(R.string.storage_delete_message, download.title, format))
-            .setPositiveButton(R.string.storage_delete) { _, _ -> storageViewModel.delete(download) }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
     }
 
     /** Asks first, because clearing the reading history cannot be undone. */
@@ -111,7 +98,6 @@ class StorageSettingsFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        binding.downloadsList.adapter = null
         super.onDestroyView()
         _binding = null
     }

@@ -17,7 +17,8 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * The filter sheet. The reader edits a draft, which starts as the filter in force; nothing
- * changes in Explore or Search until [apply]. Closing the sheet without applying drops the draft.
+ * changes in Explore or Search until [apply], except [reset], which takes effect at once. Closing the sheet without
+ * applying drops the draft.
  */
 @HiltViewModel
 class BookFilterViewModel
@@ -71,9 +72,10 @@ class BookFilterViewModel
             _draft.update { it.copy(genres = it.genres.toggled(shelfName)) }
         }
 
-        /** Clears the draft. It reaches Explore and Search only when the reader taps Apply. */
+        /** Clears the draft and the filter in force at once: Reset needs no Apply, so Explore and Search show everything again. */
         fun reset() {
             _draft.value = BookFilter()
+            holder.update(BookFilter())
         }
 
         fun apply() {

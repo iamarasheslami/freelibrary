@@ -34,11 +34,11 @@ class SettingsRepository
         private val storedPreferences: Flow<Preferences> =
             dataStore.data.catch { error -> if (error is IOException) emit(emptyPreferences()) else throw error }
 
-        /** The chosen theme; Dark until the reader picks one. */
+        /** The chosen theme; follows the device until the reader picks one. */
         val themeMode: Flow<ThemeMode> =
             storedPreferences.map { preferences ->
                 val stored = preferences[THEME_MODE_KEY]
-                ThemeMode.entries.firstOrNull { it.name == stored } ?: ThemeMode.DARK
+                ThemeMode.entries.firstOrNull { it.name == stored } ?: ThemeMode.SYSTEM
             }
 
         /**

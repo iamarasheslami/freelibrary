@@ -93,15 +93,13 @@ class BookFilterViewModelTest {
     }
 
     @Test
-    fun `reset clears the draft but not the filter in force until apply`() {
+    fun `reset clears the draft and the filter in force at once`() {
         holder.update(BookFilter(language = "fr"))
         val viewModel = viewModel()
 
         viewModel.reset()
-        assertEquals(BookFilter(), viewModel.draft.value)
-        assertEquals(BookFilter(language = "fr"), holder.filter.value)
 
-        viewModel.apply()
+        assertEquals(BookFilter(), viewModel.draft.value)
         assertEquals(BookFilter(), holder.filter.value)
     }
 
