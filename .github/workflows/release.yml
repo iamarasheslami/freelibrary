@@ -81,7 +81,7 @@ jobs:
           cp app/build/outputs/mapping/release/mapping.txt "dist/mapping-$VERSION.txt"
           awk -v v="$VERSION" '
             $0 ~ "^## \\[" v "\\]" { found = 1; next }
-            found && /^## \[/ { exit }
+            found && (/^## \[/ || /^\[[^]]+\]: /) { exit }
             found { print }
           ' CHANGELOG.md > dist/notes.md
 
