@@ -24,6 +24,7 @@ import com.freelibrary.app.data.local.dao.ReadingDayDao
 import com.freelibrary.app.data.local.dao.ReadingProgressDao
 import com.freelibrary.app.data.local.dao.SourceDao
 import com.freelibrary.app.data.local.dao.SubjectDao
+import com.freelibrary.app.data.local.dao.WithdrawnBookDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -105,6 +106,9 @@ object DatabaseModule {
 
     @Provides
     fun provideBookFtsDao(database: FreeLibraryDatabase): BookFtsDao = database.bookFtsDao()
+
+    @Provides
+    fun provideWithdrawnBookDao(database: FreeLibraryDatabase): WithdrawnBookDao = database.withdrawnBookDao()
 
     @Provides
     fun provideBookSummaryDao(database: FreeLibraryDatabase): BookSummaryDao = database.bookSummaryDao()

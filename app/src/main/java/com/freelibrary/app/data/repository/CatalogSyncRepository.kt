@@ -13,6 +13,7 @@ import com.freelibrary.app.data.local.dao.BookSummaryDao
 import com.freelibrary.app.data.local.dao.BookshelfDao
 import com.freelibrary.app.data.local.dao.SourceDao
 import com.freelibrary.app.data.local.dao.SubjectDao
+import com.freelibrary.app.data.local.dao.WithdrawnBookDao
 import com.freelibrary.app.data.local.entity.Author
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookAuthor
@@ -24,8 +25,10 @@ import com.freelibrary.app.data.local.entity.BookSummary
 import com.freelibrary.app.data.local.entity.Bookshelf
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.local.entity.Subject
+import com.freelibrary.app.data.local.entity.WithdrawnBook
 import com.freelibrary.app.data.remote.CatalogSyncApi
 import com.freelibrary.shared.BookExport
+import com.freelibrary.shared.Manifest
 import com.freelibrary.shared.SearchText
 import javax.inject.Inject
 
@@ -88,6 +91,7 @@ class CatalogSyncRepository
         private val bookFormatDao: BookFormatDao,
         private val bookFtsDao: BookFtsDao,
         private val bookSummaryDao: BookSummaryDao,
+        private val withdrawnBookDao: WithdrawnBookDao,
         private val sources: CatalogSources,
     ) {
         /**
@@ -152,7 +156,39 @@ class CatalogSyncRepository
                 }
             }
 
+            applyWithdrawals(sourceId, manifest)
+
             return SyncResult(added = added, updated = updated, failed = failed, failureSamples = failureSamples)
+        }
+
+        /**
+         * Carries out the catalog's withdrawals. A withdrawn book the reader has nothing of is deleted with its
+         * catalog rows and search entry. One the reader has a reading place, bookmark, highlight, shelf state or
+         * download of keeps its row, so that data survives, and is only marked so browsing and search skip it.
+         * A book listed again is unmarked. Nothing here touches a reader's own data or downloaded files.
+         */
+        private suspend fun applyWithdrawals(
+            sourceId: Long,
+            manifest: Manifest,
+        ) {
+            val listed = manifest.books.mapTo(HashSet()) { it.externalId }
+            for (externalId in withdrawnBookDao.markedExternalIds(sourceId)) {
+                if (externalId in listed) {
+                    bookDao.getBySourceAndExternalId(sourceId, externalId)?.let { withdrawnBookDao.unmark(it.id) }
+                }
+            }
+            for (externalId in manifest.withdrawn) {
+                if (externalId in listed) continue
+                val book = bookDao.getBySourceAndExternalId(sourceId, externalId) ?: continue
+                database.withTransaction {
+                    if (withdrawnBookDao.hasReaderData(book.id)) {
+                        withdrawnBookDao.mark(WithdrawnBook(book.id))
+                    } else {
+                        bookFtsDao.deleteForBook(book.id)
+                        withdrawnBookDao.deleteBook(book.id)
+                    }
+                }
+            }
         }
 
         private suspend fun getOrCreateSourceId(source: CatalogSource): Long {
