@@ -55,8 +55,14 @@ class AvatarDesign private constructor(
         private const val SEPARATOR_VERSION = ":"
         private const val SEPARATOR_CHOICE = "."
 
+        /** The plain sleeveless top: no collar, no print, so the first avatar is just a face in green cloth. */
+        private const val PLAIN_OUTFIT = 10
+
         /** The avatar the creator starts with when the reader has not made one. */
-        val DEFAULT: AvatarDesign = AvatarDesign(AvatarSlot.entries.map { 0 }).with(AvatarSlot.SKIN, 1).with(AvatarSlot.HAIR, 1)
+        val DEFAULT: AvatarDesign =
+            AvatarDesign(
+                AvatarSlot.entries.map { 0 },
+            ).with(AvatarSlot.SKIN, 1).with(AvatarSlot.OUTFIT, PLAIN_OUTFIT)
 
         /** An avatar with a random choice in every slot. */
         fun random(random: Random): AvatarDesign = AvatarDesign(AvatarSlot.entries.map { random.nextInt(it.count) })
