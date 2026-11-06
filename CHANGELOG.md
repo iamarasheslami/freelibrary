@@ -6,8 +6,24 @@ All notable changes to FreeLibrary are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-06
+
+First public version.
+
 ### Added
 
+- A catalog of more than 78,000 public-domain books that ships inside the app and is kept current
+  by a background sync.
+- Home, Explore and Search with title and author search, typo tolerance, curated shelves, and
+  language, format and genre filters.
+- Book page with Read, Download, Save, Finished, Start over, Bookmarks and Delete actions.
+- EPUB reader (page view or scrolling, right-to-left books, contents list, text size), PDF reader
+  (zoom, dark-theme aware) and plain-text reader. Reading positions are saved automatically.
+- Shelves (Continue Reading, Want to Read, Finished), bookmarks with notes, and a profile.
+- Downloads with Project Gutenberg mirror fallback.
+- Backup and restore of shelves, bookmarks, settings and downloaded books.
+- Light and dark themes and a Small, Medium and Large interface size.
+- No accounts, advertising, analytics or tracking.
 - Profile: the reading card shows a gentle streak, the number of days in a row on which a book was opened. The streak is
   still alive while today has not been read yet, nothing is said about a streak that has ended except the best run, and
   Settings, Clear reading history, resets it. The days are kept only on the phone (database version 12, with a migration
@@ -30,6 +46,10 @@ All notable changes to FreeLibrary are listed here. The format follows
 - Home shows an explanation with a Try again button when the bundled catalog cannot be opened,
   for example because the phone has no room to copy it on the first start.
 - Privacy policy (`PRIVACY.md`), security policy (`SECURITY.md`) and store listing text.
+- The Apache License 2.0 text ships inside the app, and `THIRD_PARTY_NOTICES.md` lists the libraries it covers.
+- The catalog can withdraw a book on purpose, for example because of a rights problem. A withdrawn book leaves browsing and
+  search on the next sync. If the reader has a reading place, bookmark, highlight, shelf state or download of it, the book
+  stays on the reader's own lists and nothing of theirs is deleted (database version 13, with a migration).
 
 ### Changed
 
@@ -76,6 +96,9 @@ All notable changes to FreeLibrary are listed here. The format follows
   book the manifest names, gives every call time limits, and refuses answers larger than 64 MB.
 - The nightly catalog workflow validates the export (manifest, files, dates, nothing missing) and stops
   before publishing anything inconsistent.
+- Books are downloaded only from Project Gutenberg and its mirrors, and every redirect is checked against that list.
+- The system copies none of the app's data to the cloud or to a new phone. The reader's own backup file is the only way to
+  move data.
 
 ### Fixed
 
@@ -95,24 +118,5 @@ All notable changes to FreeLibrary are listed here. The format follows
   one page are read at the same time, and the next page starts loading earlier. A failing shelf query shows as a
   load error instead of crashing the page.
 
-## [0.1.0] - not yet released
-
-First public version.
-
-### Added
-
-- A catalog of more than 78,000 public-domain books that ships inside the app and is kept current
-  by a background sync.
-- Home, Explore and Search with title and author search, typo tolerance, curated shelves, and
-  language, format and genre filters.
-- Book page with Read, Download, Save, Finished, Start over, Bookmarks and Delete actions.
-- EPUB reader (page view or scrolling, right-to-left books, contents list, text size), PDF reader
-  (zoom, dark-theme aware) and plain-text reader. Reading positions are saved automatically.
-- Shelves (Continue Reading, Want to Read, Finished), bookmarks with notes, and a profile.
-- Downloads with Project Gutenberg mirror fallback.
-- Backup and restore of shelves, bookmarks, settings and downloaded books.
-- Light and dark themes and a Small, Medium and Large interface size.
-- No accounts, advertising, analytics or tracking.
-
-[Unreleased]: https://github.com/iamarasheslami/freelibrary/compare/main...HEAD
-[0.1.0]: https://github.com/iamarasheslami/freelibrary/releases
+[Unreleased]: https://github.com/iamarasheslami/freelibrary/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/iamarasheslami/freelibrary/releases/tag/v0.1.0
