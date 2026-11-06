@@ -121,6 +121,7 @@ class PdfReaderViewModel
             openedBook = book
             val saved = (startPosition as? ReaderPosition.Pdf) ?: readerRepository.savedPdfPosition(id)
             page = (saved?.page ?: 0).coerceIn(0, book.pageCount - 1)
+            readerRepository.readingStarted(id, ReaderPosition.Pdf(page))
             // Neither of these may stop the reader from reading.
             try {
                 readingStateRepository.onBookOpened(id)

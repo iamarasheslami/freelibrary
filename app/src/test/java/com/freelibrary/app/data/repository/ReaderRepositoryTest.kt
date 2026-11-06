@@ -166,24 +166,72 @@ class ReaderRepositoryTest {
             assertEquals(ReaderPosition.Epub(12, 250), repository.savedEpubPosition(bookId))
         }
 
-    @Test
-    fun `saving a position notes the day as a day of reading, once however often the reader saves`() =
-        runBlocking<Unit> {
-            repository.savePosition(bookId, ReaderPosition.Epub(1, 100))
-            now = 9_000L
-            repository.savePosition(bookId, ReaderPosition.Epub(2, 900))
+    private suspend fun readingDays() = database.readingDayDao().observeDays().first()
 
-            assertEquals(listOf(localDay(5_000L, TimeZone.getDefault())), database.readingDayDao().observeDays().first())
+    @Test
+    fun `opening a book and leaving at once is not a day of reading`() =
+        runBlocking<Unit> {
+            repository.readingStarted(bookId, ReaderPosition.Epub(1, 100))
+            now = 5_000L + 2_000L
+            repository.savePosition(bookId, ReaderPosition.Epub(1, 100))
+
+            assertEquals(emptyList<Long>(), readingDays())
         }
 
     @Test
-    fun `saving a position on another day adds another day of reading`() =
+    fun `moving on at once after opening is not yet reading`() =
         runBlocking<Unit> {
-            repository.savePosition(bookId, ReaderPosition.Epub(1, 100))
-            now = 5_000L + 2 * 86_400_000L
-            repository.savePosition(bookId, ReaderPosition.Epub(1, 200))
+            repository.readingStarted(bookId, ReaderPosition.Epub(1, 100))
+            now = 5_000L + 2_000L
+            repository.savePosition(bookId, ReaderPosition.Epub(1, 104))
 
-            assertEquals(2, database.readingDayDao().observeDays().first().size)
+            assertEquals(emptyList<Long>(), readingDays())
+        }
+
+    @Test
+    fun `moving to another place after a few seconds is a day of reading, once however often the reader saves`() =
+        runBlocking<Unit> {
+            repository.readingStarted(bookId, ReaderPosition.Epub(1, 100))
+            now = 5_000L + 6_000L
+            repository.savePosition(bookId, ReaderPosition.Epub(1, 400))
+            now += 4_000L
+            repository.savePosition(bookId, ReaderPosition.Epub(2, 900))
+
+            assertEquals(listOf(localDay(now, TimeZone.getDefault())), readingDays())
+        }
+
+    @Test
+    fun `staying thirty seconds on one page is a day of reading`() =
+        runBlocking<Unit> {
+            repository.readingStarted(bookId, ReaderPosition.Pdf(7))
+            now = 5_000L + 29_000L
+            repository.savePosition(bookId, ReaderPosition.Pdf(7))
+            assertEquals(emptyList<Long>(), readingDays())
+
+            now = 5_000L + 30_000L
+            repository.savePosition(bookId, ReaderPosition.Pdf(7))
+            assertEquals(1, readingDays().size)
+        }
+
+    @Test
+    fun `a position saved for a book that was never opened here is not a day of reading`() =
+        runBlocking<Unit> {
+            now = 5_000L + 60_000L
+            repository.savePosition(bookId, ReaderPosition.Epub(1, 100))
+
+            assertEquals(emptyList<Long>(), readingDays())
+        }
+
+    @Test
+    fun `reading on another day adds another day of reading`() =
+        runBlocking<Unit> {
+            repository.readingStarted(bookId, ReaderPosition.Pdf(1))
+            now = 5_000L + 40_000L
+            repository.savePosition(bookId, ReaderPosition.Pdf(2))
+            now += 2 * 86_400_000L
+            repository.savePosition(bookId, ReaderPosition.Pdf(3))
+
+            assertEquals(2, readingDays().size)
         }
 
     @Test

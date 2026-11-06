@@ -1,6 +1,5 @@
 package com.freelibrary.app.ui.profile
 
-import android.content.res.Resources
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
@@ -14,7 +13,6 @@ import com.freelibrary.app.databinding.ItemProfileHeaderBinding
 import com.freelibrary.app.databinding.ItemProfileReadingBinding
 import com.freelibrary.app.domain.model.BookCard
 import com.freelibrary.app.domain.model.ProfileSection
-import com.freelibrary.app.domain.model.ReadingStreak
 import com.freelibrary.app.domain.model.ReadingSummary
 import com.freelibrary.app.ui.booklist.BookSliderViewHolder
 import com.freelibrary.app.ui.cover.CoverTypefaces
@@ -115,19 +113,6 @@ class ProfileAdapter(
             }
         }
 
-        /** The streak line: nothing while the reader has never read, and never a word about a streak that was lost. */
-        private fun streakText(
-            resources: Resources,
-            streak: ReadingStreak,
-        ): String =
-            when {
-                streak.current > 0 && streak.longest > streak.current ->
-                    resources.getQuantityString(R.plurals.profile_streak_with_best, streak.current, streak.current, streak.longest)
-                streak.current > 0 -> resources.getQuantityString(R.plurals.profile_streak, streak.current, streak.current)
-                streak.longest >= 2 -> resources.getQuantityString(R.plurals.profile_streak_best_only, streak.longest, streak.longest)
-                else -> ""
-            }
-
         companion object {
             fun create(
                 parent: ViewGroup,
@@ -167,26 +152,14 @@ class ProfileAdapter(
                 }
             binding.readingMonth.text =
                 resources.getQuantityString(R.plurals.profile_finished_this_month, summary.finishedThisMonth, summary.finishedThisMonth)
-            val streak = streakText(resources, summary.streak)
-            binding.readingStreak.text = streak
-            binding.readingStreak.isVisible = streak.isNotEmpty()
+            val current = summary.streak.current
+            binding.streakCount.text = NumberFormat.getInstance().format(current)
+            binding.streakRing.setProgress(if (summary.streak.readToday) 1f else 0f)
+            val streak = resources.getQuantityString(R.plurals.profile_streak, current, current)
             val spoken = listOf(binding.readingTitle.text, binding.readingGoal.text, binding.readingMonth.text, streak)
             binding.readingCard.contentDescription =
                 resources.getString(R.string.profile_reading_description, spoken.filter { it.isNotEmpty() }.joinToString(". "))
         }
-
-        /** The streak line: nothing while the reader has never read, and never a word about a streak that was lost. */
-        private fun streakText(
-            resources: Resources,
-            streak: ReadingStreak,
-        ): String =
-            when {
-                streak.current > 0 && streak.longest > streak.current ->
-                    resources.getQuantityString(R.plurals.profile_streak_with_best, streak.current, streak.current, streak.longest)
-                streak.current > 0 -> resources.getQuantityString(R.plurals.profile_streak, streak.current, streak.current)
-                streak.longest >= 2 -> resources.getQuantityString(R.plurals.profile_streak_best_only, streak.longest, streak.longest)
-                else -> ""
-            }
 
         companion object {
             fun create(
