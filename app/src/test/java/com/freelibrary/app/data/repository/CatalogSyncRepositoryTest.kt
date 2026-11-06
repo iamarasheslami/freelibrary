@@ -7,8 +7,13 @@ import com.freelibrary.app.data.local.dao.BookFormatDao
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookBookshelf
 import com.freelibrary.app.data.local.entity.BookFormat
+import com.freelibrary.app.data.local.entity.BookShelfState
+import com.freelibrary.app.data.local.entity.Bookmark
 import com.freelibrary.app.data.local.entity.Bookshelf
+import com.freelibrary.app.data.local.entity.DownloadedBook
+import com.freelibrary.app.data.local.entity.Highlight
 import com.freelibrary.app.data.local.entity.ReadingProgress
+import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.local.entity.WithdrawnBook
 import com.freelibrary.app.data.remote.createCatalogSyncApi
@@ -580,6 +585,29 @@ class CatalogSyncRepositoryTest {
             assertEquals("para-9", database.readingProgressDao().getForBook(id)?.lastPosition)
             val sourceId = database.bookDao().getById(id)!!.sourceId
             assertEquals(listOf("1342"), database.withdrawnBookDao().markedExternalIds(sourceId))
+        }
+
+    @Test
+    fun `a withdrawn book keeps its bookmark, highlight, download and shelf state`() =
+        runTest {
+            val id = insertLocalBook("1342")
+            database.bookmarkDao().insert(Bookmark(bookId = id, position = "para-3", note = null, createdAt = 1L))
+            database.highlightDao().insert(
+                Highlight(bookId = id, startPosition = "para-4", endPosition = "para-5", color = null, createdAt = 2L),
+            )
+            database.downloadedBookDao().insert(
+                DownloadedBook(bookId = id, localFilePath = "books/1342.txt", format = "txt", downloadedAt = 3L),
+            )
+            database.bookShelfStateDao().upsert(BookShelfState(bookId = id, state = ShelfState.READING, updatedAt = 4L))
+            repository = buildRepository(withdrawalDispatcher(withdrawalManifest(listOf("158"), listOf("1342"))))
+
+            repository.sync()
+
+            assertNotNull(database.bookDao().getById(id))
+            assertEquals(1, database.bookmarkDao().getForBook(id).size)
+            assertEquals(1, database.highlightDao().getForBook(id).size)
+            assertTrue(database.downloadedBookDao().isDownloaded(id))
+            assertNotNull(database.bookShelfStateDao().getForBook(id))
         }
 
     @Test
