@@ -142,6 +142,7 @@ class TextReaderViewModel
             val saved = (startPosition as? ReaderPosition.Text) ?: readerRepository.savedTextPosition(id)
             val (part, permille) = saved?.let { book.locate(it.offset) } ?: (0 to 0)
             position = TextPlace(part, permille)
+            readerRepository.readingStarted(id, ReaderPosition.Text(book.offsetOf(part, permille)))
             // Neither of these may stop the reader from reading.
             try {
                 readingStateRepository.onBookOpened(id)

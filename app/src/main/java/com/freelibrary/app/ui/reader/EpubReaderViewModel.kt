@@ -144,6 +144,7 @@ class EpubReaderViewModel
             val chapter = (saved?.chapter ?: 0).coerceIn(0, book.chapters.lastIndex)
             val permille = if (saved != null && saved.chapter == chapter) saved.permille else 0
             position = ReaderPosition.Epub(chapter, permille)
+            readerRepository.readingStarted(id, position)
             // Neither of these may stop the reader from reading.
             try {
                 readingStateRepository.onBookOpened(id)
