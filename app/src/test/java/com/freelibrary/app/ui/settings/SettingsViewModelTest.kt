@@ -122,11 +122,11 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `it starts dark, with Wi-Fi only off and no sync yet`() =
+    fun `it follows the device theme, with Wi-Fi only off and no sync yet`() =
         runTest {
             val state = watched().state.value
 
-            assertEquals(ThemeMode.DARK, state.themeMode)
+            assertEquals(ThemeMode.SYSTEM, state.themeMode)
             assertEquals(false, state.wifiOnlySync)
             assertNull(state.lastSyncAt)
         }

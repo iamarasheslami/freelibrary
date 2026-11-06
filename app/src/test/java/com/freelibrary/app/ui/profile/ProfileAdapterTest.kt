@@ -1,7 +1,6 @@
 package com.freelibrary.app.ui.profile
 
 import com.freelibrary.app.domain.model.BookCard
-import com.freelibrary.app.domain.model.ProfileCounts
 import com.freelibrary.app.domain.model.ProfileSection
 import com.freelibrary.app.domain.model.ReadingSummary
 import com.freelibrary.app.domain.model.ViewMoreTarget
@@ -49,12 +48,12 @@ class ProfileAdapterTest {
     }
 
     @Test
-    fun `the header carries the name picture and totals`() {
-        val state = ProfileState(name = "Arash", avatarVersion = 5L, counts = ProfileCounts(2, 3))
+    fun `the header carries the name and the picture`() {
+        val state = ProfileState(name = "Arash", avatarVersion = 5L)
 
         val header = profileRows(state).first() as ProfileRow.Header
 
-        assertEquals(ProfileRow.Header("Arash", 5L, 2, 3), header)
+        assertEquals(ProfileRow.Header("Arash", 5L), header)
     }
 
     @Test
@@ -83,13 +82,13 @@ class ProfileAdapterTest {
 
         assertTrue(diff.areItemsTheSame(ProfileRow.Reading(ReadingSummary()), ProfileRow.Reading(ReadingSummary(goal = 5))))
         assertFalse(diff.areContentsTheSame(ProfileRow.Reading(ReadingSummary()), ProfileRow.Reading(ReadingSummary(goal = 5))))
-        assertFalse(diff.areItemsTheSame(ProfileRow.Reading(ReadingSummary()), ProfileRow.Header(null, null, 0, 0)))
+        assertFalse(diff.areItemsTheSame(ProfileRow.Reading(ReadingSummary()), ProfileRow.Header(null, null)))
     }
 
     @Test
     fun `there is only ever one header`() {
         val diff = ProfileAdapter.DIFF
 
-        assertTrue(diff.areItemsTheSame(ProfileRow.Header(null, null, 0, 0), ProfileRow.Header("Arash", 1L, 2, 3)))
+        assertTrue(diff.areItemsTheSame(ProfileRow.Header(null, null), ProfileRow.Header("Arash", 1L)))
     }
 }

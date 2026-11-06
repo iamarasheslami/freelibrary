@@ -25,8 +25,6 @@ sealed interface ProfileRow {
     data class Header(
         val name: String?,
         val avatarVersion: Long?,
-        val bookmarks: Int,
-        val highlights: Int,
     ) : ProfileRow
 
     data class Reading(
@@ -41,7 +39,7 @@ sealed interface ProfileRow {
 /** The header, the reading card, then a slider for each shelf that has books; a shelf with no books is not shown at all. */
 internal fun profileRows(state: ProfileState): List<ProfileRow> =
     listOf(
-        ProfileRow.Header(state.name, state.avatarVersion, state.counts.bookmarks, state.counts.highlights),
+        ProfileRow.Header(state.name, state.avatarVersion),
         ProfileRow.Reading(state.reading),
     ) + state.sections.filter { it.books.isNotEmpty() }.map { ProfileRow.Slider(it) }
 
@@ -108,14 +106,6 @@ class ProfileAdapter(
         fun bind(row: ProfileRow.Header) {
             binding.profileName.text = row.name.orEmpty()
             binding.profileName.isVisible = row.name != null
-
-            val resources = itemView.resources
-            binding.profileCounts.text =
-                resources.getString(
-                    R.string.profile_counts,
-                    resources.getQuantityString(R.plurals.profile_bookmarks, row.bookmarks, row.bookmarks),
-                    resources.getQuantityString(R.plurals.profile_highlights, row.highlights, row.highlights),
-                )
 
             val file = if (row.avatarVersion != null) avatarStore.file() else null
             if (file == null) {

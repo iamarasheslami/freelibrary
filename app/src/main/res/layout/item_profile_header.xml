@@ -40,13 +40,4 @@
         android:textColor="?attr/colorOnSurface"
         android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/profileCounts"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_s"
-        android:textAlignment="center"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="?attr/colorOnSurfaceVariant" />
-
 </LinearLayout>

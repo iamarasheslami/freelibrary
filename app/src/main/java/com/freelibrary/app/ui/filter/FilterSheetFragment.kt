@@ -58,7 +58,10 @@ class FilterSheetFragment : BottomSheetDialogFragment() {
             state = BottomSheetBehavior.STATE_EXPANDED
             skipCollapsed = true
         }
-        binding.filterReset.setOnClickListener { viewModel.reset() }
+        binding.filterReset.setOnClickListener {
+            viewModel.reset()
+            dismiss()
+        }
         binding.filterApply.setOnClickListener {
             viewModel.apply()
             dismiss()

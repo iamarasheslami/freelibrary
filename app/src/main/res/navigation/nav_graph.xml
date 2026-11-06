@@ -215,7 +215,16 @@
     <fragment
         android:id="@+id/storageSettingsFragment"
         android:name="com.freelibrary.app.ui.settings.StorageSettingsFragment"
-        tools:layout="@layout/fragment_settings_storage" />
+        tools:layout="@layout/fragment_settings_storage">
+        <action
+            android:id="@+id/action_storageSettingsFragment_to_downloadedBooksFragment"
+            app:destination="@id/downloadedBooksFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/downloadedBooksFragment"
+        android:name="com.freelibrary.app.ui.settings.DownloadedBooksFragment"
+        tools:layout="@layout/fragment_downloaded_books" />
 
     <fragment
         android:id="@+id/backupSettingsFragment"

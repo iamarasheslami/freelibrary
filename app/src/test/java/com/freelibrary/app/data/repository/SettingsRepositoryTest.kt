@@ -96,11 +96,11 @@ class SettingsRepositoryTest {
         }
 
     @Test
-    fun `the theme is Dark until the reader picks one`() =
+    fun `the theme follows the device until the reader picks one`() =
         runTest {
             val repository = SettingsRepository(InMemoryPreferences())
 
-            assertEquals(ThemeMode.DARK, repository.themeMode.first())
+            assertEquals(ThemeMode.SYSTEM, repository.themeMode.first())
         }
 
     @Test
@@ -116,12 +116,12 @@ class SettingsRepositoryTest {
         }
 
     @Test
-    fun `an unknown stored theme falls back to Dark`() =
+    fun `an unknown stored theme falls back to following the device`() =
         runTest {
             val dataStore = InMemoryPreferences()
             dataStore.edit { it[stringPreferencesKey("theme_mode")] = "SEPIA" }
 
-            assertEquals(ThemeMode.DARK, SettingsRepository(dataStore).themeMode.first())
+            assertEquals(ThemeMode.SYSTEM, SettingsRepository(dataStore).themeMode.first())
         }
 
     @Test

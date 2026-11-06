@@ -6,13 +6,11 @@ import com.freelibrary.app.data.TimeProvider
 import com.freelibrary.app.data.local.FreeLibraryDatabase
 import com.freelibrary.app.data.local.entity.Book
 import com.freelibrary.app.data.local.entity.BookShelfState
-import com.freelibrary.app.data.local.entity.Bookmark
 import com.freelibrary.app.data.local.entity.ShelfState
 import com.freelibrary.app.data.local.entity.Source
 import com.freelibrary.app.data.repository.InMemoryPreferences
 import com.freelibrary.app.data.repository.ProfileRepository
 import com.freelibrary.app.data.repository.ProfileShelvesRepository
-import com.freelibrary.app.data.repository.ProfileStatsRepository
 import com.freelibrary.app.data.repository.ReadingGoalRepository
 import com.freelibrary.app.data.repository.ReadingStateRepository
 import com.freelibrary.app.data.repository.SettingsRepository
@@ -50,7 +48,6 @@ class ProfileViewModelTest {
         viewModel =
             ProfileViewModel(
                 profileRepository,
-                ProfileStatsRepository(database.bookmarkDao(), database.highlightDao()),
                 ProfileShelvesRepository(
                     ReadingStateRepository(database, database.bookShelfStateDao(), database.bookListDao(), TimeProvider { 100L }),
                 ),
@@ -91,7 +88,6 @@ class ProfileViewModelTest {
 
             assertNull(state.name)
             assertNull(state.avatarVersion)
-            assertEquals(0, state.counts.bookmarks)
             assertEquals(3, state.sections.size)
             assertEquals(true, state.sections.all { it.books.isEmpty() })
         }
@@ -117,17 +113,6 @@ class ProfileViewModelTest {
             val state = viewModel.state.first { s -> s.sections.any { it.id == "want-to-read" && it.books.isNotEmpty() } }
 
             assertEquals(listOf("Book 1"), state.sections.first { it.id == "want-to-read" }.books.map { it.title })
-        }
-
-    @Test
-    fun `the bookmark total follows the reader's bookmarks`() =
-        runTest {
-            val bookId = addBook()
-            database.bookmarkDao().insert(Bookmark(bookId = bookId, position = "0.1", note = null, createdAt = 1L))
-
-            val state = viewModel.state.first { it.counts.bookmarks == 1 }
-
-            assertEquals(0, state.counts.highlights)
         }
 
     @Test

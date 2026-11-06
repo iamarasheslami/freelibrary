@@ -4,9 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freelibrary.app.data.repository.ProfileRepository
 import com.freelibrary.app.data.repository.ProfileShelvesRepository
-import com.freelibrary.app.data.repository.ProfileStatsRepository
 import com.freelibrary.app.data.repository.ReadingGoalRepository
-import com.freelibrary.app.domain.model.ProfileCounts
 import com.freelibrary.app.domain.model.ProfileSection
 import com.freelibrary.app.domain.model.ReadingSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,32 +19,28 @@ import javax.inject.Inject
 data class ProfileState(
     val name: String? = null,
     val avatarVersion: Long? = null,
-    val counts: ProfileCounts = ProfileCounts(0, 0),
     val sections: List<ProfileSection> = emptyList(),
     val reading: ReadingSummary = ReadingSummary(),
 )
 
-/** The Profile page: the reader's name and picture, their totals, their year and their three shelves. */
+/** The Profile page: the reader's name and picture, their year and their three shelves. */
 @HiltViewModel
 class ProfileViewModel
     @Inject
     constructor(
         profileRepository: ProfileRepository,
-        statsRepository: ProfileStatsRepository,
         shelvesRepository: ProfileShelvesRepository,
         private val goalRepository: ReadingGoalRepository,
     ) : ViewModel() {
         val state: StateFlow<ProfileState> =
             combine(
                 profileRepository.profile,
-                statsRepository.counts,
                 shelvesRepository.sections,
                 goalRepository.summary,
-            ) { profile, counts, sections, reading ->
+            ) { profile, sections, reading ->
                 ProfileState(
                     name = profile.name,
                     avatarVersion = profile.avatarVersion,
-                    counts = counts,
                     sections = sections,
                     reading = reading,
                 )
