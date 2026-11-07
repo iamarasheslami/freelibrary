@@ -34,7 +34,7 @@ data class ExploreSection(
     val bookCount: Int,
 )
 
-/** The hand-picked collections that open the Explore page, in display order. */
+/** The hand-picked collections of the Explore page, in display order. */
 object ExploreCollections {
     val all: List<HomeShelf> =
         listOf(
@@ -57,13 +57,15 @@ object ExploreSections {
     private const val GENRE_PREFIX = "Category: "
 
     /**
-     * Collections first, in curated order and only those present in [counts]; then the genre
-     * shelves; then every other shelf that is not one of the collections. Genres and other
-     * shelves are ordered largest first, ties by name. A book may appear in several sections.
+     * The page opens with what Home does not already show: the collections that are not on Home, in curated order and only
+     * those present in [counts], then the genre shelves that are not on Home. After them come the shelves that Home shows
+     * ([homeShelves], in Home's order), then every other shelf. Genres and other shelves are ordered largest first, ties by
+     * name. A book may appear in several sections.
      */
     fun build(
         counts: List<ShelfBookCount>,
         collections: List<HomeShelf> = ExploreCollections.all,
+        homeShelves: List<HomeShelf> = HomeShelves.all,
     ): List<ExploreSection> {
         val countByName = counts.associate { it.name to it.bookCount }
         val collectionNames = collections.map { it.bookshelfName }.toSet()
@@ -108,6 +110,12 @@ object ExploreSections {
                         bookCount = it.bookCount,
                     )
                 }
-        return collectionSections + genreSections + shelfSections
+        val onHome = homeShelves.map { it.bookshelfName }
+        val homeSections =
+            (collectionSections + genreSections)
+                .filter { it.bookshelfName in onHome }
+                .sortedBy { onHome.indexOf(it.bookshelfName) }
+        val notOnHome = { section: ExploreSection -> section.bookshelfName !in onHome }
+        return collectionSections.filter(notOnHome) + genreSections.filter(notOnHome) + homeSections + shelfSections
     }
 }

@@ -32,6 +32,54 @@ class ExploreSectionsTest {
         assertTrue(sections.take(2).all { it.kind == ExploreSectionKind.COLLECTION })
     }
 
+    private val onHome =
+        listOf(
+            HomeShelf("a", titleRes = 1, bookshelfName = "Alpha Collection"),
+            HomeShelf("poetry", titleRes = 4, bookshelfName = "Category: Poetry"),
+            HomeShelf("drama", titleRes = 5, bookshelfName = "Category: Drama"),
+        )
+
+    @Test
+    fun `the page opens with shelves Home does not show and the Home shelves follow in Home's order`() {
+        val sections =
+            ExploreSections.build(
+                counts =
+                    listOf(
+                        count("Alpha Collection", 50),
+                        count("Beta Collection", 40),
+                        count("Category: Poetry", 900),
+                        count("Category: Drama", 800),
+                        count("Category: Novels", 100),
+                        count("Punch", 400),
+                    ),
+                collections = collections,
+                homeShelves = onHome,
+            )
+
+        assertEquals(
+            listOf(
+                "collection:b",
+                "genre:Category: Novels",
+                "collection:a",
+                "genre:Category: Poetry",
+                "genre:Category: Drama",
+                "shelf:Punch",
+            ),
+            sections.map { it.id },
+        )
+    }
+
+    @Test
+    fun `the first ten sections never repeat a Home shelf when the catalog has enough others`() {
+        val genres = (1..12).map { count("Category: Genre $it", it * 10) }
+        val homeCounts = onHome.map { count(it.bookshelfName, 5_000) }
+
+        val sections = ExploreSections.build(homeCounts + genres, collections, onHome)
+
+        assertTrue(sections.take(10).none { it.bookshelfName in onHome.map { shelf -> shelf.bookshelfName } })
+        assertEquals(homeCounts.size + genres.size, sections.size)
+    }
+
     @Test
     fun `a collection keeps its heading resource and the catalog count`() {
         val section =
