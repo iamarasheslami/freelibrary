@@ -1,6 +1,7 @@
 package com.freelibrary.app.ui.reader
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class PdfZoomMathTest {
@@ -41,5 +42,36 @@ class PdfZoomMathTest {
         assertEquals(3, PdfZoomMath.renderLevel(2.5f))
         assertEquals(3, PdfZoomMath.renderLevel(3f))
         assertEquals(3, PdfZoomMath.renderLevel(9f))
+    }
+
+    @Test
+    fun `a zoomed page is at an edge only when it touches that side of the view`() {
+        assertEquals(false, PdfZoomMath.edgeOf(0f, 1000f, 400f))
+        assertEquals(false, PdfZoomMath.edgeOf(-0.5f, 1000f, 400f))
+        assertEquals(true, PdfZoomMath.edgeOf(-600f, 1000f, 400f))
+        assertEquals(true, PdfZoomMath.edgeOf(-599.5f, 1000f, 400f))
+        assertNull(PdfZoomMath.edgeOf(-300f, 1000f, 400f))
+        assertNull(PdfZoomMath.edgeOf(-3f, 1000f, 400f))
+    }
+
+    @Test
+    fun `a page that fits the view has no edge to push against`() {
+        assertNull(PdfZoomMath.edgeOf(0f, 400f, 400f))
+        assertNull(PdfZoomMath.edgeOf(50f, 300f, 400f))
+    }
+
+    @Test
+    fun `pushing right against the left edge goes back and pushing left against the right edge goes on`() {
+        assertEquals(false, PdfZoomMath.turnAtEdge(startEdge = false, dx = 120f, threshold = 100f))
+        assertEquals(true, PdfZoomMath.turnAtEdge(startEdge = true, dx = -120f, threshold = 100f))
+    }
+
+    @Test
+    fun `a swipe away from the edge, a short push or a swipe from the middle turns nothing`() {
+        assertNull(PdfZoomMath.turnAtEdge(startEdge = false, dx = -300f, threshold = 100f))
+        assertNull(PdfZoomMath.turnAtEdge(startEdge = true, dx = 300f, threshold = 100f))
+        assertNull(PdfZoomMath.turnAtEdge(startEdge = false, dx = 99f, threshold = 100f))
+        assertNull(PdfZoomMath.turnAtEdge(startEdge = null, dx = 500f, threshold = 100f))
+        assertNull(PdfZoomMath.turnAtEdge(startEdge = null, dx = -500f, threshold = 100f))
     }
 }

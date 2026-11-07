@@ -18,11 +18,24 @@ import kotlin.math.abs
 
 private const val PDF_SWIPE_DP = 48f
 
+/** Far enough past any edge that the page is clamped to its far side. */
+private const val FAR = 1e9f
+
 /**
- * Shows one PDF page, fitted whole into the view. Pinch or double-tap zooms, one finger moves a
- * zoomed page, and while the whole page shows a swipe sideways or a tap near an edge asks for
- * another page through [onTurnPage]. When a zoom settles, [onZoomSettled] lets the owner draw the
- * page sharper for the new zoom.
+ * How a zoomed view moves on to another page: the new page keeps the [zoom] and starts at its top left corner when the reader
+ * went [forward], or at its bottom right corner when the reader went back, the way the reading would continue.
+ */
+data class PdfViewCarry(
+    val zoom: Float,
+    val forward: Boolean,
+)
+
+/**
+ * Shows one PDF page, fitted whole into the view. Pinch or double-tap zooms, one finger moves a zoomed page, and while the
+ * whole page shows a swipe sideways or a tap near an edge asks for another page through [onTurnPage]. While zoomed, a swipe
+ * that starts with the page already against a side edge and pushes further that way asks for the neighbouring page through
+ * [onTurnPageZoomed], which keeps the zoom. When a zoom settles, [onZoomSettled] lets the owner draw the page sharper for
+ * the new zoom.
  */
 class PdfPageView
     @JvmOverloads
@@ -33,6 +46,9 @@ class PdfPageView
     ) : View(context, attrs, defStyleAttr) {
         /** Asked for the next (true) or the previous (false) page. */
         var onTurnPage: ((forward: Boolean) -> Unit)? = null
+
+        /** Asked for the next (true) or the previous (false) page by a swipe at an edge of a zoomed page, which is at [zoom]. */
+        var onTurnPageZoomed: ((forward: Boolean, zoom: Float) -> Unit)? = null
 
         /** Called for a tap that is not at an edge of a page: the reader shows or hides its bars. */
         var onTap: (() -> Unit)? = null
@@ -51,6 +67,7 @@ class PdfPageView
         private var downX = 0f
         private var downY = 0f
         private var scaledDuringGesture = false
+        private var startEdge: Boolean? = null
 
         private val scaleDetector =
             ScaleGestureDetector(
@@ -109,18 +126,21 @@ class PdfPageView
 
         /**
          * Shows [page]. With [keepView] the zoom and position stay as they are, which is how a page is
-         * swapped for a sharper drawing of itself; otherwise the whole page shows.
+         * swapped for a sharper drawing of itself; otherwise the whole page shows, or, with a [carry], the page at the carried
+         * zoom starting at the corner that the reading continues from.
          */
         fun showPage(
             page: Bitmap,
             keepView: Boolean,
+            carry: PdfViewCarry? = null,
         ) {
             val previous = bitmap
             bitmap = page
             if (!keepView) {
-                zoom = 1f
-                offsetX = 0f
-                offsetY = 0f
+                zoom = carry?.let { PdfZoomMath.clampZoom(it.zoom) } ?: 1f
+                val start = if (carry == null || carry.forward) 0f else -FAR
+                offsetX = start
+                offsetY = start
             }
             clampOffsets()
             invalidate()
@@ -202,14 +222,25 @@ class PdfPageView
                 downX = event.x
                 downY = event.y
                 scaledDuringGesture = false
+                val page = bitmap
+                startEdge =
+                    if (page != null && isZoomed()) {
+                        PdfZoomMath.edgeOf(offsetX, page.width * fitScale(page) * zoom, width.toFloat())
+                    } else {
+                        null
+                    }
             }
             scaleDetector.onTouchEvent(event)
             if (!scaleDetector.isInProgress) gestureDetector.onTouchEvent(event)
-            if (event.actionMasked == MotionEvent.ACTION_UP && !scaledDuringGesture && !isZoomed()) {
+            if (event.actionMasked == MotionEvent.ACTION_UP && !scaledDuringGesture) {
                 val dx = event.x - downX
                 val dy = event.y - downY
                 if (abs(dx) > touchSlop && abs(dx) > abs(dy)) {
-                    PageMath.swipeForward(dx, swipeThreshold)?.let { onTurnPage?.invoke(it) }
+                    if (isZoomed()) {
+                        PdfZoomMath.turnAtEdge(startEdge, dx, swipeThreshold)?.let { onTurnPageZoomed?.invoke(it, zoom) }
+                    } else {
+                        PageMath.swipeForward(dx, swipeThreshold)?.let { onTurnPage?.invoke(it) }
+                    }
                 }
             }
             return true
