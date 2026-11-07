@@ -141,22 +141,29 @@ class ProfileAdapter(
             val resources = itemView.resources
             val goal = summary.goal
             binding.readingRing.setProgress(summary.progress)
-            binding.readingCount.text = NumberFormat.getInstance().format(summary.finishedThisYear)
+            val numbers = NumberFormat.getInstance()
+            val finished = numbers.format(summary.finishedThisYear)
+            binding.readingCount.text = if (goal == null) finished else "$finished/${numbers.format(goal)}"
             binding.readingTitle.text =
                 resources.getString(if (goal == null) R.string.profile_reading_title else R.string.profile_goal_title, summary.year)
-            binding.readingGoal.text =
+            // With a goal the circle shows "finished/goal", so only the two moments that need words get a line.
+            val goalLine =
                 when {
                     goal == null -> resources.getString(R.string.profile_goal_set)
                     summary.goalReached -> resources.getQuantityString(R.plurals.profile_goal_reached, goal, goal)
-                    else -> resources.getQuantityString(R.plurals.profile_goal_progress, goal, summary.finishedThisYear, goal)
+                    else -> ""
                 }
+            binding.readingGoal.text = goalLine
+            binding.readingGoal.isVisible = goalLine.isNotEmpty()
+            val goalSpoken =
+                goal?.let { resources.getQuantityString(R.plurals.profile_goal_progress, it, summary.finishedThisYear, it) }.orEmpty()
             binding.readingMonth.text =
                 resources.getQuantityString(R.plurals.profile_finished_this_month, summary.finishedThisMonth, summary.finishedThisMonth)
             val current = summary.streak.current
-            binding.streakCount.text = NumberFormat.getInstance().format(current)
+            binding.streakCount.text = numbers.format(current)
             binding.streakRing.setProgress(if (summary.streak.readToday) 1f else 0f)
             val streak = resources.getQuantityString(R.plurals.profile_streak, current, current)
-            val spoken = listOf(binding.readingTitle.text, binding.readingGoal.text, binding.readingMonth.text, streak)
+            val spoken = listOf(binding.readingTitle.text, goalSpoken, goalLine, binding.readingMonth.text, streak)
             binding.readingCard.contentDescription =
                 resources.getString(R.string.profile_reading_description, spoken.filter { it.isNotEmpty() }.joinToString(". "))
         }

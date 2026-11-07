@@ -20,33 +20,59 @@
         android:orientation="horizontal"
         android:padding="@dimen/spacing_m">
 
-        <FrameLayout
+        <LinearLayout
             android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:importantForAccessibility="no">
+            android:layout_height="wrap_content"
+            android:importantForAccessibility="no"
+            android:orientation="vertical">
 
-            <com.freelibrary.app.ui.profile.GoalRingView
-                android:id="@+id/readingRing"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:ringColor="?attr/colorPrimary"
-                app:ringStroke="8dp"
-                app:trackColor="?attr/colorOutlineVariant" />
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_gravity="center_horizontal">
+
+                <com.freelibrary.app.ui.profile.GoalRingView
+                    android:id="@+id/readingRing"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:ringColor="?attr/colorPrimary"
+                    app:ringStroke="7dp"
+                    app:trackColor="?attr/colorOutlineVariant" />
+
+                <TextView
+                    android:id="@+id/readingCount"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorOnSurface"
+                    app:autoSizeMaxTextSize="18sp"
+                    app:autoSizeMinTextSize="9sp"
+                    app:autoSizeTextType="uniform" />
+
+            </FrameLayout>
 
             <TextView
-                android:id="@+id/readingCount"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textAppearance="?attr/textAppearanceTitleLarge"
-                android:textColor="?attr/colorOnSurface" />
+                android:layout_marginTop="@dimen/spacing_xs"
+                android:ellipsize="end"
+                android:gravity="center_horizontal"
+                android:maxLines="2"
+                android:minLines="2"
+                android:text="@string/profile_finished_books_label"
+                android:textAppearance="?attr/textAppearanceLabelSmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
 
-        </FrameLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing_m"
+            android:layout_marginStart="@dimen/spacing_s"
+            android:layout_marginEnd="@dimen/spacing_s"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -76,15 +102,14 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="72dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing_s"
             android:importantForAccessibility="no"
             android:orientation="vertical">
 
             <FrameLayout
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_gravity="center_horizontal">
 
                 <com.freelibrary.app.ui.profile.GoalRingView
@@ -92,24 +117,32 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     app:ringColor="?attr/colorTertiary"
-                    app:ringStroke="6dp"
+                    app:ringStroke="7dp"
                     app:trackColor="?attr/colorOutlineVariant" />
 
                 <TextView
                     android:id="@+id/streakCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_gravity="center"
+                    android:gravity="center"
+                    android:maxLines="1"
                     android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnSurface"
+                    app:autoSizeMaxTextSize="18sp"
+                    app:autoSizeMinTextSize="9sp"
+                    app:autoSizeTextType="uniform" />
 
             </FrameLayout>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="@dimen/spacing_xs"
+                android:ellipsize="end"
+                android:gravity="center_horizontal"
+                android:maxLines="2"
+                android:minLines="2"
                 android:text="@string/profile_streak_label"
                 android:textAppearance="?attr/textAppearanceLabelSmall"
                 android:textColor="?attr/colorOnSurfaceVariant" />

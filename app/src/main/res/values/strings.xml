@@ -161,6 +161,7 @@
         <item quantity="one">%d day in a row</item>
         <item quantity="other">%d days in a row</item>
     </plurals>
+    <string name="profile_finished_books_label">Finished books</string>
     <string name="profile_streak_label">Day streak</string>
     <string name="profile_reading_description">%1$s. Tap to change your goal.</string>
     <string name="profile_goal_dialog_title">Yearly goal</string>
