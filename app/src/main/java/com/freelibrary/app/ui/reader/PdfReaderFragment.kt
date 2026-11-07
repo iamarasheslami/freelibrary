@@ -39,7 +39,7 @@ private const val END_PROMPT_MS = 10_000
 /**
  * Reads a downloaded PDF one page at a time, with the phone's own PDF renderer. A page is drawn
  * whole when it is shown and drawn again sharper once the reader zooms in. Pages turn by swiping,
- * by tapping near an edge or with the Previous and Next buttons.
+ * by tapping near an edge or with the Previous and Next buttons. A zoomed page turns by swiping against its side edge and keeps its zoom.
  */
 @AndroidEntryPoint
 class PdfReaderFragment : Fragment() {
@@ -85,6 +85,9 @@ class PdfReaderFragment : Fragment() {
             true
         }
         binding.pdfPageView.onTurnPage = { forward -> goToPage(currentPage + if (forward) 1 else -1) }
+        binding.pdfPageView.onTurnPageZoomed = { forward, zoom ->
+            goToPage(currentPage + if (forward) 1 else -1, carry = PdfViewCarry(zoom, forward))
+        }
         binding.pdfPageView.onTap = { chrome?.toggle() }
         binding.pdfPageView.onZoomSettled = ::onZoomSettled
         viewLifecycleOwner.lifecycleScope.launch {
@@ -130,17 +133,21 @@ class PdfReaderFragment : Fragment() {
         goToPage(viewModel.page, report = false)
     }
 
-    /** Shows page [page] (from 0), if the book has it. [report] tells the view model the reader moved. */
+    /**
+     * Shows page [page] (from 0), if the book has it. [report] tells the view model the reader moved. With a [carry] the page
+     * opens at the zoom the reader had instead of showing whole.
+     */
     private fun goToPage(
         page: Int,
         report: Boolean = true,
+        carry: PdfViewCarry? = null,
     ) {
         val book = book ?: return
         if (page !in 0 until book.pageCount) return
         currentPage = page
         if (report) viewModel.onPageChanged(page)
         updatePageBar(book)
-        draw(page, level = 1, keepView = false)
+        draw(page, level = carry?.let { PdfZoomMath.renderLevel(it.zoom) } ?: 1, keepView = false, carry = carry)
     }
 
     private fun updatePageBar(book: PdfBook) {
@@ -152,6 +159,7 @@ class PdfReaderFragment : Fragment() {
         page: Int,
         level: Int,
         keepView: Boolean,
+        carry: PdfViewCarry? = null,
     ) {
         val book = book ?: return
         val view = binding.pdfPageView
@@ -167,7 +175,7 @@ class PdfReaderFragment : Fragment() {
                     binding.pdfMessage.isVisible = true
                 } else {
                     binding.pdfMessage.isVisible = false
-                    view.showPage(bitmap, keepView)
+                    view.showPage(bitmap, keepView, carry)
                     renderedLevel = level
                 }
             }
@@ -244,6 +252,7 @@ class PdfReaderFragment : Fragment() {
         chrome = null
         _binding?.pdfPageView?.let { view ->
             view.onTurnPage = null
+            view.onTurnPageZoomed = null
             view.onTap = null
             view.onZoomSettled = null
         }
