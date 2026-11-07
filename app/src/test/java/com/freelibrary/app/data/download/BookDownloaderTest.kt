@@ -16,8 +16,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -30,6 +33,7 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.io.File
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
@@ -446,4 +450,148 @@ class BookDownloaderTest {
             assertTrue(outside.exists())
             assertTrue(database.downloadedBookDao().getFormatsForBook(bookId).isEmpty())
         }
+
+    private fun downloaderWithRetries(
+        retries: Int,
+        pauseMillis: Long = 0L,
+    ) = BookDownloader(
+        OkHttpClient(),
+        BookStorage(booksDir),
+        database.downloadedBookDao(),
+        TimeProvider { 5_000L },
+        1_000_000L,
+        allowHost = { true },
+        retryPauseMillis = pauseMillis,
+        maxRetries = retries,
+    )
+
+    /** Cuts the first answer off half way; later answers come from [later], given the Range header the request carried. */
+    private fun cutOffFirstThen(
+        asked: MutableList<String?>,
+        later: (range: String?) -> MockResponse,
+    ) {
+        server.dispatcher =
+            object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse {
+                    val range = request.getHeader("Range")
+                    val first = asked.isEmpty()
+                    asked.add(range)
+                    return if (first) {
+                        MockResponse()
+                            .setHeader("Content-Type", "application/epub+zip")
+                            .setBody(Buffer().write(RESUME_BYTES))
+                            .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+                    } else {
+                        later(range)
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun `a transfer that breaks carries on from the bytes already received`() =
+        runTest {
+            val asked = CopyOnWriteArrayList<String?>()
+            cutOffFirstThen(asked) { range ->
+                val start = range!!.removePrefix("bytes=").removeSuffix("-").toInt()
+                MockResponse()
+                    .setResponseCode(206)
+                    .setHeader("Content-Type", "application/epub+zip")
+                    .setHeader("Content-Range", "bytes $start-${RESUME_BYTES.size - 1}/${RESUME_BYTES.size}")
+                    .setBody(Buffer().write(RESUME_BYTES, start, RESUME_BYTES.size - start))
+            }
+
+            val outcome = downloaderWithRetries(retries = 3).download(bookId, BookFileFormat.EPUB, url())
+
+            assertArrayEquals(RESUME_BYTES, (outcome as DownloadOutcome.Done).file.readBytes())
+            assertEquals(null, asked.first())
+            assertTrue("The second request should ask for a range: $asked", asked[1]!!.startsWith("bytes="))
+            assertEquals(listOf("$bookId.epub"), filesLeft().map { it.name })
+        }
+
+    @Test
+    fun `a server that ignores the range sends the file again and it is read from the start`() =
+        runTest {
+            val asked = CopyOnWriteArrayList<String?>()
+            cutOffFirstThen(asked) {
+                MockResponse().setHeader("Content-Type", "application/epub+zip").setBody(Buffer().write(RESUME_BYTES))
+            }
+
+            val outcome = downloaderWithRetries(retries = 3).download(bookId, BookFileFormat.EPUB, url())
+
+            assertArrayEquals(RESUME_BYTES, (outcome as DownloadOutcome.Done).file.readBytes())
+        }
+
+    @Test
+    fun `a range the server cannot serve starts the file again`() =
+        runTest {
+            val asked = CopyOnWriteArrayList<String?>()
+            cutOffFirstThen(asked) { range ->
+                if (range != null && asked.size == 2) {
+                    MockResponse().setResponseCode(416)
+                } else {
+                    MockResponse().setHeader("Content-Type", "application/epub+zip").setBody(Buffer().write(RESUME_BYTES))
+                }
+            }
+
+            val outcome = downloaderWithRetries(retries = 3).download(bookId, BookFileFormat.EPUB, url())
+
+            assertArrayEquals(RESUME_BYTES, (outcome as DownloadOutcome.Done).file.readBytes())
+        }
+
+    @Test
+    fun `a connection that comes back lets the download finish`() =
+        runTest {
+            server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+            server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+            respond(epubBytes())
+
+            val outcome = downloaderWithRetries(retries = 5).download(bookId, BookFileFormat.EPUB, url())
+
+            assertTrue(outcome is DownloadOutcome.Done)
+        }
+
+    @Test
+    fun `when the retries run out the reader is told the connection is down and nothing is left behind`() =
+        runTest {
+            repeat(DISCONNECTS) { server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)) }
+
+            assertFailed(DownloadError.OFFLINE, downloaderWithRetries(retries = 2).download(bookId, BookFileFormat.EPUB, url()))
+            // The first try and two more, and the client may itself repeat a request once.
+            assertTrue("Expected at least 3 requests, saw ${server.requestCount}", server.requestCount >= 3)
+        }
+
+    @Test
+    fun `a transfer that keeps breaking ends offline with no half file`() =
+        runTest {
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest) =
+                        MockResponse()
+                            .setHeader("Content-Type", "application/epub+zip")
+                            .setBody(Buffer().write(RESUME_BYTES))
+                            .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+                }
+
+            assertFailed(DownloadError.OFFLINE, downloaderWithRetries(retries = 2).download(bookId, BookFileFormat.EPUB, url()))
+        }
+
+    @Test
+    fun `each retry waits for the pause`() =
+        runTest {
+            repeat(DISCONNECTS) { server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)) }
+            val started = System.nanoTime()
+
+            downloaderWithRetries(retries = 2, pauseMillis = 300L).download(bookId, BookFileFormat.EPUB, url())
+
+            val elapsedMillis = (System.nanoTime() - started) / 1_000_000
+            assertTrue("Two retries should wait at least 600 ms, waited $elapsedMillis", elapsedMillis >= 600)
+        }
+
+    private companion object {
+        /** Enough refused connections for every try, however often the client repeats a request itself. */
+        const val DISCONNECTS = 30
+
+        val RESUME_BYTES = byteArrayOf('P'.code.toByte(), 'K'.code.toByte(), 3, 4) + ByteArray(300_000) { (it % 251).toByte() }
+    }
 }
