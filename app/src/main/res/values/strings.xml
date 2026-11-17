@@ -314,6 +314,11 @@
     <string name="pdf_page_label">Page %1$d of %2$d</string>
     <string name="pdf_go_to_page">Go to page</string>
     <string name="pdf_go_to_page_hint">Page number (1 to %1$d)</string>
+    <string name="pdf_page_spoken">Page %1$d of %2$d, shown as a picture</string>
+    <string name="pdf_page_spoken_first">Page %1$d of %2$d. This reader shows PDF pages as pictures, so a screen reader cannot read their text. If this book has an EPUB or text edition, that one can be read aloud.</string>
+    <string name="pdf_zoom_state">Zoom %1$d%%</string>
+    <string name="reader_action_zoom_in">Zoom in</string>
+    <string name="reader_action_zoom_out">Zoom out</string>
     <string name="pdf_page_error">This page could not be drawn.</string>
     <string name="text_part_label">Part %1$d of %2$d</string>
     <string name="reader_error_text_too_large">This text file is too large to open on this phone.</string>

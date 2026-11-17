@@ -8,15 +8,22 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewConfiguration
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
+import com.freelibrary.app.R
 import kotlin.math.abs
 
 private const val PDF_SWIPE_DP = 48f
+private const val PERCENT = 100
 
 /** Far enough past any edge that the page is clamped to its far side. */
 private const val FAR = 1e9f
@@ -36,6 +43,9 @@ data class PdfViewCarry(
  * that starts with the page already against a side edge and pushes further that way asks for the neighbouring page through
  * [onTurnPageZoomed], which keeps the zoom. When a zoom settles, [onZoomSettled] lets the owner draw the page sharper for
  * the new zoom.
+ *
+ * A screen reader hears the description given by [setPageDescription], is told when it changes, and can turn the page and zoom
+ * in and out with its own actions, because a swipe or a pinch is not available to it.
  */
 class PdfPageView
     @JvmOverloads
@@ -68,6 +78,13 @@ class PdfPageView
         private var downY = 0f
         private var scaledDuringGesture = false
         private var startEdge: Boolean? = null
+
+        init {
+            isFocusable = true
+            ViewCompat.setImportantForAccessibility(this, ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_YES)
+            ViewCompat.setAccessibilityLiveRegion(this, ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE)
+            ViewCompat.setAccessibilityDelegate(this, PageDelegate())
+        }
 
         private val scaleDetector =
             ScaleGestureDetector(
@@ -123,6 +140,49 @@ class PdfPageView
                     }
                 },
             )
+
+        /** What a screen reader says about the page showing, for example its number; the view is a live region, so a change is read. */
+        fun setPageDescription(text: CharSequence?) {
+            contentDescription = text
+        }
+
+        /** Zooms in or out by a whole level around the middle of the view, as a screen reader asks, and lets the owner sharpen it. */
+        private fun zoomFromScreenReader(zoomIn: Boolean) {
+            zoomTo(PdfZoomMath.stepZoom(zoom, zoomIn), width / 2f, height / 2f)
+            onZoomSettled?.invoke(zoom)
+        }
+
+        private inner class PageDelegate : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(
+                host: View,
+                info: AccessibilityNodeInfoCompat,
+            ) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.isScrollable = true
+                if (isZoomed()) info.stateDescription = context.getString(R.string.pdf_zoom_state, (zoom * PERCENT).toInt())
+                info.addAction(AccessibilityActionCompat.ACTION_SCROLL_FORWARD)
+                info.addAction(AccessibilityActionCompat.ACTION_SCROLL_BACKWARD)
+                if (zoom < PdfZoomMath.MAX_ZOOM) {
+                    info.addAction(AccessibilityActionCompat(R.id.action_pdf_zoom_in, context.getString(R.string.reader_action_zoom_in)))
+                }
+                if (isZoomed()) {
+                    info.addAction(AccessibilityActionCompat(R.id.action_pdf_zoom_out, context.getString(R.string.reader_action_zoom_out)))
+                }
+            }
+
+            override fun performAccessibilityAction(
+                host: View,
+                action: Int,
+                args: Bundle?,
+            ): Boolean =
+                when (action) {
+                    AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD -> true.also { onTurnPage?.invoke(true) }
+                    AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD -> true.also { onTurnPage?.invoke(false) }
+                    R.id.action_pdf_zoom_in -> true.also { zoomFromScreenReader(zoomIn = true) }
+                    R.id.action_pdf_zoom_out -> true.also { zoomFromScreenReader(zoomIn = false) }
+                    else -> super.performAccessibilityAction(host, action, args)
+                }
+        }
 
         /**
          * Shows [page]. With [keepView] the zoom and position stay as they are, which is how a page is

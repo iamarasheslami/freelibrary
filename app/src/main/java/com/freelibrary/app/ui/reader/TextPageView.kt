@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Typeface
 import android.graphics.text.LineBreaker
 import android.os.Build
+import android.os.Bundle
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.StaticLayout
@@ -17,8 +18,14 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.accessibility.AccessibilityManager
 import android.widget.OverScroller
+import androidx.core.content.getSystemService
 import androidx.core.graphics.withSave
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat.AccessibilityActionCompat
 import com.freelibrary.app.R
 import kotlin.math.abs
 
@@ -28,12 +35,16 @@ private const val SWIPE_DP = 48f
 private const val SIDEWAYS_RATIO = 2
 private const val PAGE_PADDING_DP = 16f
 private const val MAX_PERMILLE = 1000
+private const val SCREEN_READER_STEP_PERCENT = 90
 
 /**
  * Shows one part of a plain text book without a web view: the text is laid out here and drawn
  * straight to the screen, so it needs little memory. In page view it shows one page of whole lines,
  * and a swipe sideways or a tap near an edge asks for another page through [onTurnPage]. In scroll
  * view it is an ordinary vertical scroll. [onMoved] tells when the place shown has changed.
+ *
+ * A screen reader gets the words on the page (or on the screen, in scroll view) as the view's description, is told again whenever
+ * they change, and can turn the page with its scroll forward and backward actions.
  */
 class TextPageView
     @JvmOverloads
@@ -73,6 +84,13 @@ class TextPageView
         private var quiet = false
         private var downX = 0f
         private var downY = 0f
+
+        init {
+            isFocusable = true
+            ViewCompat.setImportantForAccessibility(this, ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_YES)
+            ViewCompat.setAccessibilityLiveRegion(this, ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE)
+            ViewCompat.setAccessibilityDelegate(this, ReaderTextDelegate())
+        }
 
         /** Shows [plain], the text of one part, starting [permille] thousandths of the way through it. */
         fun show(
@@ -121,6 +139,7 @@ class TextPageView
             if (target !in pageStarts.indices) return false
             page = target
             invalidate()
+            speakWhatShows()
             onMoved?.invoke()
             return true
         }
@@ -176,6 +195,68 @@ class TextPageView
             }
             quiet = false
             invalidate()
+            speakWhatShows()
+        }
+
+        /** The words that show now: the lines of the page in page view, the lines on the screen in scroll view. */
+        private fun shownText(): String {
+            val l = layout ?: return ""
+            if (l.lineCount == 0) return ""
+            val lines =
+                if (paged) {
+                    TextPaging.linesOfPage(pageStarts, page, l.lineCount)
+                } else {
+                    l.getLineForVertical(scrollY)..l.getLineForVertical(scrollY + height)
+                }
+            return content.subSequence(l.getLineStart(lines.first), l.getLineEnd(lines.last)).toString().trim()
+        }
+
+        /**
+         * Tells a screen reader that other words show now. The view is a polite live region, so a change of its description is
+         * read aloud; the description is only worked out while some accessibility service is on.
+         */
+        private fun speakWhatShows() {
+            if (context.getSystemService<AccessibilityManager>()?.isEnabled == true) contentDescription = shownText()
+        }
+
+        /** Scroll forward and backward from a screen reader: a page in page view, nearly a screen in scroll view. */
+        private fun moveFromScreenReader(forward: Boolean) {
+            if (paged) {
+                onTurnPage?.invoke(forward)
+                return
+            }
+            val atEdge = if (forward) scrollY >= maxScroll() else scrollY <= 0
+            if (atEdge) {
+                onTurnPage?.invoke(forward)
+            } else {
+                val step = height * SCREEN_READER_STEP_PERCENT / 100
+                scrollTo(0, (scrollY + if (forward) step else -step).coerceIn(0, maxScroll()))
+            }
+        }
+
+        private inner class ReaderTextDelegate : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(
+                host: View,
+                info: AccessibilityNodeInfoCompat,
+            ) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                info.contentDescription = shownText()
+                info.isScrollable = true
+                if (paged) info.stateDescription = context.getString(R.string.reader_page_number, page + 1, pageStarts.size)
+                info.addAction(AccessibilityActionCompat.ACTION_SCROLL_FORWARD)
+                info.addAction(AccessibilityActionCompat.ACTION_SCROLL_BACKWARD)
+            }
+
+            override fun performAccessibilityAction(
+                host: View,
+                action: Int,
+                args: Bundle?,
+            ): Boolean =
+                when (action) {
+                    AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD -> true.also { moveFromScreenReader(forward = true) }
+                    AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD -> true.also { moveFromScreenReader(forward = false) }
+                    else -> super.performAccessibilityAction(host, action, args)
+                }
         }
 
         private fun goTo(permille: Int) {
@@ -235,7 +316,10 @@ class TextPageView
             oldt: Int,
         ) {
             super.onScrollChanged(l, t, oldl, oldt)
-            if (!quiet && !paged) onMoved?.invoke()
+            if (!quiet && !paged) {
+                speakWhatShows()
+                onMoved?.invoke()
+            }
         }
 
         override fun computeScroll() {

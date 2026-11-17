@@ -74,4 +74,20 @@ class PdfZoomMathTest {
         assertNull(PdfZoomMath.turnAtEdge(startEdge = null, dx = 500f, threshold = 100f))
         assertNull(PdfZoomMath.turnAtEdge(startEdge = null, dx = -500f, threshold = 100f))
     }
+
+    @Test
+    fun `a screen reader zooms in and out one whole level at a time`() {
+        assertEquals(2f, PdfZoomMath.stepZoom(1f, zoomIn = true), 0f)
+        assertEquals(3f, PdfZoomMath.stepZoom(2f, zoomIn = true), 0f)
+        assertEquals(2f, PdfZoomMath.stepZoom(1.4f, zoomIn = true), 0f)
+        assertEquals(1f, PdfZoomMath.stepZoom(1.4f, zoomIn = false), 0f)
+        assertEquals(2f, PdfZoomMath.stepZoom(3f, zoomIn = false), 0f)
+        assertEquals(1f, PdfZoomMath.stepZoom(2f, zoomIn = false), 0f)
+    }
+
+    @Test
+    fun `zooming by steps never leaves the allowed range`() {
+        assertEquals(PdfZoomMath.MAX_ZOOM, PdfZoomMath.stepZoom(PdfZoomMath.MAX_ZOOM, zoomIn = true), 0f)
+        assertEquals(1f, PdfZoomMath.stepZoom(1f, zoomIn = false), 0f)
+    }
 }

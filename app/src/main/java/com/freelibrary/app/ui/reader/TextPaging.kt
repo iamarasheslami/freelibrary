@@ -25,6 +25,17 @@ internal object TextPaging {
         return starts.toIntArray()
     }
 
+    /** The first and the last line of page [page] (from 0) when the text is cut into pages that start at [starts]. */
+    fun linesOfPage(
+        starts: IntArray,
+        page: Int,
+        lineCount: Int,
+    ): IntRange {
+        val first = starts[page]
+        val last = (if (page < starts.lastIndex) starts[page + 1] else lineCount) - 1
+        return first..maxOf(first, last)
+    }
+
     /** The page that [line] is on. */
     fun pageOfLine(
         starts: IntArray,

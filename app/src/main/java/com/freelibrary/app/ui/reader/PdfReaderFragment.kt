@@ -56,6 +56,7 @@ class PdfReaderFragment : Fragment() {
     private var renderJob: Job? = null
     private var pageDialog: AlertDialog? = null
     private var chrome: ReaderChrome? = null
+    private var noticeGiven = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -152,6 +153,10 @@ class PdfReaderFragment : Fragment() {
 
     private fun updatePageBar(book: PdfBook) {
         binding.pdfPageLabel.text = getString(R.string.pdf_page_label, currentPage + 1, book.pageCount)
+        // The first page a screen reader meets also says that the pages are pictures and what to do about it.
+        val spoken = if (noticeGiven) R.string.pdf_page_spoken else R.string.pdf_page_spoken_first
+        noticeGiven = true
+        binding.pdfPageView.setPageDescription(getString(spoken, currentPage + 1, book.pageCount))
     }
 
     /** Draws [page] at [level] off the main thread and shows it, unless the reader has moved on meanwhile. */

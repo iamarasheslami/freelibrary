@@ -3,11 +3,16 @@ package com.freelibrary.app.ui.reader
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
 import android.webkit.WebView
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import com.freelibrary.app.domain.model.ReaderPosition
 import kotlin.math.abs
 
@@ -46,6 +51,32 @@ class ReaderWebView
         private var swiping = false
         private var movedAway = false
         private var animator: ObjectAnimator? = null
+
+        init {
+            // In page view the pages lie side by side, so a screen reader's scroll forward and backward turn the page.
+            ViewCompat.setAccessibilityDelegate(
+                this,
+                object : AccessibilityDelegateCompat() {
+                    override fun performAccessibilityAction(
+                        host: View,
+                        action: Int,
+                        args: Bundle?,
+                    ): Boolean {
+                        val forward =
+                            when (action) {
+                                AccessibilityNodeInfoCompat.ACTION_SCROLL_FORWARD -> true
+                                AccessibilityNodeInfoCompat.ACTION_SCROLL_BACKWARD -> false
+                                else -> null
+                            }
+                        if (paged && forward != null) {
+                            onTurnPage?.invoke(forward)
+                            return true
+                        }
+                        return super.performAccessibilityAction(host, action, args)
+                    }
+                },
+            )
+        }
 
         /** How many pages the chapter is, in page view; 1 while it is not laid out yet. */
         fun pageCount(): Int = PageMath.pageCount(computeHorizontalScrollRange(), width)
