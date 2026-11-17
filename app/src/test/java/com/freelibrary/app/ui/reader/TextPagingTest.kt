@@ -55,4 +55,18 @@ class TextPagingTest {
         assertEquals(500, TextPaging.offsetOf(1000, 500))
         assertEquals(500, TextPaging.offsetOf(5000, 500))
     }
+
+    @Test
+    fun `a page reads from its first line to the line before the next page`() {
+        val starts = intArrayOf(0, 4, 9)
+
+        assertEquals(0..3, TextPaging.linesOfPage(starts, 0, lineCount = 12))
+        assertEquals(4..8, TextPaging.linesOfPage(starts, 1, lineCount = 12))
+    }
+
+    @Test
+    fun `the last page reads to the last line, and an empty text reads its one line`() {
+        assertEquals(9..11, TextPaging.linesOfPage(intArrayOf(0, 4, 9), 2, lineCount = 12))
+        assertEquals(0..0, TextPaging.linesOfPage(intArrayOf(0), 0, lineCount = 0))
+    }
 }

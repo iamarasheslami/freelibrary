@@ -2,4 +2,7 @@
 <resources>
     <!-- Remembers which book's cover an image view is showing or loading. -->
     <item name="cover_request_key" type="id" />
+    <!-- Actions that a screen reader offers on a PDF page. -->
+    <item name="action_pdf_zoom_in" type="id" />
+    <item name="action_pdf_zoom_out" type="id" />
 </resources>

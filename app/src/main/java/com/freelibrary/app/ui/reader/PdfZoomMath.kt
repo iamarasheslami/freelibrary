@@ -1,6 +1,7 @@
 package com.freelibrary.app.ui.reader
 
 import kotlin.math.ceil
+import kotlin.math.floor
 
 /** The arithmetic of zooming and moving a PDF page: pure functions, so they are easy to test. */
 internal object PdfZoomMath {
@@ -69,6 +70,12 @@ internal object PdfZoomMath {
             startEdge == true && dx <= -threshold -> true
             else -> null
         }
+
+    /** The next whole zoom level up (when [zoomIn]) or down from [zoom], within the limits: 1, 2, 3. */
+    fun stepZoom(
+        zoom: Float,
+        zoomIn: Boolean,
+    ): Float = clampZoom(if (zoomIn) floor(zoom + 0.01f) + 1f else ceil(zoom - 0.01f) - 1f)
 
     /** How sharp a drawing of the page must be to look good at [zoom]: 1 for the whole page, then 2 and 3. */
     fun renderLevel(zoom: Float): Int = ceil(zoom - 0.01f).toInt().coerceIn(1, MAX_ZOOM.toInt())
